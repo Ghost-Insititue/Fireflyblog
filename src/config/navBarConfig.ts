@@ -89,6 +89,22 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 				external: true,
 				icon: "fa7-brands:gitee",
 			},
+
+			{
+				name: "CSDN",
+				url: "https://blog.csdn.net/qq_49525131?type=blog",
+				external: true,
+				icon: "material-symbols:copyright",
+			},
+
+			{
+				name: "博客园",
+				url: "https://home.cnblogs.com/u/3321696",
+				external: true,
+				icon: "material-symbols:article",
+			},
+
+
 			/*
 			{
 				name: "QQ交流群",
