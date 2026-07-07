@@ -30,6 +30,13 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 			// 标签
 			LinkPresets.Tags,
+
+			// 写文章
+			{
+				name: "写文章",
+				url: "/editor/",
+				icon: "material-symbols:edit-note",
+			},
 		],
 	});
 
