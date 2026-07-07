@@ -24,6 +24,8 @@ export const commentConfig: CommentConfig = {
 	waline: {
 		// waline 后端服务地址
 		serverURL: "https://waline.xiaomaisos.me/",
+		// 国内自建waline后台："https://api.zcservice.houlang.cloud/comment/d93bc8c3ba83dc70228e56885532e176"
+		// "https://waline.xiaomaisos.me/",
 		// 设置 Waline 评论系统语言
 		lang: "zh-CN",
 		// 设置 Waline 评论系统表情地址
