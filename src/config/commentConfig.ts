@@ -41,6 +41,22 @@ export const commentConfig: CommentConfig = {
 		login: "enable",
 		// 是否启用文章访问量统计功能
 		visitorCount: true,
+		// 是否启用反应功能
+		reaction: [
+        	"https://unpkg.com/@waline/emojis@1.4.0/bilibili/bb_look_down.png",
+			"https://unpkg.com/@waline/emojis@1.4.0/bilibili/bb_trollface.png",
+			"https://unpkg.com/@waline/emojis@1.4.0/bilibili/bb_antic.png",
+        	"https://unpkg.com/@waline/emojis@1.4.0/bilibili/bb_think.png",
+        	"https://unpkg.com/@waline/emojis@1.4.0/bilibili/bb_spit_blodd.png",
+   		],
+    	locale: {
+        	reactionTitle: "(๑˃ᴗ˂)ﻭ 求一连！投个币嘛~",
+        	reaction0: "求",
+        	reaction1: "一",
+        	reaction2: "个",
+			reaction3: "投",
+			reaction4: "币",
+        },
 	},
 
 	// artalk评论系统配置
