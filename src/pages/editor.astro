@@ -95,7 +95,7 @@ import { siteConfig } from "@/config";
         <button data-action="italic" title="斜体 (Ctrl+I)" class="toolbar-btn">
           <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 5v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V5z"/></svg>
         </button>
-        <button data-action="strikethrough" title="删除线" class="toolbar-btn">
+        <button data-action="strikethrough" title="删除线 (Ctrl+Shift+X)" class="toolbar-btn">
           <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>
         </button>
 
@@ -312,6 +312,11 @@ import { siteConfig } from "@/config";
           <input id="draft-name-input" type="text" placeholder="草稿名称（如：我的第一篇文章）"
             class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           <button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer whitespace-nowrap">保存</button>
+        </div>
+        <div class="relative mb-3">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="draft-search" type="text" placeholder="搜索草稿..."
+            class="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
         </div>
         <div id="draft-toolbar" class="flex items-center justify-between mb-2 hidden">
           <label class="flex items-center gap-1.5 cursor-pointer text-xs text-black/60 dark:text-white/60 select-none">
@@ -534,10 +539,13 @@ import { siteConfig } from "@/config";
       function updateCounts(text) {
         const lines = text.split('\n').length;
         const chars = text.length;
-        // 简单中文词数统计
+        // 中文字符数
         const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+        // 英文单词数
         const words = (text.match(/[a-zA-Z]+/g) || []).length;
-        const total = cjk + words;
+        // 数字串数
+        const numbers = (text.match(/\d+/g) || []).length;
+        const total = cjk + words + numbers;
         document.getElementById('word-count').textContent = total + ' 词';
         document.getElementById('char-count').textContent = chars + ' 字符';
         document.getElementById('line-count').textContent = lines + ' 行';
@@ -766,6 +774,7 @@ import { siteConfig } from "@/config";
             case 'b': e.preventDefault(); actions.bold(); break;
             case 'i': e.preventDefault(); actions.italic(); break;
             case 'k': e.preventDefault(); actions.link(); break;
+            case 'x': if (e.shiftKey) { e.preventDefault(); actions.strikethrough(); } break;
             case 'z': if (!e.shiftKey) {} break; // 默认行为
             case 's': if (e.shiftKey) { e.preventDefault(); document.getElementById('btn-quick-save').click(); } else { e.preventDefault(); document.getElementById('btn-download').click(); } break;
           }
@@ -1014,10 +1023,11 @@ import { siteConfig } from "@/config";
           if (res.ok) {
             const data = await res.json();
             status.className = 'text-sm text-green-500';
-            status.innerHTML = `✓ 发布成功！<a href="${data.content.html_url}" target="_blank" class="underline text-[var(--primary)]">查看文件</a>`;
+            status.innerHTML = `✓ 发布成功！<a href="${data.content.html_url}" target="_blank" class="underline text-[var(--primary)]">查看文件</a>，3秒后自动跳转...`;
             // 发布成功，清空自动保存
             try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e) {}
             setTimeout(() => {
+              window.open(data.content.html_url, '_blank');
               document.getElementById('github-modal').classList.add('hidden');
             }, 3000);
           } else {
@@ -1177,6 +1187,13 @@ import { siteConfig } from "@/config";
         const container = document.getElementById('draft-list');
         const toolbar = document.getElementById('draft-toolbar');
         const selectAll = document.getElementById('draft-select-all');
+        const searchInput = document.getElementById('draft-search');
+        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+        // 按关键词筛选
+        const filtered = keyword
+          ? list.map((d, i) => ({ ...d, _origIndex: i })).filter(d => (d.name || '').toLowerCase().includes(keyword) || (d.title || '').toLowerCase().includes(keyword))
+          : list.map((d, i) => ({ ...d, _origIndex: i }));
 
         if (list.length === 0) {
           container.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无保存的草稿</div>';
@@ -1187,14 +1204,19 @@ import { siteConfig } from "@/config";
         toolbar.classList.remove('hidden');
         selectAll.checked = false;
 
-        container.innerHTML = list.map((d, i) => `
+        if (filtered.length === 0) {
+          container.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">没有匹配的草稿</div>';
+          return;
+        }
+
+        container.innerHTML = filtered.map((d) => `
           <div class="draft-item flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition">
-            <input type="checkbox" class="draft-check w-3.5 h-3.5 rounded accent-[var(--primary)]" data-index="${i}" />
-            <div class="flex-1 min-w-0 cursor-pointer" data-action="load" data-index="${i}">
+            <input type="checkbox" class="draft-check w-3.5 h-3.5 rounded accent-[var(--primary)]" data-index="${d._origIndex}" />
+            <div class="flex-1 min-w-0 cursor-pointer" data-action="load" data-index="${d._origIndex}">
               <div class="text-sm font-medium text-black/80 dark:text-white/80 truncate">${d.name || '未命名草稿'}</div>
               <div class="text-xs text-black/40 dark:text-white/40">${d.title ? '标题: ' + d.title : '无标题'} · ${new Date(d.savedAt).toLocaleString()}</div>
             </div>
-            <button class="text-xs text-red-500 hover:text-red-700 cursor-pointer px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-action="delete" data-index="${i}">删除</button>
+            <button class="text-xs text-red-500 hover:text-red-700 cursor-pointer px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-action="delete" data-index="${d._origIndex}">删除</button>
           </div>
         `).join('');
 
@@ -1245,6 +1267,12 @@ import { siteConfig } from "@/config";
       document.getElementById('btn-drafts').addEventListener('click', () => {
         document.getElementById('draft-modal').classList.remove('hidden');
         document.getElementById('draft-name-input').value = '';
+        document.getElementById('draft-search').value = '';
+        renderDraftList();
+      });
+
+      // 草稿搜索
+      document.getElementById('draft-search').addEventListener('input', () => {
         renderDraftList();
       });
 
@@ -1340,3 +1368,4 @@ import { siteConfig } from "@/config";
     }
   </script>
 </MainGridLayout>
+
