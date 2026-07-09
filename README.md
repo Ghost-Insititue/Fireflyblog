@@ -107,6 +107,16 @@ homeText: {
 
 ---
 
+### ✏️ 编辑器页面（新增）
+
+新增在线 Markdown 编辑器页面，支持在浏览器中直接编写和编辑博客文章。
+
+**涉及文件：**
+- `src/pages/editor.astro`（新增：编辑器页面）
+- `src/pages/api/editor/`（新增：编辑器 API 接口）
+
+---
+
 ### 🔧 其他修改
 
 - 站点标题、描述、关键词等基础配置自定义
@@ -205,6 +215,9 @@ src/config/
 │   │   ├── Layout.astro             # 主布局（修改：字体缩放 + widget 显隐）
 │   │   └── MainGridLayout.astro     # 网格布局
 │   ├── pages/                       # 页面路由
+│   │   ├── editor.astro             # 在线编辑器（新增）
+│   │   ├── api/editor/              # 编辑器 API（新增）
+│   │   └── ...
 │   ├── styles/                      # 样式文件
 │   ├── types/                       # TypeScript 类型定义
 │   │   ├── sidebarConfig.ts         # （修改：新增 homePageOnly）
