@@ -18,31 +18,102 @@
 
 ## 📖 项目简介
 
-本仓库基于 [CuteLeaf/Firefly](https://github.com/CuteLeaf/Firefly) Astro 博客主题进行深度自定义修改，保留了原版清新美观的设计风格，同时新增了多项功能和优化。
+本仓库基于 [CuteLeaf/Firefly](https://github.com/CuteLeaf/Firefly) Astro 博客主题进行深度自定义修改。保留了原版清新美观的设计风格，同时新增了多项功能和优化。
 
-> **致谢：** 本项目核心主题由 [CuteLeaf](https://github.com/CuteLeaf) 开发，遵循 MIT 协议。如需使用原版主题，请前往 [Firefly 仓库](https://github.com/CuteLeaf/Firefly)。
+> **致谢：** 核心主题由 [CuteLeaf](https://github.com/CuteLeaf) 开发，遵循 MIT 协议。如需使用原版主题，请前往 [Firefly 仓库](https://github.com/CuteLeaf/Firefly)。
 
 ---
 
 ## ✨ 相比原版的改动
 
 ### 🎵 音乐播放器增强
-- **自动识别模式（auto）**：将歌曲、封面、歌词放入同一文件夹，按 `序号 - 歌曲名 - 歌手` 命名，运行脚本自动生成播放列表
-- **歌词间距优化**：调整歌词显示区域的内边距，减少顶部空白
-- 支持 mp3、flac、wav、ogg、m4a、aac、wma 等多种音频格式
 
-### 📐 页面布局调整
-- **页面缩放优化**：调整根字体大小，使初始页面呈现约 85% 缩放效果，更紧凑美观
-- **侧边栏智能显示**：站点统计、站点信息仅在主页显示，其他页面自动隐藏
+| 功能 | 说明 |
+|------|------|
+| **自动识别模式（auto）** | 新增 `auto` 模式，歌曲/封面/歌词放同一文件夹，按 `序号 - 歌曲名 - 歌手` 命名，运行脚本自动生成播放列表 |
+| **自动生成脚本** | 新增 `scripts/generate-music-playlist.mjs`，扫描文件夹自动生成 `playlist.json` |
+| **歌词间距优化** | 调整歌词区域 `py-24` → `py-[30px]`，减少顶部空白 |
+| **多格式支持** | 支持 mp3、flac、wav、ogg、m4a、aac、wma |
+
+**使用方式：**
+```bash
+# 1. 放文件到 public/assets/music/
+# 01 - 知我 (宁姚) - 谭渊.mp3
+# 01 - 知我 (宁姚) - 谭渊.jpg    ← 同名自动匹配封面
+# 01 - 知我 (宁姚) - 谭渊.lrc    ← 同名自动匹配歌词
+
+# 2. 生成播放列表
+node scripts/generate-music-playlist.mjs
+
+# 3. 配置 src/config/musicConfig.ts
+# mode: "auto"
+```
+
+**涉及文件：**
+- `scripts/generate-music-playlist.mjs`（新增）
+- `src/config/musicConfig.ts`（修改：新增 auto 模式配置）
+- `src/types/musicConfig.ts`（修改：新增 auto 类型定义）
+- `src/components/features/MusicManager.astro`（修改：新增 `fetchAutoPlaylist()`）
+- `src/components/features/MusicPlayer.astro`（修改：歌词间距调整）
+
+---
+
+### 📐 页面布局优化
+
+| 功能 | 说明 |
+|------|------|
+| **页面缩放** | 调整根字体大小 `text-[14px] md:text-[16px]` → `text-[12px] md:text-[14px]`，使初始页面呈现约 85% 缩放效果，更紧凑美观 |
+| **侧边栏智能显示** | 站点统计（stats）、站点信息（siteInfo）仅在主页显示，其他页面自动隐藏 |
+
+**侧边栏主页专属显示实现原理：**
+- 服务端（SideBar.astro）：渲染时判断是否主页，非主页添加 `hidden` class
+- 客户端（Layout.astro）：swup 切页时动态更新组件显隐，确保切换页面后状态正确
+
+**涉及文件：**
+- `src/layouts/Layout.astro`（修改：根字体大小 + 客户端 widget 显隐逻辑）
+- `src/components/layout/SideBar.astro`（修改：服务端主页判断 + `widget-home-page-only` class）
+- `src/config/sidebarConfig.ts`（修改：stats/siteInfo 添加 `homePageOnly: true`）
+- `src/types/sidebarConfig.ts`（修改：新增 `homePageOnly` 类型定义）
+
+---
+
+### 🎨 横幅文字自定义
+
+自定义主页横幅标题和打字机效果副标题：
+
+```typescript
+// src/config/backgroundWallpaper.ts
+homeText: {
+    title: "Lovely firefly!",
+    subtitle: [
+        "In Reddened Chrysalis, I Once Rest",
+        "From Shattered Sky, I Free Fall",
+        // ...
+    ],
+},
+```
+
+**涉及文件：**
+- `src/config/backgroundWallpaper.ts`（修改：自定义横幅文字）
+
+---
 
 ### ⚡ 性能优化
-- **Cloudflare CDN 加速**：接入 Cloudflare CDN，提升全球访问速度
-- 修复编辑页加载缓慢问题
+
+| 功能 | 说明 |
+|------|------|
+| **Cloudflare CDN** | 接入 Cloudflare CDN 加速，提升全球访问速度 |
+| **加载优化** | 修复编辑页加载缓慢问题 |
+
+---
 
 ### 🔧 其他修改
-- 自定义横幅标题和副标题
-- 导航栏、侧边栏等细节调整
-- 多处样式和交互优化
+
+- 站点标题、描述、关键词等基础配置自定义
+- 导航栏标题自定义
+- 评论系统配置
+- 统计分析配置
+- 多处样式和交互细节调整
 
 ---
 
@@ -79,51 +150,29 @@ pnpm run build
 
 ---
 
-## 🎵 音乐播放器使用
-
-本项目新增了 `auto` 模式，无需手动编辑代码即可管理音乐：
-
-### 1. 放置文件
-
-```
-public/assets/music/
-├── 01 - 知我 (宁姚) - 谭渊.mp3
-├── 01 - 知我 (宁姚) - 谭渊.jpg     ← 同名自动匹配封面
-├── 01 - 知我 (宁姚) - 谭渊.lrc     ← 同名自动匹配歌词
-├── 02 - 晴天 - 周杰伦.mp3
-├── 02 - 晴天 - 周杰伦.webp
-└── 02 - 晴天 - 周杰伦.lrc
-```
-
-### 2. 生成播放列表
-
-```bash
-node scripts/generate-music-playlist.mjs
-```
-
-### 3. 配置
-
-编辑 `src/config/musicConfig.ts`：
-
-```typescript
-mode: "auto",  // 使用自动模式
-```
-
-支持三种模式：`meting`（在线API）、`local`（手动配置）、`auto`（自动扫描）
-
----
-
 ## ⚙️ 主要配置文件
 
 ```
 src/config/
-├── siteConfig.ts           # 站点基础配置（标题、描述、主题色等）
-├── backgroundWallpaper.ts  # 背景壁纸和横幅文字配置
-├── musicConfig.ts          # 音乐播放器配置
-├── sidebarConfig.ts        # 侧边栏组件配置
-├── commentConfig.ts        # 评论系统配置
-├── profileConfig.ts        # 个人资料配置
-└── ...                     # 更多配置项
+├── siteConfig.ts              # 站点基础配置（标题、描述、主题色等）
+├── backgroundWallpaper.ts     # 背景壁纸和横幅文字配置
+├── musicConfig.ts             # 音乐播放器配置（meting/local/auto 三种模式）
+├── sidebarConfig.ts           # 侧边栏组件配置（含主页专属显示）
+├── commentConfig.ts           # 评论系统配置
+├── profileConfig.ts           # 个人资料配置
+├── analyticsConfig.ts         # 统计分析配置
+├── navbarConfig.ts            # 导航栏配置
+├── announcementConfig.ts      # 公告配置
+├── coverImageConfig.ts        # 封面图配置
+├── effectsConfig.ts           # 动画特效配置
+├── expressiveCodeConfig.ts    # 代码高亮配置
+├── fontConfig.ts              # 字体配置
+├── footerConfig.ts            # 页脚配置
+├── friendsConfig.ts           # 友链配置
+├── galleryConfig.ts           # 相册配置
+├── licenseConfig.ts           # 许可证配置
+├── sponsorConfig.ts           # 赞助配置
+└── plantumlConfig.ts          # PlantUML 配置
 ```
 
 详细配置说明请参考 [Firefly 使用文档](https://docs-firefly.cuteleaf.cn/)。
@@ -133,23 +182,66 @@ src/config/
 ## 📁 目录结构
 
 ```
-├── scripts/                    # 构建脚本
-│   └── generate-music-playlist.mjs  # 音乐播放列表自动生成
+├── scripts/                         # 构建脚本
+│   ├── generate-icons.js            # 图标生成（原版）
+│   ├── generate-lqips.ts            # LQIP 生成（原版）
+│   └── generate-music-playlist.mjs  # 音乐播放列表自动生成（新增）
 ├── src/
-│   ├── components/             # 组件
-│   │   ├── features/           # 功能组件（音乐播放器、特效等）
-│   │   ├── widget/             # 侧边栏小组件
-│   │   └── layout/             # 布局组件（侧边栏、导航栏等）
-│   ├── config/                 # 配置文件
-│   ├── layouts/                # 页面布局
-│   ├── pages/                  # 页面路由
-│   ├── styles/                 # 样式文件
-│   ├── types/                  # TypeScript 类型定义
-│   └── utils/                  # 工具函数
-├── public/                     # 静态资源
-│   └── assets/music/           # 音乐文件目录
-├── astro.config.mjs            # Astro 配置
-└── package.json
+│   ├── components/
+│   │   ├── features/                # 功能组件
+│   │   │   ├── MusicManager.astro   # 音乐管理器（修改：支持 auto 模式）
+│   │   │   ├── MusicPlayer.astro    # 音乐播放器（修改：歌词间距）
+│   │   │   └── ...
+│   │   ├── widget/                  # 侧边栏小组件
+│   │   │   ├── SiteStats.astro      # 站点统计
+│   │   │   ├── SiteInfo.astro       # 站点信息
+│   │   │   ├── Music.astro          # 音乐 widget
+│   │   │   └── ...
+│   │   └── layout/                  # 布局组件
+│   │       ├── SideBar.astro        # 侧边栏（修改：主页专属显示）
+│   │       └── ...
+│   ├── config/                      # 配置文件
+│   ├── layouts/
+│   │   ├── Layout.astro             # 主布局（修改：字体缩放 + widget 显隐）
+│   │   └── MainGridLayout.astro     # 网格布局
+│   ├── pages/                       # 页面路由
+│   ├── styles/                      # 样式文件
+│   ├── types/                       # TypeScript 类型定义
+│   │   ├── sidebarConfig.ts         # （修改：新增 homePageOnly）
+│   │   ├── musicConfig.ts           # （修改：新增 auto 模式）
+│   │   └── ...
+│   └── utils/                       # 工具函数
+├── public/
+│   └── assets/music/                # 音乐文件目录
+├── astro.config.mjs                 # Astro 配置
+├── package.json
+└── README-copy.md                   # 原版 README 备份
+```
+
+---
+
+## 🎵 音乐播放器配置
+
+支持三种模式：
+
+| 模式 | 数据来源 | 适用场景 |
+|------|----------|----------|
+| `meting` | 在线 API（网易云/QQ音乐等） | 使用在线歌单 |
+| `local` | musicConfig.ts 中手动配置 | 少量固定歌曲 |
+| `auto` | playlist.json（自动生成） | **新增**，放文件即用 |
+
+### auto 模式使用
+
+```bash
+# 文件命名规则：序号 - 歌曲名 - 歌手.扩展名
+public/assets/music/
+├── 01 - 知我 (宁姚) - 谭渊.mp3
+├── 01 - 知我 (宁姚) - 谭渊.jpg
+├── 01 - 知我 (宁姚) - 谭渊.lrc
+└── playlist.json  # 自动生成
+
+# 生成播放列表
+node scripts/generate-music-playlist.mjs
 ```
 
 ---
@@ -162,6 +254,7 @@ src/config/
 - **搜索：** [Pagefind](https://pagefind.app/)
 - **代码高亮：** [Expressive Code](https://expressive-code.com/)
 - **数学公式：** [KaTeX](https://katex.org/)
+- **CDN：** [Cloudflare](https://www.cloudflare.com/)
 - **部署：** GitHub Pages / Vercel / Cloudflare Pages
 
 ---
