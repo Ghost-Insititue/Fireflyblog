@@ -98,7 +98,8 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			position: "sticky",
 			// 是否在文章详情页显示
 			showOnPostPage: false,
-			
+			// 是否仅在主页显示
+			homePageOnly: true,
 		},
 	],
 
@@ -157,6 +158,8 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			position: "sticky",
 			// 是否在文章详情页显示
 			showOnPostPage: false,
+			// 是否仅在主页显示
+			homePageOnly: true,
 			// 组件专属配置
 			specificConfig: {
 				siteInfo: {
@@ -284,6 +287,8 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			enable: true,
 			// 是否在文章详情页显示
 			showOnPostPage: true,
+			// 是否仅在主页显示
+			homePageOnly: true,
 		},
 		{
 			// 组件类型：站点信息组件
@@ -292,6 +297,8 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			enable: true,
 			// 是否在文章详情页显示
 			showOnPostPage: true,
+			// 是否仅在主页显示
+			homePageOnly: true,
 			// 组件专属配置
 			specificConfig: {
 				siteInfo: {
