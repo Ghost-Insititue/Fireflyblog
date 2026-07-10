@@ -9,22 +9,22 @@ import { siteConfig } from "@/config";
     <div id="editor-app" class="card-base overflow-hidden rounded-(--radius-large)">
       
       <!-- ========== 元数据表单 ========== -->
-      <div id="meta-panel" class="border-b border-[var(--line-divider)] px-6 py-5 space-y-4 bg-transparent">
+      <div id="meta-panel" class="border-b border-[var(--line-divider)] px-4 py-3 space-y-2 bg-transparent">
         <div class="flex items-center gap-3 mb-2">
-          <div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70">
+          <div class="h-6 w-6 rounded-md bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83l3.75 3.75l1.83-1.83z"/></svg>
           </div>
-          <h2 class="text-lg font-bold text-black/90 dark:text-white/90">文章信息</h2>
-          <button id="toggle-meta" class="ml-auto text-sm text-[var(--primary)] hover:underline cursor-pointer">收起 ▲</button>
+          <h2 class="text-sm font-bold text-black/90 dark:text-white/90">文章信息</h2>
+          <button id="toggle-meta" class="ml-auto text-xs text-[var(--primary)] hover:underline cursor-pointer">收起 ▲</button>
         </div>
 
-        <div id="meta-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div id="meta-fields" class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <!-- 标题 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">标题 <span class="text-red-500">*</span></label>
-            <div class="flex gap-2">
+            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">标题 <span class="text-red-500">*</span></label>
+            <div class="flex gap-1.5">
               <input id="post-title" type="text" placeholder="请输入文章标题"
-                class="flex-1 px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+                class="flex-1 px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
               <button id="btn-pinned" type="button" class="toggle-btn" title="置顶">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V4a2 2 0 00-2-2H9a2 2 0 00-2 2v1a1 1 0 001 1 1 1 0 011 1z"/></svg>
                 置顶
@@ -40,32 +40,32 @@ import { siteConfig } from "@/config";
 
           <!-- 描述 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">描述</label>
+            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">描述</label>
             <input id="post-desc" type="text" placeholder="一句话描述文章内容（可选）"
-              class="w-full px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+              class="w-full px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
           </div>
 
           <!-- 分类 -->
           <div>
-            <label class="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">分类</label>
+            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">分类</label>
             <input id="post-category" type="text" placeholder="如：技术笔记"
-              class="w-full px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+              class="w-full px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
           </div>
 
           <!-- 标签 -->
           <div>
-            <label class="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">标签 <span class="text-xs text-black/40 dark:text-white/40">（逗号分隔）</span></label>
+            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">标签 <span class="text-xs text-black/40 dark:text-white/40">（逗号分隔）</span></label>
             <input id="post-tags" type="text" placeholder="如：JavaScript, Astro, 博客"
-              class="w-full px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+              class="w-full px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
           </div>
 
           <!-- 封面图 -->
           <div>
-            <label class="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">封面图 URL</label>
-            <div class="flex gap-2">
+            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">封面图 URL</label>
+            <div class="flex gap-1.5">
               <input id="post-cover" type="text" placeholder="https://... 或留空"
-                class="flex-1 px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-              <label class="px-3 py-2.5 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap" title="上传本地图片">
+                class="flex-1 px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+              <label class="px-2 py-1.5 rounded-md border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1 whitespace-nowrap" title="上传本地图片">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 上传
                 <input id="cover-upload" type="file" accept="image/*" class="hidden" />
@@ -75,19 +75,27 @@ import { siteConfig } from "@/config";
 
           <!-- 文章密码 + 密码提示 -->
           <div>
-            <label class="block text-sm font-medium text-black/70 dark:text-white/70 mb-1">文章密码 <span class="text-xs text-black/40 dark:text-white/40">（加密文章用）</span></label>
-            <div class="flex gap-2">
+            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">文章密码 <span class="text-xs text-black/40 dark:text-white/40">（加密文章用）</span></label>
+            <div class="flex gap-1.5">
               <input id="post-password-hint" type="text" placeholder="密码提示"
-                class="w-1/3 px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-              <input id="post-password" type="text" placeholder="输入密码，留空不加密"
-                class="flex-1 px-4 py-2.5 rounded-lg border border-[var(--line-divider)] bg-transparent text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+                class="w-1/3 px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+              <div class="relative flex-1 flex items-center">
+                <div class="edge-password-wrap flex-1">
+                  <input id="post-password" type="password" placeholder="输入密码，留空不加密"
+                    class="w-full px-3 py-1.5 pr-9 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
+                </div>
+                <button id="toggle-password" type="button" class="custom-eye-btn absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer" title="显示密码">
+                  <svg id="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg id="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- ========== 工具栏 ========== -->
-      <div id="toolbar" class="flex flex-nowrap items-center gap-0.5 px-3 py-1.5 border-b border-[var(--line-divider)] bg-transparent sticky top-0 z-20 overflow-x-auto">
+      <div id="toolbar" class="flex flex-nowrap items-center gap-0.5 px-2 py-1 border-b border-[var(--line-divider)] bg-transparent sticky top-0 z-20 overflow-x-auto">
         <!-- 文本格式 -->
         <button data-action="bold" title="加粗 (Ctrl+B)" class="toolbar-btn">
           <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 4H7v16h7.5c2.5 0 4.5-2 4.5-4.5c0-1.57-.8-2.96-2.01-3.77C18.16 10.77 19 9.38 19 7.5C19 5.57 17.43 4 15.5 4zm0 2c.83 0 1.5.67 1.5 1.5S14.33 9 13.5 9H9V6h4.5zm0 6c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5H9v-3h4.5z"/></svg>
@@ -214,7 +222,7 @@ import { siteConfig } from "@/config";
       </div>
 
       <!-- ========== 编辑器主体 ========== -->
-      <div id="editor-body" class="flex" style="height: calc(100vh - 280px); min-height: 400px;">
+      <div id="editor-body" class="flex" style="height: calc(100vh - 200px); min-height: 400px;">
         <!-- 左侧：Markdown 输入 -->
         <div id="editor-pane" class="flex-1 flex flex-col border-r border-[var(--line-divider)]">
           <textarea id="markdown-input" 
@@ -313,11 +321,7 @@ import { siteConfig } from "@/config";
             class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           <button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer whitespace-nowrap">保存</button>
         </div>
-        <div class="relative mb-3">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="draft-search" type="text" placeholder="搜索草稿..."
-            class="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-        </div>
+
         <div id="draft-toolbar" class="flex items-center justify-between mb-2 hidden">
           <label class="flex items-center gap-1.5 cursor-pointer text-xs text-black/60 dark:text-white/60 select-none">
             <input id="draft-select-all" type="checkbox" class="w-3.5 h-3.5 rounded accent-[var(--primary)]" />
@@ -388,17 +392,19 @@ import { siteConfig } from "@/config";
     .toggle-btn {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 12px;
-      border-radius: 0.5rem;
+      gap: 3px;
+      padding: 3px 6px;
+      border-radius: 0.25rem;
       border: 1px solid var(--line-divider);
-      font-size: 0.875rem;
+      font-size: 0.6875rem;
+      line-height: 1;
       color: color-mix(in srgb, currentColor 50%, transparent);
       cursor: pointer;
       transition: all 0.15s;
       white-space: nowrap;
       user-select: none;
       background: transparent;
+      height: 28px;
     }
     .toggle-btn:hover {
       border-color: color-mix(in srgb, var(--primary) 40%, transparent);
@@ -409,6 +415,12 @@ import { siteConfig } from "@/config";
       background: color-mix(in srgb, var(--primary) 10%, transparent);
       color: var(--primary);
     }
+    /* Edge 浏览器密码框自带小眼睛：隐藏原生按钮，统一用自定义按钮 */
+    .edge-password-wrap input[type="password"]::-ms-reveal,
+    .edge-password-wrap input[type="text"]::-ms-reveal {
+      display: none !important;
+    }
+
     #markdown-input:focus {
       box-shadow: inset 0 0 0 2px var(--primary);
     }
@@ -457,7 +469,7 @@ import { siteConfig } from "@/config";
 
     /* #1 移动端响应式：小屏编辑器高度自适应，元数据默认收起 */
     @media (max-width: 768px) {
-      #editor-body { height: calc(100vh - 140px) !important; min-height: 280px !important; }
+      #editor-body { height: calc(100vh - 100px) !important; min-height: 280px !important; }
       #meta-fields { display: none; }
     }
   </style>
@@ -582,6 +594,10 @@ import { siteConfig } from "@/config";
         document.getElementById('post-password-hint').value = data.passwordHint || '';
         setToggle('btn-pinned', 'post-pinned', data.pinned || false);
         setToggle('btn-comment', 'post-comment', data.comment !== false);
+        // 重置密码眼睛状态
+        document.getElementById('post-password').type = 'password';
+        document.getElementById('eye-open').classList.remove('hidden');
+        document.getElementById('eye-closed').classList.add('hidden');
         updatePreview();
       }
 
@@ -775,7 +791,6 @@ import { siteConfig } from "@/config";
             case 'i': e.preventDefault(); actions.italic(); break;
             case 'k': e.preventDefault(); actions.link(); break;
             case 'x': if (e.shiftKey) { e.preventDefault(); actions.strikethrough(); } break;
-            case 'z': if (!e.shiftKey) {} break; // 默认行为
             case 's': if (e.shiftKey) { e.preventDefault(); document.getElementById('btn-quick-save').click(); } else { e.preventDefault(); document.getElementById('btn-download').click(); } break;
           }
         }
@@ -807,6 +822,22 @@ import { siteConfig } from "@/config";
       }
       setupToggle('btn-pinned', 'post-pinned', false);
       setupToggle('btn-comment', 'post-comment', true);
+
+      // ===== 密码小眼睛 =====
+      document.getElementById('toggle-password').addEventListener('click', () => {
+        const input = document.getElementById('post-password');
+        const eyeOpen = document.getElementById('eye-open');
+        const eyeClosed = document.getElementById('eye-closed');
+        if (input.type === 'password') {
+          input.type = 'text';
+          eyeOpen.classList.add('hidden');
+          eyeClosed.classList.remove('hidden');
+        } else {
+          input.type = 'password';
+          eyeOpen.classList.remove('hidden');
+          eyeClosed.classList.add('hidden');
+        }
+      });
 
       // ===== 视图切换 =====
       const editorPane = document.getElementById('editor-pane');
@@ -887,18 +918,21 @@ import { siteConfig } from "@/config";
         const comment = document.getElementById('post-comment').value === 'true';
         const now = new Date().toISOString().split('T')[0];
 
+        // 转义 YAML 特殊字符
+        const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
         let fm = '---\n';
-        fm += `title: "${title}"\n`;
+        fm += `title: "${esc(title)}"\n`;
         fm += `published: ${now}\n`;
-        if (desc) fm += `description: "${desc}"\n`;
+        if (desc) fm += `description: "${esc(desc)}"\n`;
         if (tags) {
           const tagList = tags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
-          fm += `tags: [${tagList.map(t => `"${t}"`).join(', ')}]\n`;
+          fm += `tags: [${tagList.map(t => `"${esc(t)}"`).join(', ')}]\n`;
         }
-        if (category) fm += `category: "${category}"\n`;
-        if (cover) fm += `image: "${cover}"\n`;
-        if (password) fm += `password: "${password}"\n`;
-        if (passwordHint) fm += `passwordHint: "${passwordHint}"\n`;
+        if (category) fm += `category: "${esc(category)}"\n`;
+        if (cover) fm += `image: "${esc(cover)}"\n`;
+        if (password) fm += `password: "${esc(password)}"\n`;
+        if (passwordHint) fm += `passwordHint: "${esc(passwordHint)}"\n`;
         if (pinned) fm += `pinned: true\n`;
         if (!comment) fm += `comment: false\n`;
         fm += 'draft: false\n';
@@ -948,9 +982,13 @@ import { siteConfig } from "@/config";
         const fs = document.getElementById('fullscreen-preview');
         fs.classList.remove('hidden');
         fullscreenContent.innerHTML = preview.innerHTML;
+        // 暂停同步滚动，避免编辑区 scroll 事件干扰
+        syncScrollEnabled = false;
       });
       document.getElementById('close-preview').addEventListener('click', () => {
         document.getElementById('fullscreen-preview').classList.add('hidden');
+        // 恢复同步滚动
+        syncScrollEnabled = btnSyncScroll.classList.contains('active');
       });
 
       // ===== GitHub 发布 =====
@@ -1179,7 +1217,29 @@ import { siteConfig } from "@/config";
         document.getElementById('post-password-hint').value = data.passwordHint || '';
         setToggle('btn-pinned', 'post-pinned', data.pinned || false);
         setToggle('btn-comment', 'post-comment', data.comment !== false);
+        // 重置密码眼睛状态
+        document.getElementById('post-password').type = 'password';
+        document.getElementById('eye-open').classList.remove('hidden');
+        document.getElementById('eye-closed').classList.add('hidden');
         updatePreview();
+      }
+
+      // 草稿列表内行内确认条（替代浏览器 confirm）
+      function showDraftConfirm(message, onConfirm) {
+        const container = document.getElementById('draft-list');
+        const bar = document.createElement('div');
+        bar.className = 'flex items-center justify-between px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm';
+        bar.innerHTML = `
+          <span class="text-amber-700 dark:text-amber-300">⚠️ ${message}</span>
+          <div class="flex gap-1.5">
+            <button class="confirm-yes px-2.5 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 cursor-pointer">确认</button>
+            <button class="confirm-no px-2.5 py-1 rounded text-xs text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">取消</button>
+          </div>
+        `;
+        // 插到列表最前面
+        container.prepend(bar);
+        bar.querySelector('.confirm-yes').onclick = () => { bar.remove(); onConfirm(); };
+        bar.querySelector('.confirm-no').onclick = () => { bar.remove(); };
       }
 
       function renderDraftList() {
@@ -1187,13 +1247,7 @@ import { siteConfig } from "@/config";
         const container = document.getElementById('draft-list');
         const toolbar = document.getElementById('draft-toolbar');
         const selectAll = document.getElementById('draft-select-all');
-        const searchInput = document.getElementById('draft-search');
-        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
-
-        // 按关键词筛选
-        const filtered = keyword
-          ? list.map((d, i) => ({ ...d, _origIndex: i })).filter(d => (d.name || '').toLowerCase().includes(keyword) || (d.title || '').toLowerCase().includes(keyword))
-          : list.map((d, i) => ({ ...d, _origIndex: i }));
+        const filtered = list.map((d, i) => ({ ...d, _origIndex: i }));
 
         if (list.length === 0) {
           container.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无保存的草稿</div>';
@@ -1203,11 +1257,6 @@ import { siteConfig } from "@/config";
 
         toolbar.classList.remove('hidden');
         selectAll.checked = false;
-
-        if (filtered.length === 0) {
-          container.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">没有匹配的草稿</div>';
-          return;
-        }
 
         container.innerHTML = filtered.map((d) => `
           <div class="draft-item flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition">
@@ -1229,11 +1278,12 @@ import { siteConfig } from "@/config";
         document.getElementById('btn-batch-delete').onclick = () => {
           const checked = [...container.querySelectorAll('.draft-check:checked')].map(cb => parseInt(cb.dataset.index));
           if (checked.length === 0) return;
-          if (!confirm(`删除选中的 ${checked.length} 篇草稿？`)) return;
-          const drafts = getDrafts();
-          checked.sort((a, b) => b - a).forEach(idx => drafts.splice(idx, 1));
-          saveDrafts(drafts);
-          renderDraftList();
+          showDraftConfirm(`删除选中的 ${checked.length} 篇草稿？`, () => {
+            const drafts = getDrafts();
+            checked.sort((a, b) => b - a).forEach(idx => drafts.splice(idx, 1));
+            saveDrafts(drafts);
+            renderDraftList();
+          });
         };
 
         // 加载草稿
@@ -1241,10 +1291,11 @@ import { siteConfig } from "@/config";
           el.addEventListener('click', () => {
             const idx = parseInt(el.dataset.index);
             const drafts = getDrafts();
-            if (drafts[idx] && confirm(`加载草稿「${drafts[idx].name}」？当前内容会被覆盖。`)) {
+            if (!drafts[idx]) return;
+            showDraftConfirm(`加载「${drafts[idx].name}」？当前内容会被覆盖。`, () => {
               loadDraftData(drafts[idx]);
               document.getElementById('draft-modal').classList.add('hidden');
-            }
+            });
           });
         });
 
@@ -1254,11 +1305,12 @@ import { siteConfig } from "@/config";
             e.stopPropagation();
             const idx = parseInt(el.dataset.index);
             const drafts = getDrafts();
-            if (confirm(`删除草稿「${drafts[idx].name}」？`)) {
+            if (!drafts[idx]) return;
+            showDraftConfirm(`删除「${drafts[idx].name}」？`, () => {
               drafts.splice(idx, 1);
               saveDrafts(drafts);
               renderDraftList();
-            }
+            });
           });
         });
       }
@@ -1267,12 +1319,6 @@ import { siteConfig } from "@/config";
       document.getElementById('btn-drafts').addEventListener('click', () => {
         document.getElementById('draft-modal').classList.remove('hidden');
         document.getElementById('draft-name-input').value = '';
-        document.getElementById('draft-search').value = '';
-        renderDraftList();
-      });
-
-      // 草稿搜索
-      document.getElementById('draft-search').addEventListener('input', () => {
         renderDraftList();
       });
 

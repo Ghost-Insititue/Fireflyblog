@@ -33,15 +33,24 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
     <div class="card-base z-10 px-9 py-6 relative w-full">
       <!-- 页面标题和描述 -->
       <div class="mb-4">
-        <div class="flex items-center gap-3 mb-3">
-          <div
-            class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70"
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70"
+            >
+              <Icon is:inline name="material-symbols:photo-library" class="text-[1.5rem]" />
+            </div>
+            <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+              {title}
+            </div>
+          </div>
+          <button
+            id="btn-create-album"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-(--primary) text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer"
           >
-            <Icon is:inline name="material-symbols:photo-library" class="text-[1.5rem]" />
-          </div>
-          <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-            {title}
-          </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新建相册
+          </button>
         </div>
         {description && (
           <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
@@ -212,4 +221,275 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
       customElements.define("gallery-filter", GalleryFilter);
     }
   </script>
+
 </MainGridLayout>
+
+<!-- 新建相册弹窗（必须在 MainGridLayout 外部，避免被 overflow-hidden 裁剪） -->
+<div id="create-album-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+    <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 480px; max-height: 90vh; overflow-y: auto;">
+      <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">📁 新建相册</h3>
+
+      <div class="space-y-3">
+        <!-- 相册名称 -->
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
+          <input id="new-album-name" type="text" placeholder="如：2026 旅行日记"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <!-- 相册 ID -->
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID <span class="text-xs text-black/40 dark:text-white/40">（用于 URL 和目录名，自动生成）</span></label>
+          <input id="new-album-id" type="text" placeholder="travel-2026"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <!-- 描述 -->
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label>
+          <input id="new-album-desc" type="text" placeholder="一句话描述相册内容"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <!-- 地点 + 日期 -->
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">拍摄地点</label>
+            <input id="new-album-location" type="text" placeholder="如：杭州"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+          <div style="width: 160px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">日期</label>
+            <input id="new-album-date" type="date"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+        </div>
+
+        <!-- 标签 -->
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-xs text-black/40 dark:text-white/40">（逗号分隔）</span></label>
+          <input id="new-album-tags" type="text" placeholder="如：旅行, 风景"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <!-- 密码 -->
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码 <span class="text-xs text-black/40 dark:text-white/40">（留空公开）</span></label>
+            <div class="relative">
+              <input id="new-album-password" type="password" placeholder="设置密码后需输入才能查看"
+                class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              <button id="toggle-new-pwd" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="width: 140px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label>
+            <input id="new-album-hint" type="text" placeholder="可选"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+        </div>
+
+        <!-- 状态 -->
+        <div id="create-status" class="text-sm hidden"></div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5">
+        <button id="create-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+        <button id="create-confirm" class="px-5 py-2 rounded-lg bg-(--primary) text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    (function() {
+      const modal = document.getElementById('create-album-modal');
+      const btnOpen = document.getElementById('btn-create-album');
+      const btnCancel = document.getElementById('create-cancel');
+      const btnConfirm = document.getElementById('create-confirm');
+      const statusEl = document.getElementById('create-status');
+
+      // 自动生成 ID
+      const nameInput = document.getElementById('new-album-name');
+      const idInput = document.getElementById('new-album-id');
+      let idManuallyEdited = false;
+
+      nameInput.addEventListener('input', () => {
+        if (idManuallyEdited) return;
+        const name = nameInput.value.trim();
+        // 中文保留，其他转 slug
+        const slug = name
+          .toLowerCase()
+          .replace(/[\u4e00-\u9fff]+/g, m => m)
+          .replace(/[^\w\u4e00-\u9fff]+/g, '-')
+          .replace(/^-|-$/g, '');
+        idInput.value = slug;
+      });
+      idInput.addEventListener('input', () => { idManuallyEdited = true; });
+
+      // 日期默认今天
+      document.getElementById('new-album-date').value = new Date().toISOString().split('T')[0];
+
+      // 密码小眼睛
+      document.getElementById('toggle-new-pwd').addEventListener('click', () => {
+        const pwd = document.getElementById('new-album-password');
+        pwd.type = pwd.type === 'password' ? 'text' : 'password';
+      });
+
+      // 打开弹窗
+      btnOpen.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        nameInput.value = '';
+        idInput.value = '';
+        idManuallyEdited = false;
+        document.getElementById('new-album-desc').value = '';
+        document.getElementById('new-album-location').value = '';
+        document.getElementById('new-album-tags').value = '';
+        document.getElementById('new-album-password').value = '';
+        document.getElementById('new-album-hint').value = '';
+        document.getElementById('new-album-date').value = new Date().toISOString().split('T')[0];
+        statusEl.classList.add('hidden');
+        btnConfirm.disabled = false;
+        btnConfirm.textContent = '创建';
+      });
+
+      // 关闭
+      btnCancel.addEventListener('click', () => modal.classList.add('hidden'));
+      modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) modal.classList.add('hidden'); });
+
+      // 创建
+      btnConfirm.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        const id = idInput.value.trim();
+        const desc = document.getElementById('new-album-desc').value.trim();
+        const location = document.getElementById('new-album-location').value.trim();
+        const date = document.getElementById('new-album-date').value;
+        const tags = document.getElementById('new-album-tags').value;
+        const password = document.getElementById('new-album-password').value;
+        const hint = document.getElementById('new-album-hint').value.trim();
+
+        if (!name) { showStatus('请输入相册名称', 'error'); nameInput.focus(); return; }
+        if (!id) { showStatus('请输入相册 ID', 'error'); idInput.focus(); return; }
+        if (!/^[a-zA-Z0-9\u4e00-\u9fff][a-zA-Z0-9\-_\u4e00-\u9fff]*$/.test(id)) {
+          showStatus('ID 只能包含字母、数字、中文、连字符和下划线', 'error');
+          return;
+        }
+
+        const token = localStorage.getItem('gh-editor-token');
+        const repo = localStorage.getItem('gh-editor-repo') || 'Ghost-Insititue/Fireflyblog';
+        if (!token) {
+          showStatus('请先在编辑器页面配置 GitHub Token（点击「发布到 GitHub」设置）', 'error');
+          return;
+        }
+
+        btnConfirm.disabled = true;
+        btnConfirm.textContent = '创建中...';
+
+        try {
+          // Step 1: 读取当前 galleryConfig.ts
+          showStatus('⏳ 正在读取配置文件...', 'uploading');
+          const configPath = 'src/config/galleryConfig.ts';
+          const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}?ref=main`, {
+            headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+          });
+
+          if (!getRes.ok) throw new Error('读取 galleryConfig.ts 失败');
+          const fileData = await getRes.json();
+          const currentContent = decodeURIComponent(escape(atob(fileData.content)));
+          const sha = fileData.sha;
+
+          // Step 2: 检查 ID 是否已存在
+          if (currentContent.includes(`id: "${id}"`) || currentContent.includes(`id: '${id}'`)) {
+            throw new Error(`相册 ID「${id}」已存在`);
+          }
+
+          // Step 3: 构建新相册配置
+          const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          let newAlbum = `\t\t{\n`;
+          newAlbum += `\t\t\tid: "${esc(id)}",\n`;
+          newAlbum += `\t\t\tname: "${esc(name)}",\n`;
+          if (desc) newAlbum += `\t\t\tdescription: "${esc(desc)}",\n`;
+          if (location) newAlbum += `\t\t\tlocation: "${esc(location)}",\n`;
+          if (date) newAlbum += `\t\t\tdate: "${date}",\n`;
+          if (tags) {
+            const tagList = tags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+            newAlbum += `\t\t\ttags: [${tagList.map(t => `"${esc(t)}"`).join(', ')}],\n`;
+          }
+          if (password) {
+            newAlbum += `\t\t\tpassword: "${esc(password)}",\n`;
+            if (hint) newAlbum += `\t\t\tpasswordHint: "${esc(hint)}",\n`;
+          }
+          newAlbum += `\t\t},`;
+
+          // Step 4: 插入到 albums 数组末尾
+          // 找到最后一个 }, 的位置（albums 数组内）
+          const lastBracket = currentContent.lastIndexOf('],');
+          if (lastBracket === -1) throw new Error('无法解析 galleryConfig.ts 格式');
+          const updatedContent = currentContent.slice(0, lastBracket) + newAlbum + '\n\t' + currentContent.slice(lastBracket);
+
+          // Step 5: 提交更新后的 galleryConfig.ts
+          showStatus('⏳ 正在更新配置文件...', 'uploading');
+          const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
+          const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: `gallery: create album "${name}" (${id})`,
+              content: encoded,
+              sha: sha,
+              branch: 'main',
+            }),
+          });
+          if (!updateRes.ok) {
+            const err = await updateRes.json();
+            throw new Error('更新配置失败: ' + (err.message || JSON.stringify(err)));
+          }
+
+          // Step 6: 创建相册目录（放一个 .gitkeep）
+          showStatus('⏳ 正在创建相册目录...', 'uploading');
+          const gitkeepPath = `public/gallery/${id}/.gitkeep`;
+          const gitkeepContent = btoa('');
+          const dirRes = await fetch(`https://api.github.com/repos/${repo}/contents/${gitkeepPath}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: `gallery: init album directory ${id}`,
+              content: gitkeepContent,
+              branch: 'main',
+            }),
+          });
+          if (!dirRes.ok) {
+            const err = await dirRes.json();
+            throw new Error('创建目录失败: ' + (err.message || JSON.stringify(err)));
+          }
+
+          btnConfirm.textContent = '完成';
+          showStatus(`✅ 相册「${name}」创建成功！1.5 秒后跳转...`, 'success');
+          setTimeout(() => { window.location.href = '/gallery/' + id; }, 1500);
+
+        } catch (e) {
+          btnConfirm.disabled = false;
+          btnConfirm.textContent = '创建';
+          showStatus('❌ ' + e.message, 'error');
+        }
+      });
+
+      function showStatus(msg, type) {
+        statusEl.classList.remove('hidden');
+        statusEl.className = 'text-sm ' +
+          (type === 'error' ? 'text-red-500' :
+           type === 'success' ? 'text-green-500' :
+           'text-blue-500');
+        statusEl.textContent = msg;
+      }
+    })();
+  </script>
