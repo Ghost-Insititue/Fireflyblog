@@ -1,1424 +1,1002 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
+import EditorLayout from "@/layouts/EditorLayout.astro";
 import { siteConfig } from "@/config";
 ---
 
-<MainGridLayout title="写文章" description="在线 Markdown 编辑器">
-  <div class="w-full mb-4">
-    <!-- 编辑器主容器 -->
-    <div id="editor-app" class="card-base overflow-hidden rounded-(--radius-large)">
-      
-      <!-- ========== 元数据表单 ========== -->
-      <div id="meta-panel" class="border-b border-[var(--line-divider)] px-4 py-3 space-y-2 bg-transparent">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="h-6 w-6 rounded-md bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83l3.75 3.75l1.83-1.83z"/></svg>
-          </div>
-          <h2 class="text-sm font-bold text-black/90 dark:text-white/90">文章信息</h2>
-          <button id="toggle-meta" class="ml-auto text-xs text-[var(--primary)] hover:underline cursor-pointer">收起 ▲</button>
-        </div>
+<EditorLayout>
+<div class="flex h-full">
+  <!-- 左侧导航栏 -->
+  <aside id="sidebar" class="w-56 bg-[var(--card-bg)] border-r border-[var(--line-divider)] flex flex-col shrink-0">
+    <div class="px-4 py-3 border-b border-[var(--line-divider)]">
+      <a href="/" class="flex items-center gap-2 text-sm font-bold text-black/80 dark:text-white/80 hover:text-[var(--primary)] transition">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        {siteConfig.title}
+      </a>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-2 text-sm">
+      <a href="/" class="flex items-center gap-2 px-4 py-2 text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        首页
+      </a>
+      <a href="/archive/" class="flex items-center gap-2 px-4 py-2 text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+        归档
+      </a>
+      <a href="/categories/" class="flex items-center gap-2 px-4 py-2 text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        分类
+      </a>
+      <a href="/tags/" class="flex items-center gap-2 px-4 py-2 text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        标签
+      </a>
+      <a href="/gallery/" class="flex items-center gap-2 px-4 py-2 text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        相册
+      </a>
+      <a href="/friends/" class="flex items-center gap-2 px-4 py-2 text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        友链
+      </a>
+      <div class="my-2 border-t border-[var(--line-divider)]"></div>
+      <a href="/editor" class="flex items-center gap-2 px-4 py-2 bg-[var(--primary)]/10 text-[var(--primary)] font-medium">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        写文章
+      </a>
+    </nav>
+  </aside>
 
-        <div id="meta-fields" class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <!-- 标题 -->
-          <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">标题 <span class="text-red-500">*</span></label>
-            <div class="flex gap-1.5">
-              <input id="post-title" type="text" placeholder="请输入文章标题"
-                class="flex-1 px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-              <button id="btn-pinned" type="button" class="toggle-btn" title="置顶">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V4a2 2 0 00-2-2H9a2 2 0 00-2 2v1a1 1 0 001 1 1 1 0 011 1z"/></svg>
-                置顶
-              </button>
-              <button id="btn-comment" type="button" class="toggle-btn active" title="评论">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                评论
-              </button>
-              <input id="post-pinned" type="hidden" value="false" />
-              <input id="post-comment" type="hidden" value="true" />
-            </div>
-          </div>
+  <!-- 中间编辑区 -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- 标题输入 -->
+    <div class="px-6 py-3 border-b border-[var(--line-divider)]">
+      <input id="post-title" type="text" placeholder="输入文章标题..."
+        class="w-full text-2xl font-bold bg-transparent text-black/90 dark:text-white/90 focus:outline-none placeholder:text-black/20 dark:placeholder:text-white/20" />
+    </div>
 
-          <!-- 描述 -->
-          <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">描述</label>
-            <input id="post-desc" type="text" placeholder="一句话描述文章内容（可选）"
-              class="w-full px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-          </div>
+    <!-- 工具栏 -->
+    <div id="toolbar" class="flex flex-nowrap items-center gap-0.5 px-3 py-1.5 border-b border-[var(--line-divider)] bg-transparent overflow-x-auto">
+      <button data-action="bold" title="加粗 (Ctrl+B)" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 4H7v16h7.5c2.5 0 4.5-2 4.5-4.5c0-1.57-.8-2.96-2.01-3.77C18.16 10.77 19 9.38 19 7.5C19 5.57 17.43 4 15.5 4zm0 2c.83 0 1.5.67 1.5 1.5S14.33 9 13.5 9H9V6h4.5zm0 6c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5H9v-3h4.5z"/></svg>
+      </button>
+      <button data-action="italic" title="斜体 (Ctrl+I)" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 5v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V5z"/></svg>
+      </button>
+      <button data-action="strikethrough" title="删除线" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>
+      </button>
+      <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
+      <button data-action="h1" title="一级标题" class="toolbar-btn text-xs font-bold">H1</button>
+      <button data-action="h2" title="二级标题" class="toolbar-btn text-xs font-bold">H2</button>
+      <button data-action="h3" title="三级标题" class="toolbar-btn text-xs font-bold">H3</button>
+      <button data-action="h4" title="四级标题" class="toolbar-btn text-xs font-bold">H4</button>
+      <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
+      <button data-action="ul" title="无序列表" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5s1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5S5.5 6.83 5.5 6S4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5s1.5-.68 1.5-1.5s-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+      </button>
+      <button data-action="ol" title="有序列表" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+      </button>
+      <button data-action="checklist" title="任务列表" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5h2v14H3V5zm4 0v2h12V7H7zm0 4v2h12v-2H7zm0 4v2h12v-2H7zm-4 3l3-3l1.5 1.5L5 18.5L2.5 16L4 14.5z"/></svg>
+      </button>
+      <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
+      <button data-action="quote" title="引用" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
+      </button>
+      <button data-action="code" title="行内代码" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6l6 6l1.4-1.4zm5.2 0l4.6-4.6l-4.6-4.6L16 6l6 6l-6 6l-1.4-1.4z"/></svg>
+      </button>
+      <button data-action="codeblock" title="代码块" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v12zm-8-2h4v-2h-4v2zm-6-6h2v2H6v-2zm0 4h2v2H6v-2zm0 4h12v2H6v-2z"/></svg>
+      </button>
+      <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
+      <button data-action="link" title="链接 (Ctrl+K)" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+      </button>
+      <button data-action="image" title="图片" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      </button>
+      <button data-action="table" title="表格" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"/></svg>
+      </button>
+      <button data-action="hr" title="分割线" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 11h20v2H2z"/></svg>
+      </button>
+      <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
+      <button data-action="undo" title="撤销 (Ctrl+Z)" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88c3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+      </button>
+      <button data-action="redo" title="重做 (Ctrl+Y)" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5c1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+      </button>
+      <div class="flex-1"></div>
+      <!-- 视图切换 -->
+      <button id="btn-view-editor" title="仅编辑" class="toolbar-btn text-xs">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button id="btn-view-split" title="分栏" class="toolbar-btn text-xs active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+      </button>
+      <button id="btn-view-preview" title="仅预览" class="toolbar-btn text-xs">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
 
-          <!-- 分类 -->
-          <div>
-            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">分类</label>
-            <input id="post-category" type="text" placeholder="如：技术笔记"
-              class="w-full px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-          </div>
-
-          <!-- 标签 -->
-          <div>
-            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">标签 <span class="text-xs text-black/40 dark:text-white/40">（逗号分隔）</span></label>
-            <input id="post-tags" type="text" placeholder="如：JavaScript, Astro, 博客"
-              class="w-full px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-          </div>
-
-          <!-- 封面图 -->
-          <div>
-            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">封面图 URL</label>
-            <div class="flex gap-1.5">
-              <input id="post-cover" type="text" placeholder="https://... 或留空"
-                class="flex-1 px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-              <label class="px-2 py-1.5 rounded-md border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1 whitespace-nowrap" title="上传本地图片">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                上传
-                <input id="cover-upload" type="file" accept="image/*" class="hidden" />
-              </label>
-            </div>
-          </div>
-
-          <!-- 文章密码 + 密码提示 -->
-          <div>
-            <label class="block text-xs font-medium text-black/70 dark:text-white/70 mb-0.5">文章密码 <span class="text-xs text-black/40 dark:text-white/40">（加密文章用）</span></label>
-            <div class="flex gap-1.5">
-              <input id="post-password-hint" type="text" placeholder="密码提示"
-                class="w-1/3 px-3 py-1.5 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-              <div class="relative flex-1 flex items-center">
-                <div class="edge-password-wrap flex-1">
-                  <input id="post-password" type="password" placeholder="输入密码，留空不加密"
-                    class="w-full px-3 py-1.5 pr-9 rounded-md border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 transition" />
-                </div>
-                <button id="toggle-password" type="button" class="custom-eye-btn absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer" title="显示密码">
-                  <svg id="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg id="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- 编辑器主体 -->
+    <div id="editor-body" class="flex flex-1 overflow-hidden">
+      <!-- 左侧：Markdown 输入 -->
+      <div id="editor-pane" class="flex-1 flex flex-col border-r border-[var(--line-divider)]">
+        <textarea id="markdown-input" 
+          class="flex-1 w-full resize-none p-5 text-sm font-mono bg-transparent text-black/90 dark:text-white/90 focus:outline-none placeholder:text-black/30 dark:placeholder:text-white/30"
+          style="line-height: 1.75;"
+          placeholder="开始写作吧...&#10;&#10;支持完整的 Markdown 语法：&#10;- **加粗** 和 *斜体*&#10;- # 标题&#10;- ```代码块```&#10;- > 引用&#10;- [链接](url)&#10;- ![图片](url)"
+          spellcheck="false"
+        ></textarea>
       </div>
-
-      <!-- ========== 工具栏 ========== -->
-      <div id="toolbar" class="flex flex-nowrap items-center gap-0.5 px-2 py-1 border-b border-[var(--line-divider)] bg-transparent sticky top-0 z-20 overflow-x-auto">
-        <!-- 文本格式 -->
-        <button data-action="bold" title="加粗 (Ctrl+B)" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 4H7v16h7.5c2.5 0 4.5-2 4.5-4.5c0-1.57-.8-2.96-2.01-3.77C18.16 10.77 19 9.38 19 7.5C19 5.57 17.43 4 15.5 4zm0 2c.83 0 1.5.67 1.5 1.5S14.33 9 13.5 9H9V6h4.5zm0 6c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5H9v-3h4.5z"/></svg>
-        </button>
-        <button data-action="italic" title="斜体 (Ctrl+I)" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 5v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V5z"/></svg>
-        </button>
-        <button data-action="strikethrough" title="删除线 (Ctrl+Shift+X)" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>
-        </button>
-
-        <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
-
-        <!-- 标题 -->
-        <button data-action="h1" title="一级标题" class="toolbar-btn text-xs font-bold">H1</button>
-        <button data-action="h2" title="二级标题" class="toolbar-btn text-xs font-bold">H2</button>
-        <button data-action="h3" title="三级标题" class="toolbar-btn text-xs font-bold">H3</button>
-        <button data-action="h4" title="四级标题" class="toolbar-btn text-xs font-bold">H4</button>
-
-        <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
-
-        <!-- 列表 -->
-        <button data-action="ul" title="无序列表" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5s1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5S5.5 6.83 5.5 6S4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5s1.5-.68 1.5-1.5s-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
-        </button>
-        <button data-action="ol" title="有序列表" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
-        </button>
-        <button data-action="checklist" title="任务列表" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5h2v14H3V5zm4 0v2h12V7H7zm0 4v2h12v-2H7zm0 4v2h12v-2H7zm-4 3l3-3l1.5 1.5L5 18.5L2.5 16L4 14.5z"/></svg>
-        </button>
-
-        <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
-
-        <!-- 引用 & 代码 -->
-        <button data-action="quote" title="引用" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
-        </button>
-        <button data-action="code" title="行内代码" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6l6 6l1.4-1.4zm5.2 0l4.6-4.6l-4.6-4.6L16 6l6 6l-6 6l-1.4-1.4z"/></svg>
-        </button>
-        <button data-action="codeblock" title="代码块" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v12zm-8-2h4v-2h-4v2zm-6-6h2v2H6v-2zm0 4h2v2H6v-2zm0 4h12v2H6v-2z"/></svg>
-        </button>
-
-        <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
-
-        <!-- 链接 & 媒体 -->
-        <button data-action="link" title="链接 (Ctrl+K)" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-        </button>
-        <button data-action="image" title="图片" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-        </button>
-        <button data-action="table" title="表格" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"/></svg>
-        </button>
-        <button data-action="hr" title="分割线" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 11h20v2H2z"/></svg>
-        </button>
-
-        <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
-
-        <!-- 撤销/重做 -->
-        <button data-action="undo" title="撤销 (Ctrl+Z)" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88c3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
-        </button>
-        <button data-action="redo" title="重做 (Ctrl+Y)" class="toolbar-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5c1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
-        </button>
-
-        <div class="flex-1"></div>
-
-        <button id="btn-download" title="下载 .md" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          下载
-        </button>
-        <button id="btn-github" title="发布到 GitHub" class="toolbar-btn text-xs text-[var(--primary)] font-medium">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          发布
-        </button>
-      </div>
-
-      <!-- 第二行：视图切换 + 操作 -->
-      <div class="flex flex-nowrap items-center gap-0.5 px-3 py-1 border-b border-[var(--line-divider)] bg-transparent overflow-x-auto">
-        <button id="btn-view-editor" title="仅编辑" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          编辑
-        </button>
-        <button id="btn-view-split" title="分栏" class="toolbar-btn text-xs active">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
-          分栏
-        </button>
-        <button id="btn-view-preview" title="仅预览" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          预览
-        </button>
-        <button id="btn-preview-full" title="全屏预览" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-          全屏
-        </button>
-
-        <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
-
-        <button id="btn-sync-scroll" title="同步滚动" class="toolbar-btn text-xs active">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16"/><path d="M17 4v16"/><path d="M4 8h16"/><path d="M4 16h16"/></svg>
-          同步
-        </button>
-
-        <div class="flex-1"></div>
-
-        <button id="btn-copy" title="复制内容" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          复制
-        </button>
-        <button id="btn-quick-save" title="保存草稿 (Ctrl+Shift+S)" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          保存
-        </button>
-        <button id="btn-drafts" title="草稿箱" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          草稿
-        </button>
-      </div>
-
-      <!-- ========== 编辑器主体 ========== -->
-      <div id="editor-body" class="flex" style="height: calc(100vh - 200px); min-height: 400px;">
-        <!-- 左侧：Markdown 输入 -->
-        <div id="editor-pane" class="flex-1 flex flex-col border-r border-[var(--line-divider)]">
-          <textarea id="markdown-input" 
-            class="flex-1 w-full resize-none p-5 text-sm font-mono bg-transparent text-black/90 dark:text-white/90 focus:outline-none placeholder:text-black/30 dark:placeholder:text-white/30"
-            style="line-height: 1.75;"
-            placeholder="开始写作吧...&#10;&#10;支持完整的 Markdown 语法：&#10;- **加粗** 和 *斜体*&#10;- # 标题&#10;- ```代码块```&#10;- > 引用&#10;- [链接](url)&#10;- ![图片](url)"
-            spellcheck="false"
-          ></textarea>
-        </div>
-
-        <!-- 右侧：预览 -->
-        <div id="preview-pane" class="flex-1 flex flex-col overflow-hidden">
-          <div id="preview-content" class="flex-1 overflow-y-auto p-5 markdown-content prose prose-sm dark:prose-invert max-w-none">
-            <div class="text-black/30 dark:text-white/30 text-sm italic">预览区域 — 在左侧输入 Markdown 即可实时预览</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========== 底部操作栏 ========== -->
-      <div class="flex items-center px-6 py-3 border-t border-[var(--line-divider)] bg-transparent">
-        <div class="flex items-center gap-4 text-sm text-black/50 dark:text-white/50">
-          <span id="word-count">0 字</span>
-          <span id="char-count">0 字符</span>
-          <span id="line-count">0 行</span>
+      <!-- 右侧：预览 -->
+      <div id="preview-pane" class="flex-1 flex flex-col overflow-hidden">
+        <div id="preview-content" class="flex-1 overflow-y-auto p-5 markdown-content prose prose-sm dark:prose-invert max-w-none">
+          <div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>
         </div>
       </div>
     </div>
 
-    <!-- GitHub 发布弹窗 -->
-    <div id="github-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-      <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
-        <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">发布到 GitHub</h3>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">GitHub Token</label>
-            <input id="gh-token" type="password" placeholder="ghp_xxxxx"
-              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-            <p class="text-xs text-black/40 dark:text-white/40 mt-1">🔒 仅保存在本浏览器</p>
-          </div>
-          <div class="flex gap-3">
-            <div class="flex-1">
-              <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">仓库</label>
-              <input id="gh-repo" type="text" value="Ghost-Insititue/Fireflyblog"
-                class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-            </div>
-            <div style="width: 80px;">
-              <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">分支</label>
-              <input id="gh-branch" type="text" value="main"
-                class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-            </div>
-          </div>
-          <div id="gh-status" class="text-sm hidden"></div>
-        </div>
-        <div class="flex justify-end gap-2 mt-5">
-          <button id="gh-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
-          <button id="gh-confirm" class="px-5 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">确认发布</button>
-        </div>
+    <!-- 底部状态栏 -->
+    <div class="flex items-center justify-between px-4 py-2 border-t border-[var(--line-divider)] text-xs text-black/50 dark:text-white/50">
+      <div class="flex items-center gap-4">
+        <span id="word-count">0 词</span>
+        <span id="char-count">0 字符</span>
+        <span id="line-count">0 行</span>
       </div>
-    </div>
-
-    <!-- 图片上传弹窗 -->
-    <div id="image-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-      <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
-        <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入图片</h3>
-        <div class="space-y-3">
-          <div class="flex gap-2">
-            <input id="img-url-input" type="text" placeholder="图片地址"
-              class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-            <label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              本地
-              <input id="img-file-input" type="file" accept="image/*" class="hidden" />
-            </label>
-          </div>
-          <div id="img-preview" class="hidden">
-            <img id="img-preview-thumb" class="max-h-24 rounded-lg mx-auto" />
-          </div>
-          <div id="img-status" class="text-sm hidden"></div>
-        </div>
-        <div class="flex justify-end gap-2 mt-4">
-          <button id="img-cancel" class="px-3 py-1.5 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
-          <button id="img-confirm" class="px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">插入</button>
-        </div>
+      <div class="flex items-center gap-2">
+        <button id="btn-quick-save" title="Ctrl+Shift+S" class="px-3 py-1.5 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition cursor-pointer text-xs font-medium">保存草稿</button>
+        <button data-panel="drafts" title="草稿箱" class="px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer text-xs">草稿箱</button>
+        <button data-panel="publish" title="发布" class="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 hover:opacity-90 transition cursor-pointer text-xs font-medium">发布文章</button>
       </div>
-    </div>
-
-    <!-- 草稿管理弹窗 -->
-    <div id="draft-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-      <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-black/90 dark:text-white/90">📋 草稿管理</h3>
-          <button id="draft-close" class="text-black/50 dark:text-white/50 hover:text-black/90 dark:hover:text-white/90 cursor-pointer text-xl">✕</button>
-        </div>
-        <div class="flex gap-2 mb-4">
-          <input id="draft-name-input" type="text" placeholder="草稿名称（如：我的第一篇文章）"
-            class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-          <button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer whitespace-nowrap">保存</button>
-        </div>
-
-        <div id="draft-toolbar" class="flex items-center justify-between mb-2 hidden">
-          <label class="flex items-center gap-1.5 cursor-pointer text-xs text-black/60 dark:text-white/60 select-none">
-            <input id="draft-select-all" type="checkbox" class="w-3.5 h-3.5 rounded accent-[var(--primary)]" />
-            全选
-          </label>
-          <button id="btn-batch-delete" class="text-xs text-red-500 hover:text-red-700 cursor-pointer px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">删除选中</button>
-        </div>
-        <div id="draft-list" class="space-y-1 max-h-80 overflow-y-auto">
-          <div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无保存的草稿</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 链接弹窗 -->
-    <div id="link-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-      <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
-        <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入链接</h3>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">链接文字</label>
-            <input id="link-text-input" type="text" placeholder="显示的文字"
-              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">链接地址</label>
-            <input id="link-url-input" type="text" placeholder="https://"
-              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-          </div>
-        </div>
-        <div class="flex justify-end gap-2 mt-5">
-          <button id="link-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
-          <button id="link-confirm" class="px-5 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">插入</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 全屏预览弹窗 -->
-    <div id="fullscreen-preview" class="fixed inset-0 z-50 flex flex-col bg-white dark:bg-neutral-900 hidden">
-      <div class="flex items-center justify-between px-6 py-3 border-b border-[var(--line-divider)] bg-white dark:bg-neutral-900">
-        <h3 class="font-bold text-black/90 dark:text-white/90">全屏预览</h3>
-        <button id="close-preview" class="toolbar-btn text-xs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          关闭
-        </button>
-      </div>
-      <div id="fullscreen-content" class="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full markdown-content prose dark:prose-invert"></div>
     </div>
   </div>
 
-  <!-- highlight.js 语法高亮主题 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+  <!-- 右侧面板区（图标栏 + 滑出面板） -->
+  <div class="flex shrink-0">
+    <!-- 滑出面板（内联，不覆盖编辑区） -->
+    <div id="slide-panel" class="w-0 overflow-hidden bg-[var(--card-bg)] border-l border-[var(--line-divider)] transition-all duration-300 flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--line-divider)] w-72">
+        <h3 id="panel-title" class="text-sm font-bold text-black/90 dark:text-white/90">设置</h3>
+        <button id="panel-close" class="text-black/50 dark:text-white/50 hover:text-black/90 dark:hover:text-white/90 cursor-pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="panel-content" class="flex-1 overflow-y-auto p-4 w-72"></div>
+    </div>
 
-  <!-- 样式 -->
-  <style>
-    @reference "../styles/main.css";
+    <!-- 图标栏 -->
+    <aside id="right-icon-bar" class="w-12 bg-[var(--card-bg)] border-l border-[var(--line-divider)] flex flex-col items-center py-3 gap-1 shrink-0">
+      <button data-panel="meta" class="icon-bar-btn" title="文章信息">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </button>
+      <div class="flex-1"></div>
+      <button data-panel="drafts" class="icon-bar-btn" title="草稿箱">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5.5A2.5 2.5 0 017.5 3H18a2 2 0 012 2v14a2 2 0 01-2 2H7.5A2.5 2.5 0 015 18.5v-13z"/><path d="M9 3v2h6V3"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      </button>
+      <button id="btn-export-md" class="icon-bar-btn" title="导出 MD">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+    </aside>
+  </div>
 
-    .toolbar-btn {
-      @apply px-2 py-1 rounded-md text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black/90 dark:hover:text-white/90 transition cursor-pointer flex items-center justify-center text-sm;
-    }
-    .toolbar-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-    .toolbar-btn.active {
-      @apply bg-[var(--primary)]/15 text-[var(--primary)];
-    }
-    /* 切换按钮（置顶/评论） */
-    .toggle-btn {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      padding: 3px 6px;
-      border-radius: 0.25rem;
-      border: 1px solid var(--line-divider);
-      font-size: 0.6875rem;
-      line-height: 1;
-      color: color-mix(in srgb, currentColor 50%, transparent);
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-      user-select: none;
-      background: transparent;
-      height: 28px;
-    }
-    .toggle-btn:hover {
-      border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-      color: color-mix(in srgb, var(--primary) 70%, transparent);
-    }
-    .toggle-btn.active {
-      border-color: var(--primary);
-      background: color-mix(in srgb, var(--primary) 10%, transparent);
-      color: var(--primary);
-    }
-    /* Edge 浏览器密码框自带小眼睛：隐藏原生按钮，统一用自定义按钮 */
-    .edge-password-wrap input[type="password"]::-ms-reveal,
-    .edge-password-wrap input[type="text"]::-ms-reveal {
-      display: none !important;
-    }
+</div>
 
-    #markdown-input:focus {
-      box-shadow: inset 0 0 0 2px var(--primary);
-    }
-    #markdown-input.drag-over {
-      box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 30px color-mix(in srgb, var(--primary) 10%, transparent);
-      background: color-mix(in srgb, var(--primary) 3%, transparent);
-    }
-    /* 预览区代码样式 */
-    #preview-content :where(code):not(:where([class~="not-prose"] *)) {
-      @apply bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded text-sm;
-    }
-    #preview-content :where(pre):not(:where([class~="not-prose"] *)) {
-      @apply bg-black/5 dark:bg-white/10 p-4 rounded-lg overflow-x-auto;
-    }
-    #preview-content :where(pre code):not(:where([class~="not-prose"] *)) {
-      @apply bg-transparent p-0;
-    }
-    #preview-content :where(blockquote):not(:where([class~="not-prose"] *)) {
-      @apply border-l-4 border-[var(--primary)] pl-4 italic text-black/70 dark:text-white/70;
-    }
-    #preview-content :where(table):not(:where([class~="not-prose"] *)) {
-      @apply w-full border-collapse;
-    }
-    #preview-content :where(th):not(:where([class~="not-prose"] *)) {
-      @apply bg-black/5 dark:bg-white/10 px-3 py-2 text-left font-semibold border border-[var(--line-divider)];
-    }
-    #preview-content :where(td):not(:where([class~="not-prose"] *)) {
-      @apply px-3 py-2 border border-[var(--line-divider)];
-    }
-    #preview-content :where(img):not(:where([class~="not-prose"] *)) {
-      @apply rounded-lg max-w-full;
-    }
-    #preview-content :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
-      @apply font-bold mt-6 mb-3 text-black/90 dark:text-white/90;
-    }
-    #preview-content :where(h1):not(:where([class~="not-prose"] *)) { @apply text-3xl; }
-    #preview-content :where(h2):not(:where([class~="not-prose"] *)) { @apply text-2xl; }
-    #preview-content :where(h3):not(:where([class~="not-prose"] *)) { @apply text-xl; }
-    #preview-content :where(ul):not(:where([class~="not-prose"] *)) { @apply list-disc pl-6 my-2; }
-    #preview-content :where(ol):not(:where([class~="not-prose"] *)) { @apply list-decimal pl-6 my-2; }
-    #preview-content :where(li):not(:where([class~="not-prose"] *)) { @apply my-1; }
-    #preview-content :where(a):not(:where([class~="not-prose"] *)) { @apply text-[var(--primary)] underline; }
-    #preview-content :where(hr):not(:where([class~="not-prose"] *)) { @apply border-t border-[var(--line-divider)] my-6; }
-    #preview-content :where(.task-list-item):not(:where([class~="not-prose"] *)) { @apply list-none; }
-    #preview-content :where(.task-list-item input):not(:where([class~="not-prose"] *)) { @apply mr-2; }
+<!-- GitHub 发布弹窗 -->
+<div id="github-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
+    <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">发布到 GitHub</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">GitHub Token</label>
+        <input id="gh-token" type="password" placeholder="ghp_xxxxx"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        <p class="text-xs text-black/40 dark:text-white/40 mt-1">🔒 仅保存在本浏览器</p>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">仓库</label>
+          <input id="gh-repo" type="text" value="Ghost-Insititue/Fireflyblog"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+        <div style="width: 80px;">
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">分支</label>
+          <input id="gh-branch" type="text" value="main"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+      </div>
+      <div id="gh-status" class="text-sm hidden"></div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button id="gh-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+      <button id="gh-confirm" class="px-5 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">确认发布</button>
+    </div>
+  </div>
+</div>
 
-    /* #1 移动端响应式：小屏编辑器高度自适应，元数据默认收起 */
-    @media (max-width: 768px) {
-      #editor-body { height: calc(100vh - 100px) !important; min-height: 280px !important; }
-      #meta-fields { display: none; }
-    }
-  </style>
+<!-- 图片上传弹窗 -->
+<div id="image-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
+    <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入图片</h3>
+    <div class="space-y-3">
+      <div class="flex gap-2">
+        <input id="img-url-input" type="text" placeholder="图片地址"
+          class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        <label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          本地
+          <input id="img-file-input" type="file" accept="image/*" class="hidden" />
+        </label>
+      </div>
+      <div id="img-preview" class="hidden">
+        <img id="img-preview-thumb" class="max-h-24 rounded-lg mx-auto" />
+      </div>
+      <div id="img-status" class="text-sm hidden"></div>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <button id="img-cancel" class="px-3 py-1.5 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+      <button id="img-confirm" class="px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">插入</button>
+    </div>
+  </div>
+</div>
 
-  <!-- 脚本 -->
-  <script is:inline>
-    // ===== 加载 marked (CDN) =====
-    (function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    })('https://cdn.jsdelivr.net/npm/marked/marked.min.js').then(() => {
-      // marked 加载完后再加载 highlight.js
-      (function loadHljs(src) {
-        return new Promise((resolve) => {
-          if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-          const s = document.createElement('script');
-          s.src = src;
-          s.onload = resolve;
-          s.onerror = resolve;
-          document.head.appendChild(s);
-        });
-      })('https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js').then(() => initEditor());
-    }).catch(() => {
-      return loadScript('https://unpkg.com/marked/marked.min.js').then(() => initEditor());
-    });
+<!-- 草稿管理弹窗 -->
+<div id="draft-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold text-black/90 dark:text-white/90">📋 草稿管理</h3>
+      <button id="draft-close" class="text-black/50 dark:text-white/50 hover:text-black/90 dark:hover:text-white/90 cursor-pointer text-xl">✕</button>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <input id="draft-name-input" type="text" placeholder="草稿名称"
+        class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+      <button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer whitespace-nowrap">保存</button>
+    </div>
+    <div id="draft-list" class="space-y-1 max-h-80 overflow-y-auto">
+      <div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无保存的草稿</div>
+    </div>
+  </div>
+</div>
 
-    function initEditor() {
-      const textarea = document.getElementById('markdown-input');
-      const preview = document.getElementById('preview-content');
-      const fullscreenContent = document.getElementById('fullscreen-content');
+<!-- 链接弹窗 -->
+<div id="link-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
+    <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入链接</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">链接文字</label>
+        <input id="link-text-input" type="text" placeholder="显示的文字"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">链接地址</label>
+        <input id="link-url-input" type="text" placeholder="https://"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button id="link-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+      <button id="link-confirm" class="px-5 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">插入</button>
+    </div>
+  </div>
+</div>
 
-      // ===== marked 配置 =====
-      if (typeof marked !== 'undefined') {
-        const renderer = new marked.Renderer();
-        renderer.code = function(obj) {
-          const code = typeof obj === 'object' ? obj.text : obj;
-          const lang = typeof obj === 'object' ? obj.lang : arguments[1];
-          let highlighted = code;
-          if (typeof hljs !== 'undefined') {
-            if (lang && hljs.getLanguage(lang)) {
-              try { highlighted = hljs.highlight(code, { language: lang }).value; } catch(e) {}
-            } else {
-              try { highlighted = hljs.highlightAuto(code).value; } catch(e) {}
-            }
-          }
-          const cls = lang ? ` class="hljs language-${lang}"` : ' class="hljs"';
-          return `<pre><code${cls}>${highlighted}</code></pre>`;
-        };
-        marked.setOptions({
-          breaks: true,
-          gfm: true,
-          renderer: renderer,
-        });
-      }
+<!-- 全屏预览弹窗 -->
+<div id="fullscreen-preview" class="fixed inset-0 z-50 flex flex-col bg-white dark:bg-neutral-900 hidden">
+  <div class="flex items-center justify-between px-6 py-3 border-b border-[var(--line-divider)] bg-white dark:bg-neutral-900">
+    <h3 class="font-bold text-black/90 dark:text-white/90">全屏预览</h3>
+    <button id="close-preview" class="toolbar-btn text-xs">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      关闭
+    </button>
+  </div>
+  <div id="fullscreen-content" class="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full markdown-content prose dark:prose-invert"></div>
+</div>
 
-      // ===== 实时预览 =====
-      let previewTimer = null;
-      function updatePreview() {
-        clearTimeout(previewTimer);
-        previewTimer = setTimeout(() => {
-          const md = textarea.value;
-          let html = '';
-          try {
-            html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>');
-          } catch(e) {
-            html = '<p style="color:red">渲染错误: ' + e.message + '</p>';
-          }
-          preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域 — 在左侧输入 Markdown 即可实时预览</div>';
-          updateCounts(md);
-        }, 150);
-      }
+<!-- highlight.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
 
-      function updateCounts(text) {
-        const lines = text.split('\n').length;
-        const chars = text.length;
-        // 中文字符数
-        const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
-        // 英文单词数
-        const words = (text.match(/[a-zA-Z]+/g) || []).length;
-        // 数字串数
-        const numbers = (text.match(/\d+/g) || []).length;
-        const total = cjk + words + numbers;
-        document.getElementById('word-count').textContent = total + ' 词';
-        document.getElementById('char-count').textContent = chars + ' 字符';
-        document.getElementById('line-count').textContent = lines + ' 行';
-      }
+<style>
+  @reference "../styles/main.css";
 
-      textarea.addEventListener('input', updatePreview);
+  .toolbar-btn {
+    @apply px-2 py-1 rounded-md text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black/90 dark:hover:text-white/90 transition cursor-pointer flex items-center justify-center text-sm;
+  }
+  .toolbar-btn svg { width: 18px; height: 18px; }
+  .toolbar-btn.active { @apply bg-[var(--primary)]/15 text-[var(--primary)]; }
 
-      // ===== #4 自动保存 (每30秒，内容变化时才写入) =====
-      const AUTOSAVE_KEY = 'editor-autosave-draft';
-      let lastSavedContent = '';
-      function saveDraft() {
-        const currentContent = textarea.value + document.getElementById('post-title').value;
-        if (currentContent === lastSavedContent) return; // 内容没变，跳过
-        lastSavedContent = currentContent;
-        const data = {
-          content: textarea.value,
-          title: document.getElementById('post-title').value,
-          desc: document.getElementById('post-desc').value,
-          category: document.getElementById('post-category').value,
-          tags: document.getElementById('post-tags').value,
-          cover: document.getElementById('post-cover').value,
-          password: document.getElementById('post-password').value,
-          passwordHint: document.getElementById('post-password-hint').value,
-          pinned: document.getElementById('post-pinned').value === 'true',
-          comment: document.getElementById('post-comment').value === 'true',
-          savedAt: new Date().toISOString(),
-        };
-        try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data)); } catch(e) {}
-      }
-      function restoreDraftData(data) {
-        textarea.value = data.content || '';
-        document.getElementById('post-title').value = data.title || '';
-        document.getElementById('post-desc').value = data.desc || '';
-        document.getElementById('post-category').value = data.category || '';
-        document.getElementById('post-tags').value = data.tags || '';
-        document.getElementById('post-cover').value = data.cover || '';
-        document.getElementById('post-password').value = data.password || '';
-        document.getElementById('post-password-hint').value = data.passwordHint || '';
-        setToggle('btn-pinned', 'post-pinned', data.pinned || false);
-        setToggle('btn-comment', 'post-comment', data.comment !== false);
-        // 重置密码眼睛状态
-        document.getElementById('post-password').type = 'password';
-        document.getElementById('eye-open').classList.remove('hidden');
-        document.getElementById('eye-closed').classList.add('hidden');
-        updatePreview();
-      }
+  .toggle-btn {
+    display: flex;
+ align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line-divider);
+    font-size: 0.8rem;
+    color: color-mix(in srgb, currentColor 50%, transparent);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+    background: transparent;
+  }
+  .toggle-btn:hover {
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    color: color-mix(in srgb, var(--primary) 70%, transparent);
+  }
+  .toggle-btn.active {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    color: var(--primary);
+  }
 
-      function loadDraft() {
-        try {
-          const raw = localStorage.getItem(AUTOSAVE_KEY);
-          if (!raw) return;
-          const data = JSON.parse(raw);
-          if (!data.content && !data.title) return;
-          // 用自定义提示条代替 confirm()，避免 Chrome 拦截后台弹窗
-          const bar = document.createElement('div');
-          bar.className = 'flex items-center justify-between px-4 py-2.5 border-b border-[var(--line-divider)] bg-[var(--primary)]/5 text-sm';
-          bar.innerHTML = `<span>📋 发现自动保存的草稿（${new Date(data.savedAt).toLocaleString()}）</span>`;
-          const btnGroup = document.createElement('div');
-          btnGroup.className = 'flex gap-2';
-          const btnYes = document.createElement('button');
-          btnYes.textContent = '恢复';
-          btnYes.className = 'px-3 py-1 rounded bg-[var(--primary)] text-white dark:text-black/80 text-sm cursor-pointer';
-          const btnNo = document.createElement('button');
-          btnNo.textContent = '忽略';
-          btnNo.className = 'px-3 py-1 rounded text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer';
-          btnYes.onclick = () => { restoreDraftData(data); bar.remove(); };
-          btnNo.onclick = () => { bar.remove(); };
-          btnGroup.appendChild(btnYes);
-          btnGroup.appendChild(btnNo);
-          bar.appendChild(btnGroup);
-          document.getElementById('editor-app').prepend(bar);
-        } catch(e) {}
-      }
-      setInterval(saveDraft, 30000);
-      loadDraft();
+  #markdown-input:focus { box-shadow: inset 0 0 0 2px var(--primary); }
+  #markdown-input.drag-over {
+    box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 30px color-mix(in srgb, var(--primary) 10%, transparent);
+    background: color-mix(in srgb, var(--primary) 3%, transparent);
+  }
 
-      // ===== #3 图片拖拽/粘贴上传 =====
-      function insertTextAtCursor(text) {
-        const start = textarea.selectionStart;
-        textarea.setRangeText(text, start, start, 'end');
-        textarea.focus();
-        updatePreview();
-      }
+  #preview-content :where(code):not(:where([class~="not-prose"] *)) { @apply bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded text-sm; }
+  #preview-content :where(pre):not(:where([class~="not-prose"] *)) { @apply bg-black/5 dark:bg-white/10 p-4 rounded-lg overflow-x-auto; }
+  #preview-content :where(pre code):not(:where([class~="not-prose"] *)) { @apply bg-transparent p-0; }
+  #preview-content :where(blockquote):not(:where([class~="not-prose"] *)) { @apply border-l-4 border-[var(--primary)] pl-4 italic text-black/70 dark:text-white/70; }
+  #preview-content :where(table):not(:where([class~="not-prose"] *)) { @apply w-full border-collapse; }
+  #preview-content :where(th):not(:where([class~="not-prose"] *)) { @apply bg-black/5 dark:bg-white/10 px-3 py-2 text-left font-semibold border border-[var(--line-divider)]; }
+  #preview-content :where(td):not(:where([class~="not-prose"] *)) { @apply px-3 py-2 border border-[var(--line-divider)]; }
+  #preview-content :where(img):not(:where([class~="not-prose"] *)) { @apply rounded-lg max-w-full; }
+  #preview-content :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) { @apply font-bold mt-6 mb-3 text-black/90 dark:text-white/90; }
+  #preview-content :where(h1):not(:where([class~="not-prose"] *)) { @apply text-3xl; }
+  #preview-content :where(h2):not(:where([class~="not-prose"] *)) { @apply text-2xl; }
+  #preview-content :where(h3):not(:where([class~="not-prose"] *)) { @apply text-xl; }
+  #preview-content :where(ul):not(:where([class~="not-prose"] *)) { @apply list-disc pl-6 my-2; }
+  #preview-content :where(ol):not(:where([class~="not-prose"] *)) { @apply list-decimal pl-6 my-2; }
+  #preview-content :where(li):not(:where([class~="not-prose"] *)) { @apply my-1; }
+  #preview-content :where(a):not(:where([class~="not-prose"] *)) { @apply text-[var(--primary)] underline; }
+  #preview-content :where(hr):not(:where([class~="not-prose"] *)) { @apply border-t border-[var(--line-divider)] my-6; }
+  #preview-content :where(.task-list-item):not(:where([class~="not-prose"] *)) { @apply list-none; }
+  #preview-content :where(.task-list-item input):not(:where([class~="not-prose"] *)) { @apply mr-2; }
 
-      function showUploadStatus(msg, type) {
-        // 在工具栏下方显示临时提示
-        let bar = document.getElementById('upload-status-bar');
-        if (!bar) {
-          bar = document.createElement('div');
-          bar.id = 'upload-status-bar';
-          bar.className = 'text-sm px-4 py-2 border-b border-[var(--line-divider)]';
-          document.getElementById('toolbar').after(bar);
-        }
-        bar.className = 'text-sm px-4 py-2 border-b border-[var(--line-divider)] ' +
-          (type === 'error' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' :
-           type === 'success' ? 'text-green-500 bg-green-50 dark:bg-green-900/20' :
-           'text-blue-500 bg-blue-50 dark:bg-blue-900/20');
-        bar.textContent = msg;
-        if (type !== 'uploading') {
-          setTimeout(() => { bar.remove(); }, 3000);
-        }
-      }
+  .icon-bar-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, currentColor 50%, transparent);
+    cursor: pointer;
+    transition: all 0.15s;
+    pointer-events: auto;
+  }
+  .icon-bar-btn:hover {
+    background: color-mix(in srgb, currentColor 5%, transparent);
+    color: color-mix(in srgb, currentColor 80%, transparent);
+  }
+  .icon-bar-btn.active {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    color: var(--primary);
+  }
 
-      async function uploadImage(file) {
-        showUploadStatus('⏳ 正在上传图片...', 'uploading');
-        try {
-          const url = await uploadToGitHub(file);
-          if (url) {
-            insertTextAtCursor(`![${file.name}](${url})`);
-            showUploadStatus(`✓ 上传成功：${file.name}`, 'success');
-          }
-        } catch (e) {
-          showUploadStatus(`❌ ${e.message}`, 'error');
-        }
-      }
+  @media (max-width: 768px) {
+    #sidebar, #right-icon-bar { display: none; }
+  }
+</style>
 
-      function handleImageFiles(files) {
-        for (const file of files) {
-          if (file.type.startsWith('image/')) {
-            uploadImage(file);
-          }
-        }
-      }
+<script is:inline>
+(function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+})('https://cdn.jsdelivr.net/npm/marked/marked.min.js').then(() => {
+  return new Promise((resolve) => {
+    const src = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js';
+    if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+ s.onload = resolve;
+    s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+}).then(() => initEditor());
 
-      // 粘贴事件
-      textarea.addEventListener('paste', (e) => {
-        const items = e.clipboardData?.items;
-        if (!items) return;
-        const imageFiles = [];
-        for (const item of items) {
-          if (item.type.startsWith('image/')) {
-            const file = item.getAsFile();
-            if (file) imageFiles.push(file);
-          }
-        }
-        if (imageFiles.length > 0) {
-          e.preventDefault();
-          handleImageFiles(imageFiles);
-        }
-      });
+function initEditor() {
+  const textarea = document.getElementById('markdown-input');
+  const preview = document.getElementById('preview-content');
+  const fullscreenContent = document.getElementById('fullscreen-content');
 
-      // 拖拽事件
-      textarea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        textarea.classList.add('drag-over');
-      });
-      textarea.addEventListener('dragleave', () => {
-        textarea.classList.remove('drag-over');
-      });
-      textarea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        textarea.classList.remove('drag-over');
-        if (e.dataTransfer?.files.length) {
-          handleImageFiles(e.dataTransfer.files);
-        }
-      });
-
-      // ===== 工具栏操作 =====
-      function surroundSelection(before, after) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = textarea.value.substring(start, end);
-        const replacement = before + (selected || '文本') + (after || before);
-        textarea.setRangeText(replacement, start, end, 'select');
-        textarea.focus();
-        updatePreview();
-      }
-
-      function prefixLine(prefix) {
-        const start = textarea.selectionStart;
-        const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
-        textarea.setRangeText(prefix, lineStart, lineStart, 'end');
-        textarea.focus();
-        updatePreview();
-      }
-
-      const actions = {
-        bold: () => surroundSelection('**'),
-        italic: () => surroundSelection('*'),
-        strikethrough: () => surroundSelection('~~'),
-        h1: () => prefixLine('# '),
-        h2: () => prefixLine('## '),
-        h3: () => prefixLine('### '),
-        h4: () => prefixLine('#### '),
-        ul: () => prefixLine('- '),
-        ol: () => prefixLine('1. '),
-        checklist: () => prefixLine('- [ ] '),
-        quote: () => prefixLine('> '),
-        code: () => surroundSelection('`'),
-        codeblock: () => surroundSelection('```\n', '\n```'),
-        link: () => {
-          document.getElementById('link-modal').classList.remove('hidden');
-          document.getElementById('link-text-input').value = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd) || '';
-          document.getElementById('link-url-input').value = '';
-          document.getElementById('link-url-input').focus();
-        },
-        image: () => {
-          document.getElementById('image-modal').classList.remove('hidden');
-          document.getElementById('img-url-input').value = '';
-          document.getElementById('img-file-input').value = '';
-          document.getElementById('img-preview').classList.add('hidden');
-          document.getElementById('img-status').className = 'text-sm hidden';
-          document.getElementById('img-status').textContent = '';
-          document.getElementById('img-url-input').focus();
-        },
-        table: () => {
-          const table = '\n| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |\n';
-          const start = textarea.selectionStart;
-          textarea.setRangeText(table, start, start, 'end');
-          textarea.focus();
-          updatePreview();
-        },
-        hr: () => {
-          const start = textarea.selectionStart;
-          textarea.setRangeText('\n---\n', start, start, 'end');
-          textarea.focus();
-          updatePreview();
-        },
-        undo: () => document.execCommand('undo'),
-        redo: () => document.execCommand('redo'),
-      };
-
-      document.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const action = actions[btn.dataset.action];
-          if (action) action();
-        });
-      });
-
-      // ===== 快捷键 =====
-      textarea.addEventListener('keydown', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-          switch(e.key.toLowerCase()) {
-            case 'b': e.preventDefault(); actions.bold(); break;
-            case 'i': e.preventDefault(); actions.italic(); break;
-            case 'k': e.preventDefault(); actions.link(); break;
-            case 'x': if (e.shiftKey) { e.preventDefault(); actions.strikethrough(); } break;
-            case 's': if (e.shiftKey) { e.preventDefault(); document.getElementById('btn-quick-save').click(); } else { e.preventDefault(); document.getElementById('btn-download').click(); } break;
-          }
-        }
-        // Tab 缩进
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          const start = textarea.selectionStart;
-          textarea.setRangeText('  ', start, start, 'end');
-          updatePreview();
-        }
-      });
-
-      // ===== 置顶/评论切换按钮 =====
-      function setupToggle(btnId, hiddenId, defaultActive) {
-        const btn = document.getElementById(btnId);
-        const hidden = document.getElementById(hiddenId);
-        if (defaultActive) btn.classList.add('active');
-        hidden.value = defaultActive ? 'true' : 'false';
-        btn.addEventListener('click', () => {
-          btn.classList.toggle('active');
-          hidden.value = btn.classList.contains('active') ? 'true' : 'false';
-        });
-      }
-      function setToggle(btnId, hiddenId, active) {
-        const btn = document.getElementById(btnId);
-        const hidden = document.getElementById(hiddenId);
-        btn.classList.toggle('active', active);
-        hidden.value = active ? 'true' : 'false';
-      }
-      setupToggle('btn-pinned', 'post-pinned', false);
-      setupToggle('btn-comment', 'post-comment', true);
-
-      // ===== 密码小眼睛 =====
-      document.getElementById('toggle-password').addEventListener('click', () => {
-        const input = document.getElementById('post-password');
-        const eyeOpen = document.getElementById('eye-open');
-        const eyeClosed = document.getElementById('eye-closed');
-        if (input.type === 'password') {
-          input.type = 'text';
-          eyeOpen.classList.add('hidden');
-          eyeClosed.classList.remove('hidden');
+  // marked 配置
+  if (typeof marked !== 'undefined') {
+    const renderer = new marked.Renderer();
+    renderer.code = function(obj) {
+      const code = typeof obj === 'object' ? obj.text : obj;
+      const lang = typeof obj === 'object' ? obj.lang : arguments[1];
+      let highlighted = code;
+      if (typeof hljs !== 'undefined') {
+        if (lang && hljs.getLanguage(lang)) {
+          try { highlighted = hljs.highlight(code, { language: lang }).value; } catch(e) {}
         } else {
-          input.type = 'password';
-          eyeOpen.classList.remove('hidden');
-          eyeClosed.classList.add('hidden');
-        }
-      });
-
-      // ===== 视图切换 =====
-      const editorPane = document.getElementById('editor-pane');
-      const previewPane = document.getElementById('preview-pane');
-      const viewBtns = { editor: document.getElementById('btn-view-editor'), split: document.getElementById('btn-view-split'), preview: document.getElementById('btn-view-preview') };
-
-      function setView(mode) {
-        Object.values(viewBtns).forEach(b => b.classList.remove('active'));
-        viewBtns[mode].classList.add('active');
-        if (mode === 'editor') {
-          editorPane.style.display = 'flex';
-          previewPane.style.display = 'none';
-        } else if (mode === 'preview') {
-          editorPane.style.display = 'none';
-          previewPane.style.display = 'flex';
-        } else {
-          editorPane.style.display = 'flex';
-          previewPane.style.display = 'flex';
+          try { highlighted = hljs.highlightAuto(code).value; } catch(e) {}
         }
       }
+      const cls = lang ? ' class="hljs language-' + lang + '"' : ' class="hljs"';
+      return '<pre><code' + cls + '>' + highlighted + '</code></pre>';
+    };
+    marked.setOptions({ breaks: true, gfm: true, renderer: renderer });
+  }
 
-      viewBtns.editor.addEventListener('click', () => setView('editor'));
-      viewBtns.split.addEventListener('click', () => setView('split'));
-      viewBtns.preview.addEventListener('click', () => setView('preview'));
+  // 实时预览
+  let previewTimer = null;
+  function updatePreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => {
+      const md = textarea.value;
+      let html = '';
+      try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
+ catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
+      preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
+      if (fullscreenContent) fullscreenContent.innerHTML = preview.innerHTML;
+      updateCounts(md);
+    }, 150);
+  }
 
-      // ===== 同步滚动 =====
-      let syncScrollEnabled = true;
-      let isSyncing = false;
-      const btnSyncScroll = document.getElementById('btn-sync-scroll');
-      const previewContent = document.getElementById('preview-content');
+  function updateCounts(text) {
+    const lines = text.split('\n').length;
+    const chars = text.length;
+    const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+    const words = (text.match(/[a-zA-Z]+/g) || []).length;
+    document.getElementById('word-count').textContent = (cjk + words) + ' 词';
+    document.getElementById('char-count').textContent = chars + ' 字符';
+    document.getElementById('line-count').textContent = lines + ' 行';
+  }
 
-      function syncScroll(source, target) {
-        if (!syncScrollEnabled || isSyncing) return;
-        const maxScroll = source.scrollHeight - source.clientHeight;
-        if (maxScroll <= 0) return;
-        isSyncing = true;
-        const ratio = source.scrollTop / maxScroll;
-        const targetMax = target.scrollHeight - target.clientHeight;
-        target.scrollTop = ratio * targetMax;
-        requestAnimationFrame(() => { isSyncing = false; });
+  textarea.addEventListener('input', updatePreview);
+
+  // 自动保存
+  const AUTOSAVE_KEY = 'editor-autosave-draft';
+  function saveDraft() {
+    const data = {
+      content: textarea.value,
+      title: document.getElementById('post-title').value,
+      desc: document.getElementById('post-desc').value,
+      category: document.getElementById('post-category').value,
+      tags: document.getElementById('post-tags').value,
+      cover: document.getElementById('post-cover').value,
+      slug: document.getElementById('post-slug').value,
+      password: document.getElementById('post-password').value,
+      passwordHint: document.getElementById('post-password-hint').value,
+      pinned: document.getElementById('post-pinned').value === 'true',
+      comment: document.getElementById('post-comment').value === 'true',
+      savedAt: new Date().toISOString(),
+    };
+    try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+  setInterval(saveDraft, 30000);
+
+  // 工具栏按钮
+  document.querySelectorAll('#toolbar [data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      let insert = '';
+      switch(action) {
+ case 'bold': insert = '**' + (selected || '粗体文本') + '**'; break;
+        case 'italic': insert = '*' + (selected || '斜体文本') + '*'; break;
+        case 'strikethrough': insert = '~~' + (selected || '删除线') + '~~'; break;
+        case 'h1': insert = '# ' + (selected || '标题'); break;
+        case 'h2': insert = '## ' + (selected || '标题'); break;
+        case 'h3': insert = '### ' + (selected || '标题'); break;
+        case 'h4': insert = '#### ' + (selected || '标题'); break;
+        case 'ul': insert = '- ' + (selected || '列表项'); break;
+        case 'ol': insert = '1. ' + (selected || '列表项'); break;
+        case 'checklist': insert = '- [ ] ' + (selected || '任务'); break;
+        case 'quote': insert = '> ' + (selected || '引用'); break;
+        case 'code': insert = '`' + (selected || '代码') + '`'; break;
+        case 'codeblock': insert = '```javascript\n' + (selected || '代码') + '\n```'; break;
+        case 'link': insert = '[' + (selected || '链接文字') + '](https://)'; break;
+        case 'image': insert = '![' + (selected || '图片') + '](url)'; break;
+        case 'table': insert = '| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |'; break;
+        case 'hr': insert = '\n---\n'; break;
+        case 'undo': textarea.focus(); document.execCommand('undo'); return;
+        case 'redo': textarea.focus(); document.execCommand('redo'); return;
       }
-
-      textarea.addEventListener('scroll', () => syncScroll(textarea, previewContent));
-      previewContent.addEventListener('scroll', () => syncScroll(previewContent, textarea));
-
-      btnSyncScroll.addEventListener('click', () => {
-        syncScrollEnabled = !syncScrollEnabled;
-        btnSyncScroll.classList.toggle('active', syncScrollEnabled);
-      });
-
-      // ===== 元数据面板折叠 =====
-      const metaFields = document.getElementById('meta-fields');
-      const toggleBtn = document.getElementById('toggle-meta');
-      // 移动端初始状态：CSS 已隐藏，修正按钮文字
-      if (getComputedStyle(metaFields).display === 'none') {
-        toggleBtn.textContent = '展开 ▼';
-      }
-      toggleBtn.addEventListener('click', () => {
-        if (getComputedStyle(metaFields).display === 'none') {
-          metaFields.style.display = 'grid';
-          toggleBtn.textContent = '收起 ▲';
-        } else {
-          metaFields.style.display = 'none';
-          toggleBtn.textContent = '展开 ▼';
-        }
-      });
-
-      // ===== 生成 frontmatter =====
-      function generateFrontmatter() {
-        const title = document.getElementById('post-title').value || '未命名文章';
-        const desc = document.getElementById('post-desc').value;
-        const category = document.getElementById('post-category').value;
-        const tags = document.getElementById('post-tags').value;
-        const cover = document.getElementById('post-cover').value;
-        const password = document.getElementById('post-password').value;
-        const passwordHint = document.getElementById('post-password-hint').value;
-        const pinned = document.getElementById('post-pinned').value === 'true';
-        const comment = document.getElementById('post-comment').value === 'true';
-        const now = new Date().toISOString().split('T')[0];
-
-        // 转义 YAML 特殊字符
-        const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-
-        let fm = '---\n';
-        fm += `title: "${esc(title)}"\n`;
-        fm += `published: ${now}\n`;
-        if (desc) fm += `description: "${esc(desc)}"\n`;
-        if (tags) {
-          const tagList = tags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
-          fm += `tags: [${tagList.map(t => `"${esc(t)}"`).join(', ')}]\n`;
-        }
-        if (category) fm += `category: "${esc(category)}"\n`;
-        if (cover) fm += `image: "${esc(cover)}"\n`;
-        if (password) fm += `password: "${esc(password)}"\n`;
-        if (passwordHint) fm += `passwordHint: "${esc(passwordHint)}"\n`;
-        if (pinned) fm += `pinned: true\n`;
-        if (!comment) fm += `comment: false\n`;
-        fm += 'draft: false\n';
-        fm += '---\n\n';
-        return fm;
-      }
-
-      function getFullMarkdown() {
-        return generateFrontmatter() + textarea.value;
-      }
-
-      function getFilename() {
-        const title = document.getElementById('post-title').value || 'untitled';
-        const slug = title.toLowerCase()
-          .replace(/[\u4e00-\u9fff]+/g, m => m) // 保留中文
-          .replace(/[^\w\u4e00-\u9fff]+/g, '-')
-          .replace(/^-|-$/g, '');
-        return slug + '.md';
-      }
-
-      // ===== 下载 =====
-      document.getElementById('btn-download').addEventListener('click', () => {
-        const blob = new Blob([getFullMarkdown()], { type: 'text/markdown' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = getFilename();
-        a.click();
-        URL.revokeObjectURL(a.href);
-      });
-
-      // ===== 复制 =====
-      document.getElementById('btn-copy').addEventListener('click', async () => {
-        const btn = document.getElementById('btn-copy');
-        const orig = btn.innerHTML;
-        try {
-          await navigator.clipboard.writeText(getFullMarkdown());
-          btn.innerHTML = '✓ 已复制';
-          setTimeout(() => btn.innerHTML = orig, 2000);
-        } catch {
-          btn.innerHTML = orig;
-          alert('复制失败，请手动复制');
-        }
-      });
-
-      // ===== 全屏预览 =====
-      document.getElementById('btn-preview-full').addEventListener('click', () => {
-        const fs = document.getElementById('fullscreen-preview');
-        fs.classList.remove('hidden');
-        fullscreenContent.innerHTML = preview.innerHTML;
-        // 暂停同步滚动，避免编辑区 scroll 事件干扰
-        syncScrollEnabled = false;
-      });
-      document.getElementById('close-preview').addEventListener('click', () => {
-        document.getElementById('fullscreen-preview').classList.add('hidden');
-        // 恢复同步滚动
-        syncScrollEnabled = btnSyncScroll.classList.contains('active');
-      });
-
-      // ===== GitHub 发布 =====
-      document.getElementById('btn-github').addEventListener('click', () => {
-        const modal = document.getElementById('github-modal');
-        modal.classList.remove('hidden');
-        // 清空上次状态
-        const status = document.getElementById('gh-status');
-        status.className = 'text-sm hidden';
-        status.textContent = '';
-        // 尝试从 localStorage 恢复
-        const saved = localStorage.getItem('gh-editor-token');
-        if (saved) document.getElementById('gh-token').value = saved;
-        const savedRepo = localStorage.getItem('gh-editor-repo');
-        if (savedRepo) document.getElementById('gh-repo').value = savedRepo;
-      });
-
-      document.getElementById('gh-cancel').addEventListener('click', () => {
-        document.getElementById('github-modal').classList.add('hidden');
-      });
-
-      document.getElementById('gh-confirm').addEventListener('click', async () => {
-        const token = document.getElementById('gh-token').value.trim();
-        const repo = document.getElementById('gh-repo').value.trim();
-        const branch = document.getElementById('gh-branch').value.trim() || 'main';
-        const status = document.getElementById('gh-status');
-
-        if (!token) { status.className = 'text-sm text-red-500'; status.textContent = '请输入 GitHub Token'; status.classList.remove('hidden'); return; }
-        if (!repo) { status.className = 'text-sm text-red-500'; status.textContent = '请输入仓库名'; status.classList.remove('hidden'); return; }
-
-        const filename = getFilename();
-        const filePath = `src/content/posts/${filename}`;
-        const content = getFullMarkdown();
-        const encodedContent = btoa(unescape(encodeURIComponent(content)));
-
-        status.className = 'text-sm text-blue-500'; status.textContent = '正在发布...'; status.classList.remove('hidden');
-
-        // 保存到 localStorage
-        localStorage.setItem('gh-editor-token', token);
-        localStorage.setItem('gh-editor-repo', repo);
-
-        try {
-          // 检查文件是否已存在
-          const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`, {
-            headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-          });
-
-          let body = {
-            message: `post: add "${document.getElementById('post-title').value || 'untitled'}"`,
-            content: encodedContent,
-            branch: branch,
-          };
-
-          if (checkRes.ok) {
-            const existing = await checkRes.json();
-            body.sha = existing.sha;
-            body.message = `post: update "${document.getElementById('post-title').value || 'untitled'}"`;
-          }
-
-          const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            status.className = 'text-sm text-green-500';
-            status.innerHTML = `✓ 发布成功！<a href="${data.content.html_url}" target="_blank" class="underline text-[var(--primary)]">查看文件</a>，3秒后自动跳转...`;
-            // 发布成功，清空自动保存
-            try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e) {}
-            setTimeout(() => {
-              window.open(data.content.html_url, '_blank');
-              document.getElementById('github-modal').classList.add('hidden');
-            }, 3000);
-          } else {
-            const err = await res.json();
-            status.className = 'text-sm text-red-500';
-            status.textContent = '发布失败: ' + (err.message || JSON.stringify(err));
-          }
-        } catch (e) {
-          status.className = 'text-sm text-red-500';
-          status.textContent = '网络错误: ' + e.message;
-        }
-      });
-
-      // ===== 点击遮罩关闭 =====
-      document.getElementById('github-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
-      });
-      document.getElementById('image-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
-      });
-
-      // ===== 图片弹窗逻辑 =====
-      let imgSelectedFile = null;
-      document.getElementById('img-file-input').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        imgSelectedFile = file;
-        // 预览
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          document.getElementById('img-preview-thumb').src = ev.target.result;
-          document.getElementById('img-preview').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-      });
-
-      document.getElementById('img-cancel').addEventListener('click', () => {
-        document.getElementById('image-modal').classList.add('hidden');
-      });
-
-      document.getElementById('img-confirm').addEventListener('click', async () => {
-        const urlInput = document.getElementById('img-url-input');
-        const status = document.getElementById('img-status');
-        const url = urlInput.value.trim();
-
-        // 有 URL 直接插入
-        if (url && !imgSelectedFile) {
-          insertTextAtCursor(`![图片](${url})`);
-          document.getElementById('image-modal').classList.add('hidden');
-          return;
-        }
-
-        // 有本地文件，上传
-        if (imgSelectedFile) {
-          status.className = 'text-sm text-blue-500';
-          status.textContent = '⏳ 正在上传...';
-          status.classList.remove('hidden');
-          try {
-            const uploadedUrl = await uploadToGitHub(imgSelectedFile);
-            if (uploadedUrl) {
-              const altText = url || imgSelectedFile.name.replace(/\.[^.]+$/, '');
-              insertTextAtCursor(`![${altText}](${uploadedUrl})`);
-              document.getElementById('image-modal').classList.add('hidden');
-            }
-          } catch (e) {
-            status.className = 'text-sm text-red-500';
-            status.textContent = '❌ ' + e.message;
-          }
-          imgSelectedFile = null;
-          return;
-        }
-
-        status.className = 'text-sm text-red-500';
-        status.textContent = '请输入 URL 或选择本地图片';
-        status.classList.remove('hidden');
-      });
-
-      // ===== 链接弹窗 =====
-      document.getElementById('link-cancel').addEventListener('click', () => {
-        document.getElementById('link-modal').classList.add('hidden');
-      });
-      document.getElementById('link-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
-      });
-      document.getElementById('link-confirm').addEventListener('click', () => {
-        const text = document.getElementById('link-text-input').value.trim() || '链接';
-        const url = document.getElementById('link-url-input').value.trim();
-        if (!url) { document.getElementById('link-url-input').focus(); return; }
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        textarea.setRangeText(`[${text}](${url})`, start, end, 'end');
-        textarea.focus();
-        updatePreview();
-        document.getElementById('link-modal').classList.add('hidden');
-      });
-
-      // ===== 封面图上传 =====
-      document.getElementById('cover-upload').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        showUploadStatus('⏳ 正在上传封面图...', 'uploading');
-        try {
-          const url = await uploadToGitHub(file);
-          if (url) {
-            document.getElementById('post-cover').value = url;
-            showUploadStatus('✓ 封面图上传成功', 'success');
-          }
-        } catch (e) {
-          showUploadStatus('❌ ' + e.message, 'error');
-        }
-      });
-
-      // ===== #6 草稿管理 =====
-      const DRAFTS_KEY = 'editor-drafts';
-
-      function getDrafts() {
-        try {
-          return JSON.parse(localStorage.getItem(DRAFTS_KEY) || '[]');
-        } catch(e) { return []; }
-      }
-
-      function saveDrafts(list) {
-        try { localStorage.setItem(DRAFTS_KEY, JSON.stringify(list)); } catch(e) {}
-      }
-
-      function getCurrentData() {
-        return {
-          content: textarea.value,
-          title: document.getElementById('post-title').value,
-          desc: document.getElementById('post-desc').value,
-          category: document.getElementById('post-category').value,
-          tags: document.getElementById('post-tags').value,
-          cover: document.getElementById('post-cover').value,
-          password: document.getElementById('post-password').value,
-          passwordHint: document.getElementById('post-password-hint').value,
-          pinned: document.getElementById('post-pinned').value === 'true',
-          comment: document.getElementById('post-comment').value === 'true',
-        };
-      }
-
-      function loadDraftData(data) {
-        textarea.value = data.content || '';
-        document.getElementById('post-title').value = data.title || '';
-        document.getElementById('post-desc').value = data.desc || '';
-        document.getElementById('post-category').value = data.category || '';
-        document.getElementById('post-tags').value = data.tags || '';
-        document.getElementById('post-cover').value = data.cover || '';
-        document.getElementById('post-password').value = data.password || '';
-        document.getElementById('post-password-hint').value = data.passwordHint || '';
-        setToggle('btn-pinned', 'post-pinned', data.pinned || false);
-        setToggle('btn-comment', 'post-comment', data.comment !== false);
-        // 重置密码眼睛状态
-        document.getElementById('post-password').type = 'password';
-        document.getElementById('eye-open').classList.remove('hidden');
-        document.getElementById('eye-closed').classList.add('hidden');
-        updatePreview();
-      }
-
-      // 草稿列表内行内确认条（替代浏览器 confirm）
-      function showDraftConfirm(message, onConfirm) {
-        const container = document.getElementById('draft-list');
-        const bar = document.createElement('div');
-        bar.className = 'flex items-center justify-between px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm';
-        bar.innerHTML = `
-          <span class="text-amber-700 dark:text-amber-300">⚠️ ${message}</span>
-          <div class="flex gap-1.5">
-            <button class="confirm-yes px-2.5 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 cursor-pointer">确认</button>
-            <button class="confirm-no px-2.5 py-1 rounded text-xs text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">取消</button>
-          </div>
-        `;
-        // 插到列表最前面
-        container.prepend(bar);
-        bar.querySelector('.confirm-yes').onclick = () => { bar.remove(); onConfirm(); };
-        bar.querySelector('.confirm-no').onclick = () => { bar.remove(); };
-      }
-
-      function renderDraftList() {
-        const list = getDrafts();
-        const container = document.getElementById('draft-list');
-        const toolbar = document.getElementById('draft-toolbar');
-        const selectAll = document.getElementById('draft-select-all');
-        const filtered = list.map((d, i) => ({ ...d, _origIndex: i }));
-
-        // 转义 HTML 防 XSS
-        const escHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-        if (list.length === 0) {
-          container.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无保存的草稿</div>';
-          toolbar.classList.add('hidden');
-          return;
-        }
-
-        toolbar.classList.remove('hidden');
-        selectAll.checked = false;
-
-        container.innerHTML = filtered.map((d) => `
-          <div class="draft-item flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition">
-            <input type="checkbox" class="draft-check w-3.5 h-3.5 rounded accent-[var(--primary)]" data-index="${d._origIndex}" />
-            <div class="flex-1 min-w-0 cursor-pointer" data-action="load" data-index="${d._origIndex}">
-              <div class="text-sm font-medium text-black/80 dark:text-white/80 truncate">${escHtml(d.name) || '未命名草稿'}</div>
-              <div class="text-xs text-black/40 dark:text-white/40">${d.title ? '标题: ' + escHtml(d.title) : '无标题'} · ${new Date(d.savedAt).toLocaleString()}</div>
-            </div>
-            <button class="text-xs text-red-500 hover:text-red-700 cursor-pointer px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-action="delete" data-index="${d._origIndex}">删除</button>
-          </div>
-        `).join('');
-
-        // 全选
-        selectAll.onchange = () => {
-          container.querySelectorAll('.draft-check').forEach(cb => cb.checked = selectAll.checked);
-        };
-
-        // 批量删除
-        document.getElementById('btn-batch-delete').onclick = () => {
-          const checked = [...container.querySelectorAll('.draft-check:checked')].map(cb => parseInt(cb.dataset.index));
-          if (checked.length === 0) return;
-          showDraftConfirm(`删除选中的 ${checked.length} 篇草稿？`, () => {
-            const drafts = getDrafts();
-            checked.sort((a, b) => b - a).forEach(idx => drafts.splice(idx, 1));
-            saveDrafts(drafts);
-            renderDraftList();
-          });
-        };
-
-        // 加载草稿
-        container.querySelectorAll('[data-action="load"]').forEach(el => {
-          el.addEventListener('click', () => {
-            const idx = parseInt(el.dataset.index);
-            const drafts = getDrafts();
-            if (!drafts[idx]) return;
-            showDraftConfirm(`加载「${drafts[idx].name}」？当前内容会被覆盖。`, () => {
-              loadDraftData(drafts[idx]);
-              document.getElementById('draft-modal').classList.add('hidden');
-            });
-          });
-        });
-
-        // 单个删除
-        container.querySelectorAll('[data-action="delete"]').forEach(el => {
-          el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(el.dataset.index);
-            const drafts = getDrafts();
-            if (!drafts[idx]) return;
-            showDraftConfirm(`删除「${drafts[idx].name}」？`, () => {
-              drafts.splice(idx, 1);
-              saveDrafts(drafts);
-              renderDraftList();
-            });
-          });
-        });
-      }
-
-      // 打开草稿弹窗
-      document.getElementById('btn-drafts').addEventListener('click', () => {
-        document.getElementById('draft-modal').classList.remove('hidden');
-        document.getElementById('draft-name-input').value = '';
-        renderDraftList();
-      });
-
-      // 关闭
-      document.getElementById('draft-close').addEventListener('click', () => {
-        document.getElementById('draft-modal').classList.add('hidden');
-      });
-      document.getElementById('draft-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
-      });
-
-      // 保存草稿
-      document.getElementById('btn-save-draft').addEventListener('click', () => {
-        const name = document.getElementById('draft-name-input').value.trim();
-        if (!name) {
-          document.getElementById('draft-name-input').focus();
-          return;
-        }
-        const drafts = getDrafts();
-        drafts.unshift({
-          name: name,
-          ...getCurrentData(),
-          savedAt: new Date().toISOString(),
-        });
-        saveDrafts(drafts);
-        document.getElementById('draft-name-input').value = '';
-        renderDraftList();
-      });
-
-      // # 快捷保存草稿
-      document.getElementById('btn-quick-save').addEventListener('click', () => {
-        const title = document.getElementById('post-title').value.trim();
-        const name = title || '未命名草稿 ' + new Date().toLocaleTimeString();
-        const drafts = getDrafts();
-        drafts.unshift({
-          name: name,
-          ...getCurrentData(),
-          savedAt: new Date().toISOString(),
-        });
-        saveDrafts(drafts);
-        // 按钮反馈
-        const btn = document.getElementById('btn-quick-save');
-        const orig = btn.innerHTML;
-        btn.innerHTML = '✓ 已保存';
-        btn.classList.add('text-green-600');
-        setTimeout(() => {
-          btn.innerHTML = orig;
-          btn.classList.remove('text-green-600');
-        }, 1500);
-      });
-
-      // 上传到 GitHub 的通用函数
-      async function uploadToGitHub(file) {
-        const token = localStorage.getItem('gh-editor-token');
-        const repo = localStorage.getItem('gh-editor-repo') || 'Ghost-Insititue/Fireflyblog';
-        if (!token) throw new Error('请先配置 GitHub Token（点击「发布到 GitHub」设置）');
-
-        const ext = file.name.split('.').pop() || 'png';
-        const ts = Date.now();
-        const rand = Math.random().toString(36).substring(2, 8);
-        const filename = `${ts}-${rand}.${ext}`;
-        const filePath = `public/uploads/${filename}`;
-
-        const arrayBuffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        const base64 = btoa(binary);
-
-        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: `upload: ${filename}`,
-            content: base64,
-            branch: 'main',
-          }),
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || '上传失败');
-        }
-        return `/uploads/${filename}`;
-      }
-
-      // 初始化
+      textarea.setRangeText(insert, start, start, 'end');
+      textarea.focus();
       updatePreview();
-    }
-  </script>
-</MainGridLayout>
+    });
+  });
 
+  // 视图切换
+  const editorPane = document.getElementById('editor-pane');
+  const previewPane = document.getElementById('preview-pane');
+  const btnEditor = document.getElementById('btn-view-editor');
+  const btnSplit = document.getElementById('btn-view-split');
+  const btnPreview = document.getElementById('btn-view-preview');
+
+  function setView(view) {
+    [btnEditor, btnSplit, btnPreview].forEach(b => b && b.classList.remove('active'));
+    if (view === 'editor') {
+      editorPane.style.display = 'flex';
+      previewPane.style.display = 'none';
+      btnEditor && btnEditor.classList.add('active');
+    } else if (view === 'preview') {
+      editorPane.style.display = 'none';
+      previewPane.style.display = 'flex';
+      btnPreview && btnPreview.classList.add('active');
+    } else {
+      editorPane.style.display = 'flex';
+      previewPane.style.display = 'flex';
+      btnSplit && btnSplit.classList.add('active');
+    }
+  }
+
+  btnEditor && btnEditor.addEventListener('click', () => setView('editor'));
+  btnSplit && btnSplit.addEventListener('click', () => setView('split'));
+  btnPreview && btnPreview.addEventListener('click', () => setView('preview'));
+
+  // 置顶/评论切换
+  function setToggle(btnId, inputId, value) {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    if (value) { btn.classList.add('active'); input.value = 'true'; }
+    else { btn.classList.remove('active'); input.value = 'false'; }
+  }
+
+  document.getElementById('btn-pinned').addEventListener('click', function() {
+    setToggle('btn-pinned', 'post-pinned', !this.classList.contains('active'));
+  });
+  document.getElementById('btn-comment').addEventListener('click', function() {
+    setToggle('btn-comment', 'post-comment', !this.classList.contains('active'));
+  });
+
+  // 图片上传
+  document.getElementById('cover-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      document.getElementById('post-cover').value = ev.target.result;
+      const preview = document.getElementById('cover-preview');
+      const img = document.getElementById('cover-preview-img');
+      img.src = ev.target.result;
+      preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // GitHub 发布
+  const ghModal = document.getElementById('github-modal');
+  document.getElementById('btn-github').addEventListener('click', () => ghModal.classList.remove('hidden'));
+  document.getElementById('gh-cancel').addEventListener('click', () => ghModal.classList.add('hidden'));
+  document.getElementById('gh-confirm').addEventListener('click', async () => {
+    const token = document.getElementById('gh-token').value;
+    const repo = document.getElementById('gh-repo').value;
+    const branch = document.getElementById('gh-branch').value;
+    const title = document.getElementById('post-title').value;
+    const content = textarea.value;
+    const status = document.getElementById('gh-status');
+
+    if (!token || !title) {
+      status.textContent = '❌ 请填写 Token 和标题';
+      status.className = 'text-sm text-red-500';
+      status.classList.remove('hidden');
+      return;
+    }
+
+    status.textContent = '⏳ 发布中...';
+    status.className = 'text-sm text-blue-500';
+    status.classList.remove('hidden');
+
+    try {
+      const slug = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
+      const filename = 'src/content/posts/' + slug + '.md';
+      const frontmatter = '---\ntitle: "' + title + '"\npublished: ' + new Date().toISOString().split('T')[0] + '\ndraft: false\n---\n\n';
+      const base64 = btoa(unescape(encodeURIComponent(frontmatter + content)));
+
+      const res = await fetch('https://api.github.com/repos/' + repo + '/contents/' + filename, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'token ' + token,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'post: add "' + title + '"',
+          content: base64,
+          branch: branch,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || '发布失败');
+      }
+
+      status.textContent = '✅ 发布成功！';
+      status.className = 'text-sm text-green-500';
+    } catch(e) {
+      status.textContent = '❌ ' + e.message;
+      status.className = 'text-sm text-red-500';
+    }
+  });
+
+  // 图片上传弹窗
+  const imgModal = document.getElementById('image-modal');
+  document.querySelector('[data-action="image"]').addEventListener('click', () => imgModal.classList.remove('hidden'));
+  document.getElementById('img-cancel').addEventListener('click', () => imgModal.classList.add('hidden'));
+
+  // 链接弹窗
+  const linkModal = document.getElementById('link-modal');
+  document.querySelector('[data-action="link"]').addEventListener('click', () => linkModal.classList.remove('hidden'));
+  document.getElementById('link-cancel').addEventListener('click', () => linkModal.classList.add('hidden'));
+
+  // 草稿弹窗
+  const draftModal = document.getElementById('draft-modal');
+  document.getElementById('btn-drafts').addEventListener('click', () => draftModal.classList.remove('hidden'));
+  document.getElementById('draft-close').addEventListener('click', () => draftModal.classList.add('hidden'));
+
+  // 保存草稿
+  document.getElementById('btn-save-draft').addEventListener('click', () => {
+    const name = document.getElementById('draft-name-input').value || '未命名草稿';
+    const drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+    drafts.push({
+      name: name,
+      title: document.getElementById('post-title').value,
+      content: textarea.value,
+      savedAt: new Date().toISOString(),
+    });
+    localStorage.setItem('editor-drafts', JSON.stringify(drafts));
+    document.getElementById('draft-name-input').value = '';
+    alert('草稿已保存');
+  });
+
+  // 快捷键保存
+  document.getElementById('btn-quick-save').addEventListener('click', saveDraft);
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); saveDraft(); alert('草稿已保存'); }
+  });
+
+  // 下载
+  document.getElementById('btn-download').addEventListener('click', () => {
+    const title = document.getElementById('post-title').value || 'untitled';
+    const blob = new Blob([textarea.value], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = title + '.md';
+    a.click();
+  });
+
+  // 复制
+  var copyBtn = document.getElementById('btn-copy');
+  if (copyBtn) copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(textarea.value).then(() => alert('已复制'));
+  });
+
+  // 初始化
+  updatePreview();
+}
+</script>
+
+<!-- 右侧面板逻辑（独立，不依赖外部脚本） -->
+<script is:inline>
+(function() {
+  var slidePanel = document.getElementById('slide-panel');
+  var panelTitle = document.getElementById('panel-title');
+  var panelContent = document.getElementById('panel-content');
+  var panelClose = document.getElementById('panel-close');
+
+  if (!slidePanel) { console.error('slide-panel not found'); return; }
+
+  var templates = {
+    publish: { title: '发布', html: '<div class="space-y-3"><button id="btn-github" class="w-full py-2.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">发布到 GitHub</button><button id="btn-download" class="w-full py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer">下载 .md 文件</button></div>' },
+    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><button id="btn-pinned" class="toggle-btn text-xs" title="置顶">📌</button><button id="btn-comment" class="toggle-btn text-xs active" title="评论">💬</button></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
+    tags: { title: '标签', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签（逗号分隔）</label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
+    cover: { title: '封面图', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 URL</label><input id="post-cover" type="text" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
+    settings: { title: '设置', html: '<div class="text-sm text-black/50 dark:text-white/50">更多设置开发中...</div>' },
+    drafts: { title: '草稿箱', html: '<div class="space-y-3"><div class="flex gap-2"><input id="draft-name-input" type="text" placeholder="草稿名称" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none" /><button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm cursor-pointer">保存</button></div><div id="draft-list" class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无草稿</div></div>' }
+  };
+
+  var currentPanel = '';
+
+  function openPanel(name) {
+    if (currentPanel === name && slidePanel.style.width === '288px') {
+      closePanel();
+      return;
+    }
+    currentPanel = name;
+    var t = templates[name];
+    if (!t) return;
+    panelTitle.textContent = t.title;
+    panelContent.innerHTML = t.html;
+    slidePanel.style.width = '288px';
+    document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
+    // 标题同步
+    if (name === 'meta') {
+      var titleInput = document.getElementById('post-title-input');
+      var mainTitle = document.getElementById('post-title');
+      if (titleInput && mainTitle) titleInput.value = mainTitle.value;
+    }
+    // 草稿列表
+    if (name === 'drafts') renderDraftList();
+  }
+
+  function closePanel() {
+    slidePanel.style.width = '0px';
+    currentPanel = '';
+    document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+  }
+
+  // 草稿列表渲染
+  function renderDraftList() {
+    var list = document.getElementById('draft-list');
+    if (!list) return;
+    var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+    if (drafts.length === 0) {
+      list.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无草稿</div>';
+      return;
+    }
+    list.innerHTML = drafts.map(function(d, i) {
+      return '<div class="flex items-center justify-between p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer draft-item" data-index="' + i + '">' +
+        '<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">' + (d.name || '未命名') + '</div><div class="text-xs text-black/40 dark:text-white/40">' + (d.title || '无标题') + '</div></div>' +
+        '<button class="text-xs text-red-500 hover:text-red-700 ml-2 draft-delete" data-index="' + i + '">删除</button></div>';
+    }).join('');
+  }
+
+  // 事件委托 - 面板内所有按钮
+  panelContent.addEventListener('click', function(e) {
+    var target = e.target;
+
+    // 置顶
+    if (target.id === 'btn-pinned' || target.closest('#btn-pinned')) {
+      var btn = target.id === 'btn-pinned' ? target : target.closest('#btn-pinned');
+      btn.classList.toggle('active');
+      return;
+    }
+    // 评论
+    if (target.id === 'btn-comment' || target.closest('#btn-comment')) {
+      var btn = target.id === 'btn-comment' ? target : target.closest('#btn-comment');
+      btn.classList.toggle('active');
+      return;
+    }
+    // 发布到 GitHub
+    if (target.id === 'btn-github' || target.closest('#btn-github')) {
+      document.getElementById('github-modal').classList.remove('hidden');
+      closePanel();
+      return;
+    }
+    // 下载 MD
+    if (target.id === 'btn-download' || target.closest('#btn-download')) {
+      var title = document.getElementById('post-title').value || 'untitled';
+      var textarea = document.getElementById('markdown-input');
+      var blob = new Blob([textarea.value], { type: 'text/markdown' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = title + '.md';
+      a.click();
+      return;
+    }
+    // 保存草稿
+    if (target.id === 'btn-save-draft' || target.closest('#btn-save-draft')) {
+      var name = document.getElementById('draft-name-input').value || '未命名草稿';
+      var textarea = document.getElementById('markdown-input');
+      var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+      drafts.push({ name: name, title: document.getElementById('post-title').value, content: textarea.value, savedAt: new Date().toISOString() });
+      localStorage.setItem('editor-drafts', JSON.stringify(drafts));
+      document.getElementById('draft-name-input').value = '';
+      renderDraftList();
+      showToast('草稿已保存');
+      return;
+    }
+    // 删除草稿（必须在加载草稿之前判断）
+    if (target.classList.contains('draft-delete')) {
+      e.stopPropagation();
+      var idx = parseInt(target.dataset.index);
+      var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+      drafts.splice(idx, 1);
+      localStorage.setItem('editor-drafts', JSON.stringify(drafts));
+      renderDraftList();
+      return;
+    }
+    // 加载草稿
+    if (target.classList.contains('draft-item') || target.closest('.draft-item')) {
+      var item = target.classList.contains('draft-item') ? target : target.closest('.draft-item');
+      var idx = parseInt(item.dataset.index);
+      var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+      if (drafts[idx]) {
+        document.getElementById('post-title').value = drafts[idx].title || '';
+        document.getElementById('markdown-input').value = drafts[idx].content || '';
+        closePanel();
+      }
+      return;
+    }
+  });
+
+  // 标题同步（面板内输入 → 顶部标题）
+  panelContent.addEventListener('input', function(e) {
+    if (e.target.id === 'post-title-input') {
+      document.getElementById('post-title').value = e.target.value;
+    }
+  });
+
+  // 封面上传
+  panelContent.addEventListener('change', function(e) {
+    if (e.target.id === 'cover-upload') {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var coverInput = document.getElementById('post-cover');
+        if (coverInput) coverInput.value = ev.target.result;
+        var preview = document.getElementById('cover-preview');
+        var img = document.getElementById('cover-preview-img');
+        if (img && preview) { img.src = ev.target.result; preview.classList.remove('hidden'); }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // 绑定所有 data-panel 按钮（图标栏 + 底部栏）
+  document.querySelectorAll('[data-panel]').forEach(function(btn) {
+    btn.addEventListener('click', function() { openPanel(this.dataset.panel); });
+  });
+
+  // 关闭按钮
+  if (panelClose) panelClose.addEventListener('click', closePanel);
+
+  // 侧边栏导出MD按钮
+  var exportBtn = document.getElementById('btn-export-md');
+  if (exportBtn) exportBtn.addEventListener('click', function() {
+    var title = document.getElementById('post-title').value || 'untitled';
+    var textarea = document.getElementById('markdown-input');
+    var blob = new Blob([textarea.value], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = title + '.md';
+    a.click();
+  });
+
+  // 底部保存草稿按钮
+  var quickSaveBtn = document.getElementById('btn-quick-save');
+  if (quickSaveBtn) quickSaveBtn.addEventListener('click', function() {
+    var textarea = document.getElementById('markdown-input');
+    var title = document.getElementById('post-title').value;
+    var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+    drafts.push({ name: title || '快速保存', title: title, content: textarea.value, savedAt: new Date().toISOString() });
+    localStorage.setItem('editor-drafts', JSON.stringify(drafts));
+    showToast('草稿已保存');
+  });
+
+  // 轻提示
+  function showToast(msg) {
+    var toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;';
+    document.body.appendChild(toast);
+    requestAnimationFrame(function() { toast.style.opacity = '1'; });
+    setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 1500);
+  }
+
+  // 底部发布按钮 → 直接打开 GitHub 弹窗
+  var publishBtn = document.querySelector('[data-panel="publish"]');
+  if (publishBtn) {
+    publishBtn.removeAttribute('data-panel');
+    publishBtn.addEventListener('click', function() {
+      var modal = document.getElementById('github-modal');
+      if (modal) modal.classList.remove('hidden');
+    });
+  }
+
+  // GitHub 弹窗按钮
+  var ghCancel = document.getElementById('gh-cancel');
+  var ghConfirm = document.getElementById('gh-confirm');
+  if (ghCancel) ghCancel.addEventListener('click', function() {
+    var modal = document.getElementById('github-modal');
+    if (modal) modal.classList.add('hidden');
+  });
+  if (ghConfirm) ghConfirm.addEventListener('click', function() {
+    var token = document.getElementById('gh-token').value;
+    var repo = document.getElementById('gh-repo').value;
+    var branch = document.getElementById('gh-branch').value;
+    var title = document.getElementById('post-title').value;
+    var textarea = document.getElementById('markdown-input');
+    var content = textarea.value;
+    var status = document.getElementById('gh-status');
+
+    if (!token || !title) {
+      status.textContent = '❌ 请填写 Token 和标题';
+      status.className = 'text-sm text-red-500';
+      status.classList.remove('hidden');
+      return;
+    }
+
+    status.textContent = '⏳ 发布中...';
+    status.className = 'text-sm text-blue-500';
+    status.classList.remove('hidden');
+
+    var slug = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
+    var filename = 'src/content/posts/' + slug + '.md';
+    var frontmatter = '---\ntitle: "' + title + '"\npublished: ' + new Date().toISOString().split('T')[0] + '\ndraft: false\n---\n\n';
+    var base64 = btoa(unescape(encodeURIComponent(frontmatter + content)));
+
+    fetch('https://api.github.com/repos/' + repo + '/contents/' + filename, {
+      method: 'PUT',
+      headers: {
+        'Authorization': '***' + token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: 'post: add "' + title + '"',
+        content: base64,
+        branch: branch,
+      }),
+    }).then(function(res) {
+      if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '发布失败'); });
+      return res.json();
+    }).then(function() {
+      status.textContent = '✅ 发布成功！';
+      status.className = 'text-sm text-green-500';
+    }).catch(function(e) {
+      status.textContent = '❌ ' + e.message;
+      status.className = 'text-sm text-red-500';
+    });
+  });
+
+  // 图片弹窗
+  var imgModal = document.getElementById('image-modal');
+  var imgCancel = document.getElementById('img-cancel');
+  if (imgCancel && imgModal) imgCancel.addEventListener('click', function() { imgModal.classList.add('hidden'); });
+  var imgConfirm = document.getElementById('img-confirm');
+  if (imgConfirm && imgModal) imgConfirm.addEventListener('click', function() {
+    var urlInput = document.getElementById('img-url-input');
+    var url = urlInput ? urlInput.value : '';
+    if (url) {
+      var textarea = document.getElementById('markdown-input');
+      var start = textarea.selectionStart;
+      textarea.setRangeText('![图片](' + url + ')', start, start, 'end');
+      textarea.focus();
+      urlInput.value = '';
+      imgModal.classList.add('hidden');
+    }
+  });
+
+  // 链接弹窗
+  var linkModal = document.getElementById('link-modal');
+  var linkCancel = document.getElementById('link-cancel');
+  if (linkCancel && linkModal) linkCancel.addEventListener('click', function() { linkModal.classList.add('hidden'); });
+  var linkConfirm = document.getElementById('link-confirm');
+  if (linkConfirm && linkModal) linkConfirm.addEventListener('click', function() {
+    var text = document.getElementById('link-text-input').value;
+    var url = document.getElementById('link-url-input').value;
+    if (url) {
+      var textarea = document.getElementById('markdown-input');
+      var start = textarea.selectionStart;
+      textarea.setRangeText('[' + (text || '链接') + '](' + url + ')', start, start, 'end');
+      textarea.focus();
+      linkModal.classList.add('hidden');
+    }
+  });
+
+  // 工具栏图片/链接按钮 → 打开弹窗
+  var imgToolBtn = document.querySelector('[data-action="image"]');
+  if (imgToolBtn && imgModal) imgToolBtn.addEventListener('click', function() { imgModal.classList.remove('hidden'); });
+  var linkToolBtn = document.querySelector('[data-action="link"]');
+  if (linkToolBtn && linkModal) linkToolBtn.addEventListener('click', function() { linkModal.classList.remove('hidden'); });
+
+  // 初始化隐藏
+  slidePanel.style.width = '0px';
+})();
+</script>
+</EditorLayout>
