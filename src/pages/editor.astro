@@ -225,18 +225,19 @@ import { siteConfig } from "@/config";
     <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入图片</h3>
     <div class="space-y-3">
       <div class="flex gap-2">
-        <input id="img-url-input" type="text" placeholder="图片地址"
+        <input id="img-url-input" type="text" placeholder="粘贴图片 URL"
           class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        <label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
+        <label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1 whitespace-nowrap">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          本地
+          本地上传
           <input id="img-file-input" type="file" accept="image/*" class="hidden" />
         </label>
       </div>
       <div id="img-preview" class="hidden">
-        <img id="img-preview-thumb" class="max-h-24 rounded-lg mx-auto" />
+        <img id="img-preview-thumb" class="max-h-32 rounded-lg mx-auto" />
       </div>
       <div id="img-status" class="text-sm hidden"></div>
+      <p class="text-xs text-black/40 dark:text-white/40">本地图片将上传到 GitHub 仓库 public/uploads/ 目录</p>
     </div>
     <div class="flex justify-end gap-2 mt-4">
       <button id="img-cancel" class="px-3 py-1.5 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
@@ -474,8 +475,8 @@ function initEditor() {
       slug: document.getElementById('post-slug').value,
       password: document.getElementById('post-password').value,
       passwordHint: document.getElementById('post-password-hint').value,
-      pinned: document.getElementById('post-pinned').value === 'true',
-      comment: document.getElementById('post-comment').value === 'true',
+      pinned: !!document.getElementById('chk-pinned')?.checked,
+      comment: !!document.getElementById('chk-comment')?.checked,
       savedAt: new Date().toISOString(),
     };
     try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data)); } catch(e) {}
@@ -553,12 +554,7 @@ function initEditor() {
     else { btn.classList.remove('active'); input.value = 'false'; }
   }
 
-  document.getElementById('btn-pinned').addEventListener('click', function() {
-    setToggle('btn-pinned', 'post-pinned', !this.classList.contains('active'));
-  });
-  document.getElementById('btn-comment').addEventListener('click', function() {
-    setToggle('btn-comment', 'post-comment', !this.classList.contains('active'));
-  });
+  // 置顶/评论由 IIFE 事件委托处理，此处不再重复绑定
 
   // 图片上传
   document.getElementById('cover-upload').addEventListener('change', function(e) {
@@ -631,20 +627,7 @@ function initEditor() {
     }
   });
 
-  // 图片上传弹窗
-  const imgModal = document.getElementById('image-modal');
-  document.querySelector('[data-action="image"]').addEventListener('click', () => imgModal.classList.remove('hidden'));
-  document.getElementById('img-cancel').addEventListener('click', () => imgModal.classList.add('hidden'));
-
-  // 链接弹窗
-  const linkModal = document.getElementById('link-modal');
-  document.querySelector('[data-action="link"]').addEventListener('click', () => linkModal.classList.remove('hidden'));
-  document.getElementById('link-cancel').addEventListener('click', () => linkModal.classList.add('hidden'));
-
-  // 草稿弹窗
-  const draftModal = document.getElementById('draft-modal');
-  document.getElementById('btn-drafts').addEventListener('click', () => draftModal.classList.remove('hidden'));
-  document.getElementById('draft-close').addEventListener('click', () => draftModal.classList.add('hidden'));
+  // 图片/链接/草稿弹窗由 IIFE 处理，此处不再重复绑定
 
   // 保存草稿
   document.getElementById('btn-save-draft').addEventListener('click', () => {
@@ -700,7 +683,7 @@ function initEditor() {
 
   var templates = {
     publish: { title: '发布', html: '<div class="space-y-3"><button id="btn-github" class="w-full py-2.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">发布到 GitHub</button><button id="btn-download" class="w-full py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer">下载 .md 文件</button></div>' },
-    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><button id="btn-pinned" class="toggle-btn text-xs" title="置顶">📌</button><button id="btn-comment" class="toggle-btn text-xs active" title="评论">💬</button></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
+    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     tags: { title: '标签', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签（逗号分隔）</label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     cover: { title: '封面图', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 URL</label><input id="post-cover" type="text" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     settings: { title: '设置', html: '<div class="text-sm text-black/50 dark:text-white/50">更多设置开发中...</div>' },
@@ -753,6 +736,35 @@ function initEditor() {
         '<button class="text-xs text-red-500 hover:text-red-700 ml-2 draft-delete" data-index="' + i + '">删除</button></div>';
     }).join('');
   }
+
+  // checkbox 切换样式 + 初始化
+  function syncCheckboxStyle(chk) {
+    var lbl = chk.closest('label');
+    if (!lbl) return;
+    if (chk.checked) {
+      lbl.style.borderColor = 'var(--primary)';
+      lbl.style.background = 'color-mix(in srgb, var(--primary) 10%, transparent)';
+      lbl.style.color = 'var(--primary)';
+    } else {
+      lbl.style.borderColor = '';
+      lbl.style.background = '';
+      lbl.style.color = '';
+    }
+  }
+  panelContent.addEventListener('change', function(e) {
+    if (e.target.id === 'chk-pinned' || e.target.id === 'chk-comment') {
+      syncCheckboxStyle(e.target);
+    }
+  });
+  // 打开面板时初始化已有 checkbox 的样式
+  var origOpenPanel = openPanel;
+  openPanel = function(name) {
+    origOpenPanel(name);
+    setTimeout(function() {
+      var chks = panelContent.querySelectorAll('#chk-pinned, #chk-comment');
+      chks.forEach(function(c) { syncCheckboxStyle(c); });
+    }, 0);
+  };
 
   // 事件委托 - 面板内所有按钮
   panelContent.addEventListener('click', function(e) {
@@ -957,26 +969,116 @@ function initEditor() {
   // 图片弹窗
   var imgModal = document.getElementById('image-modal');
   var imgCancel = document.getElementById('img-cancel');
-  if (imgCancel && imgModal) imgCancel.addEventListener('click', function() { imgModal.classList.add('hidden'); });
   var imgConfirm = document.getElementById('img-confirm');
-  if (imgConfirm && imgModal) imgConfirm.addEventListener('click', function() {
-    var urlInput = document.getElementById('img-url-input');
-    var url = urlInput ? urlInput.value : '';
-    if (url) {
-      var textarea = document.getElementById('markdown-input');
-      var start = textarea.selectionStart;
-      textarea.setRangeText('![图片](' + url + ')', start, start, 'end');
-      textarea.focus();
-      urlInput.value = '';
-      imgModal.classList.add('hidden');
+  var imgUrlInput = document.getElementById('img-url-input');
+  var imgFileInput = document.getElementById('img-file-input');
+  var imgPreview = document.getElementById('img-preview');
+  var imgPreviewThumb = document.getElementById('img-preview-thumb');
+  var imgStatus = document.getElementById('img-status');
+  var pendingImgUrl = '';
+
+  // 打开图片弹窗
+  var imgToolBtn = document.querySelector('[data-action="image"]');
+  if (imgToolBtn && imgModal) imgToolBtn.addEventListener('click', function() {
+    imgModal.classList.remove('hidden');
+    if (imgUrlInput) imgUrlInput.value = '';
+    if (imgPreview) imgPreview.classList.add('hidden');
+    if (imgStatus) { imgStatus.classList.add('hidden'); imgStatus.textContent = ''; }
+    pendingImgUrl = '';
+    setTimeout(function() { if (imgUrlInput) imgUrlInput.focus(); }, 100);
+  });
+
+  // 取消
+  if (imgCancel && imgModal) imgCancel.addEventListener('click', function() {
+    imgModal.classList.add('hidden');
+  });
+
+  // 本地文件选择 → 上传到 GitHub
+  if (imgFileInput) imgFileInput.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+
+    // 预览
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      if (imgPreviewThumb) imgPreviewThumb.src = ev.target.result;
+      if (imgPreview) imgPreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+
+    // 上传到 GitHub
+    var token = localStorage.getItem('gh-token') || '';
+    var repo = localStorage.getItem('gh-repo') || '';
+    if (!token || !repo) {
+      if (imgStatus) { imgStatus.textContent = '❌ 请先在发布弹窗中配置 GitHub Token 和仓库'; imgStatus.className = 'text-sm text-red-500'; imgStatus.classList.remove('hidden'); }
+      return;
     }
+
+    if (imgStatus) { imgStatus.textContent = '⏳ 上传中...'; imgStatus.className = 'text-sm text-blue-500'; imgStatus.classList.remove('hidden'); }
+
+    var uploadReader = new FileReader();
+    uploadReader.onload = function(ev2) {
+      var base64 = ev2.target.result.split(',')[1];
+      var ext = file.name.split('.').pop();
+      var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+
+      fetch('https://api.github.com/repos/' + repo + '/contents/public/uploads/' + filename, {
+        method: 'PUT',
+        headers: {
+          'Authorization': '***' + token,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'upload: ' + filename,
+          content: base64,
+          branch: 'main',
+        }),
+      }).then(function(res) {
+        if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '上传失败'); });
+        return res.json();
+      }).then(function() {
+        pendingImgUrl = '/uploads/' + filename;
+        if (imgUrlInput) imgUrlInput.value = pendingImgUrl;
+        if (imgStatus) { imgStatus.textContent = '✅ 上传成功'; imgStatus.className = 'text-sm text-green-500'; }
+      }).catch(function(err) {
+        if (imgStatus) { imgStatus.textContent = '❌ ' + err.message; imgStatus.className = 'text-sm text-red-500'; }
+      });
+    };
+    uploadReader.readAsDataURL(file);
+  });
+
+  // 确认插入
+  if (imgConfirm && imgModal) imgConfirm.addEventListener('click', function() {
+    var url = pendingImgUrl || (imgUrlInput ? imgUrlInput.value.trim() : '');
+    if (!url) { imgUrlInput.focus(); return; }
+    var textarea = document.getElementById('markdown-input');
+    if (!textarea) return;
+    var start = textarea.selectionStart;
+    textarea.setRangeText('\n![' + '图片' + '](' + url + ')\n', start, start, 'end');
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input'));
+    // 重置
+    if (imgUrlInput) imgUrlInput.value = '';
+    if (imgPreview) imgPreview.classList.add('hidden');
+    if (imgStatus) { imgStatus.classList.add('hidden'); imgStatus.textContent = ''; }
+    pendingImgUrl = '';
+    imgModal.classList.add('hidden');
+  });
+
+  // 回车确认
+  if (imgUrlInput) imgUrlInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (imgConfirm) imgConfirm.click(); }
   });
 
   // 链接弹窗
   var linkModal = document.getElementById('link-modal');
   var linkCancel = document.getElementById('link-cancel');
-  if (linkCancel && linkModal) linkCancel.addEventListener('click', function() { linkModal.classList.add('hidden'); });
   var linkConfirm = document.getElementById('link-confirm');
+  var linkToolBtn = document.querySelector('[data-action="link"]');
+
+  if (linkToolBtn && linkModal) linkToolBtn.addEventListener('click', function() { linkModal.classList.remove('hidden'); });
+  if (linkCancel && linkModal) linkCancel.addEventListener('click', function() { linkModal.classList.add('hidden'); });
   if (linkConfirm && linkModal) linkConfirm.addEventListener('click', function() {
     var text = document.getElementById('link-text-input').value;
     var url = document.getElementById('link-url-input').value;
@@ -985,15 +1087,10 @@ function initEditor() {
       var start = textarea.selectionStart;
       textarea.setRangeText('[' + (text || '链接') + '](' + url + ')', start, start, 'end');
       textarea.focus();
+      textarea.dispatchEvent(new Event('input'));
       linkModal.classList.add('hidden');
     }
   });
-
-  // 工具栏图片/链接按钮 → 打开弹窗
-  var imgToolBtn = document.querySelector('[data-action="image"]');
-  if (imgToolBtn && imgModal) imgToolBtn.addEventListener('click', function() { imgModal.classList.remove('hidden'); });
-  var linkToolBtn = document.querySelector('[data-action="link"]');
-  if (linkToolBtn && linkModal) linkToolBtn.addEventListener('click', function() { linkModal.classList.remove('hidden'); });
 
   // 初始化隐藏
   slidePanel.style.width = '0px';
