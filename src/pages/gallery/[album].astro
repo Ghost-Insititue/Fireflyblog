@@ -59,14 +59,39 @@ const coverLqipProps = cover
           {i18n(I18nKey.galleryBackToAlbums)}
         </a>
         <!-- 上传按钮 -->
-        <button
-          id="btn-upload-photo"
-          class="absolute top-4 right-4 inline-flex items-center gap-1.5 text-sm text-white/90 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-          title="上传照片"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          上传
-        </button>
+        <div class="absolute top-4 right-4 flex items-center gap-2">
+          <button
+            id="btn-edit-album"
+            data-album-name="{albumMeta.name}"
+            data-album-id="{albumMeta.id}"
+            data-album-desc="{albumMeta.description || ''}"
+            data-album-date="{albumMeta.date || ''}"
+            data-album-location="{albumMeta.location || ''}"
+            data-album-tags="{(albumMeta.tags || []).join(',')}"
+            data-album-has-password={albumMeta.password ? 'true' : ''}
+            class="inline-flex items-center gap-1.5 text-sm text-white/90 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="编辑相册"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            编辑
+          </button>
+          <button
+            id="btn-delete-album"
+            class="inline-flex items-center gap-1.5 text-sm text-white/90 hover:text-white bg-red-500/50 hover:bg-red-500/70 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="删除相册"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            删除
+          </button>
+          <button
+            id="btn-upload-photo"
+            class="inline-flex items-center gap-1.5 text-sm text-white/90 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="上传照片"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            上传
+          </button>
+        </div>
         <!-- 封面上的信息 -->
         <div class="absolute bottom-0 left-0 right-0 p-6">
           <div class="text-2xl sm:text-3xl font-bold text-white mb-2 drop-shadow-lg">
@@ -210,10 +235,83 @@ const coverLqipProps = cover
     </div>
   </div>
 
+  <!-- 编辑相册弹窗 -->
+  <div id="edit-album-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+    <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 480px; max-height: 90vh; overflow-y: auto;">
+      <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">✏️ 编辑相册</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
+          <input id="edit-album-name" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID</label>
+          <input id="edit-album-id" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label>
+          <input id="edit-album-desc" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">拍摄地点</label>
+            <input id="edit-album-location" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+          <div style="width: 160px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">日期</label>
+            <input id="edit-album-date" type="date" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-xs text-black/40 dark:text-white/40">（逗号分隔）</span></label>
+          <input id="edit-album-tags" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码</label>
+            <div class="relative">
+              <input id="edit-album-password" type="password" class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              <button id="toggle-edit-pwd" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="width: 140px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label>
+            <input id="edit-album-hint" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+        </div>
+        <div id="edit-status" class="text-sm hidden"></div>
+      </div>
+      <div class="flex justify-end gap-2 mt-5">
+        <button id="edit-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+        <button id="edit-confirm" class="px-5 py-2 rounded-lg bg-(--primary) text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div id="delete-album-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+    <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 400px;">
+      <h3 class="text-base font-bold text-red-500 mb-2">⚠️ 删除相册</h3>
+      <p class="text-sm text-black/70 dark:text-white/70 mb-1">确定要删除相册「<span id="delete-album-name"></span>」吗？</p>
+      <p class="text-xs text-black/40 dark:text-white/40 mb-4">此操作会从配置中移除相册条目，但不会删除服务器上的照片文件。</p>
+      <div id="delete-status" class="text-sm mb-3 hidden"></div>
+      <div class="flex justify-end gap-2">
+        <button id="delete-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+        <button id="delete-confirm" class="px-5 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition cursor-pointer">确认删除</button>
+      </div>
+    </div>
+  </div>
+
   <script is:inline define:vars={{ albumId: albumMeta.id }}>
-    (function() {
+    function initGalleryUpload() {
       const modal = document.getElementById('gallery-upload-modal');
       const dropzone = document.getElementById('upload-dropzone');
+      if (!modal || !dropzone) return;
+      if (dropzone.dataset.bound) return;
+      dropzone.dataset.bound = 'true';
+
       const fileInput = document.getElementById('upload-file-input');
       const fileList = document.getElementById('upload-file-list');
       const statusEl = document.getElementById('upload-status');
@@ -363,5 +461,455 @@ const coverLqipProps = cover
            'text-blue-500');
         statusEl.textContent = msg;
       }
-    })();
+    }
+
+    function safeInitGalleryUpload() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { initGalleryUpload(); });
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', safeInitGalleryUpload);
+    } else {
+      safeInitGalleryUpload();
+    }
+    document.addEventListener('swup:content:replaced', safeInitGalleryUpload);
+
+    // ===== 编辑/删除相册 =====
+    function initAlbumEdit() {
+      const editBtn = document.getElementById('btn-edit-album');
+      const deleteBtn = document.getElementById('btn-delete-album');
+      const editModal = document.getElementById('edit-album-modal');
+      const deleteModal = document.getElementById('delete-album-modal');
+      if (!editBtn || !editModal) return;
+      if (editBtn.dataset.bound) return;
+      editBtn.dataset.bound = 'true';
+
+      // 打开编辑弹窗
+      editBtn.addEventListener('click', () => {
+        const btn = document.getElementById('btn-edit-album');
+        document.getElementById('edit-album-name').value = btn.dataset.albumName || '';
+        document.getElementById('edit-album-id').value = btn.dataset.albumId || '';
+        document.getElementById('edit-album-desc').value = btn.dataset.albumDesc || '';
+        document.getElementById('edit-album-date').value = btn.dataset.albumDate || '';
+        document.getElementById('edit-album-location').value = btn.dataset.albumLocation || '';
+        document.getElementById('edit-album-tags').value = btn.dataset.albumTags || '';
+        document.getElementById('edit-album-password').value = '';
+        document.getElementById('edit-album-hint').value = '';
+        document.getElementById('edit-status').classList.add('hidden');
+        editModal.classList.remove('hidden');
+      });
+
+      // 关闭编辑弹窗
+      document.getElementById('edit-cancel').addEventListener('click', () => editModal.classList.add('hidden'));
+      editModal.addEventListener('click', (e) => { if (e.target === e.currentTarget) editModal.classList.add('hidden'); });
+      document.getElementById('toggle-edit-pwd').addEventListener('click', () => {
+        const pwd = document.getElementById('edit-album-password');
+        pwd.type = pwd.type === 'password' ? 'text' : 'password';
+      });
+
+      // 编辑保存
+      document.getElementById('edit-confirm').addEventListener('click', async () => {
+        const newName = document.getElementById('edit-album-name').value.trim();
+        const newId = document.getElementById('edit-album-id').value.trim();
+        const newDesc = document.getElementById('edit-album-desc').value.trim();
+        const newLocation = document.getElementById('edit-album-location').value.trim();
+        const newDate = document.getElementById('edit-album-date').value;
+        const newTags = document.getElementById('edit-album-tags').value;
+        const newPwd = document.getElementById('edit-album-password').value;
+        const newHint = document.getElementById('edit-album-hint').value.trim();
+
+        if (!newName) { showEditStatus('请输入相册名称', 'error'); return; }
+        if (!newId) { showEditStatus('请输入相册 ID', 'error'); return; }
+
+        const token = localStorage.getItem('gh-editor-token');
+        const repo = localStorage.getItem('gh-editor-repo') || 'Ghost-Insititue/Fireflyblog';
+        if (!token) { showEditStatus('请先在编辑器页面配置 GitHub Token', 'error'); return; }
+
+        document.getElementById('edit-confirm').disabled = true;
+        document.getElementById('edit-confirm').textContent = '保存中...';
+
+        try {
+          await modifyGalleryConfig(token, repo, 'edit', {
+            oldId: document.getElementById('btn-edit-album').dataset.albumId, newId, name: newName, description: newDesc, location: newLocation, date: newDate, tags: newTags, password: newPwd, passwordHint: newHint
+          });
+          showEditStatus('✅ 保存成功，正在跳转...', 'success');
+          setTimeout(() => { window.location.href = '/gallery/' + newId; }, 1000);
+        } catch (e) {
+          showEditStatus('❌ ' + e.message, 'error');
+          document.getElementById('edit-confirm').disabled = false;
+          document.getElementById('edit-confirm').textContent = '保存';
+        }
+      });
+
+      function showEditStatus(msg, type) {
+        const el = document.getElementById('edit-status');
+        el.classList.remove('hidden');
+        el.className = 'text-sm ' + (type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-500' : 'text-blue-500');
+        el.textContent = msg;
+      }
+
+      // 删除
+      if (deleteBtn && deleteModal) {
+        deleteBtn.addEventListener('click', () => {
+          document.getElementById('delete-album-name').textContent = document.getElementById('btn-edit-album').dataset.albumName || albumId;
+          document.getElementById('delete-status').classList.add('hidden');
+          document.getElementById('delete-confirm').disabled = false;
+          document.getElementById('delete-confirm').textContent = '确认删除';
+          deleteModal.classList.remove('hidden');
+        });
+        document.getElementById('delete-cancel').addEventListener('click', () => deleteModal.classList.add('hidden'));
+        deleteModal.addEventListener('click', (e) => { if (e.target === e.currentTarget) deleteModal.classList.add('hidden'); });
+        document.getElementById('delete-confirm').addEventListener('click', async () => {
+          const token = localStorage.getItem('gh-editor-token');
+          const repo = localStorage.getItem('gh-editor-repo') || 'Ghost-Insititue/Fireflyblog';
+          if (!token) { showDeleteStatus('请先在编辑器页面配置 GitHub Token', 'error'); return; }
+          document.getElementById('delete-confirm').disabled = true;
+          document.getElementById('delete-confirm').textContent = '删除中...';
+          try {
+            await modifyGalleryConfig(token, repo, 'delete', { oldId: document.getElementById('btn-edit-album').dataset.albumId || albumId });
+            showDeleteStatus('✅ 删除成功，正在返回...', 'success');
+            setTimeout(() => { window.location.href = '/gallery/'; }, 1000);
+          } catch (e) {
+            showDeleteStatus('❌ ' + e.message, 'error');
+            document.getElementById('delete-confirm').disabled = false;
+            document.getElementById('delete-confirm').textContent = '确认删除';
+          }
+        });
+        function showDeleteStatus(msg, type) {
+          const el = document.getElementById('delete-status');
+          el.classList.remove('hidden');
+          el.className = 'text-sm ' + (type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-500' : 'text-blue-500');
+          el.textContent = msg;
+        }
+      }
+    }
+
+    // 修改 galleryConfig.ts 的通用函数
+    async function modifyGalleryConfig(token, repo, action, data) {
+      const configPath = 'src/config/galleryConfig.ts';
+      const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}?ref=main`, {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+      });
+      if (!getRes.ok) throw new Error('读取 galleryConfig.ts 失败');
+      const fileData = await getRes.json();
+      const currentContent = decodeURIComponent(escape(atob(fileData.content)));
+      const sha = fileData.sha;
+
+      const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      let updatedContent;
+
+      if (action === 'delete') {
+        const idPattern = new RegExp(`\\tid:\\s*\\"${esc(data.oldId)}\\"`);
+        const lines = currentContent.split('\n');
+        let startIdx = -1, endIdx = -1, braceCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+          if (idPattern.test(lines[i])) {
+            for (let j = i; j >= 0; j--) {
+              if (lines[j].includes('{')) { startIdx = j; break; }
+            }
+            braceCount = 0;
+            for (let j = startIdx; j < lines.length; j++) {
+              braceCount += (lines[j].match(/\{/g) || []).length;
+              braceCount -= (lines[j].match(/\}/g) || []).length;
+              if (braceCount === 0) { endIdx = j; break; }
+            }
+            break;
+          }
+        }
+        if (startIdx === -1 || endIdx === -1) throw new Error(`未找到相册「${data.oldId}」`);
+        lines.splice(startIdx, endIdx - startIdx + 1);
+        updatedContent = lines.join('\n');
+      } else if (action === 'edit') {
+        const idPattern = new RegExp(`\\tid:\\s*\\"${esc(data.oldId)}\\"`);
+        const lines = currentContent.split('\n');
+        let startIdx = -1, endIdx = -1, braceCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+          if (idPattern.test(lines[i])) {
+            for (let j = i; j >= 0; j--) {
+              if (lines[j].includes('{')) { startIdx = j; break; }
+            }
+            braceCount = 0;
+            for (let j = startIdx; j < lines.length; j++) {
+              braceCount += (lines[j].match(/\{/g) || []).length;
+              braceCount -= (lines[j].match(/\}/g) || []).length;
+              if (braceCount === 0) { endIdx = j; break; }
+            }
+            break;
+          }
+        }
+        if (startIdx === -1 || endIdx === -1) throw new Error(`未找到相册「${data.oldId}」`);
+
+        let newAlbum = `\t\t{\n`;
+        newAlbum += `\t\t\tid: "${esc(data.newId)}",\n`;
+        newAlbum += `\t\t\tname: "${esc(data.name)}",\n`;
+        if (data.description) newAlbum += `\t\t\tdescription: "${esc(data.description)}",\n`;
+        if (data.location) newAlbum += `\t\t\tlocation: "${esc(data.location)}",\n`;
+        if (data.date) newAlbum += `\t\t\tdate: "${data.date}",\n`;
+        if (data.tags) {
+          const tagList = data.tags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+          if (tagList.length > 0) newAlbum += `\t\t\ttags: [${tagList.map(t => `"${esc(t)}"`).join(', ')}],\n`;
+        }
+        if (data.password) {
+          newAlbum += `\t\t\tpassword: "${esc(data.password)}",\n`;
+          if (data.passwordHint) newAlbum += `\t\t\tpasswordHint: "${esc(data.passwordHint)}",\n`;
+        }
+        newAlbum += `\t\t},`;
+
+        lines.splice(startIdx, endIdx - startIdx + 1, newAlbum);
+        updatedContent = lines.join('\n');
+      }
+
+      if (!updatedContent) throw new Error('更新内容为空');
+
+      const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
+      const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `gallery: ${action} album "${data.name || data.oldId}"`,
+          content: encoded,
+          sha: sha,
+          branch: 'main',
+        }),
+      });
+      if (!updateRes.ok) {
+        const err = await updateRes.json();
+        throw new Error(err.message || '更新失败');
+      }
+    }
+
+    // 使用 requestAnimationFrame 确保 DOM 就绪
+    function safeInitAlbumEdit() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { initAlbumEdit(); });
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', safeInitAlbumEdit);
+    } else {
+      safeInitAlbumEdit();
+    }
+    document.addEventListener('swup:content:replaced', safeInitAlbumEdit);
+
+    // ===== 照片删除（单张 + 批量） =====
+    function initPhotoDelete() {
+      const container = document.querySelector('.gallery-masonry');
+      if (!container || container.dataset.deleteBound) return;
+      container.dataset.deleteBound = 'true';
+
+      // 批量模式状态
+      let batchMode = false;
+      let selectedPhotos = new Set();
+
+      // 添加批量操作栏
+      const batchBar = document.createElement('div');
+      batchBar.className = 'hidden items-center justify-between px-4 py-2 mb-3 rounded-lg bg-[var(--primary)]/5 border border-[var(--line-divider)] text-sm';
+      batchBar.innerHTML = `
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-1.5 cursor-pointer text-xs text-black/60 dark:text-white/60">
+            <input id="select-all-photos" type="checkbox" class="w-3.5 h-3.5 rounded accent-[var(--primary)]" />
+            全选
+          </label>
+          <span id="selected-count" class="text-xs text-black/40 dark:text-white/40">已选 0 张</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-batch-delete-photos" class="px-3 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 cursor-pointer disabled:opacity-50" disabled>删除选中</button>
+          <button id="btn-cancel-batch" class="px-3 py-1 rounded text-xs text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">取消</button>
+        </div>
+      `;
+      container.before(batchBar);
+
+      // 长按进入批量模式 / 点击删除单张
+      let longPressTimer = null;
+      container.addEventListener('mousedown', (e) => {
+        const photoCard = e.target.closest('.gallery-photo-card');
+        if (!photoCard) return;
+        longPressTimer = setTimeout(() => {
+          enterBatchMode();
+          togglePhotoSelection(photoCard);
+        }, 500);
+      });
+      container.addEventListener('mouseup', () => clearTimeout(longPressTimer));
+      container.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
+
+      // 单张删除按钮
+      container.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('[data-action="delete-photo"]');
+        if (!deleteBtn) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (batchMode) {
+          const card = deleteBtn.closest('.gallery-photo-card');
+          togglePhotoSelection(card);
+          return;
+        }
+
+        // 单张删除确认
+        const src = deleteBtn.dataset.src;
+        showPhotoConfirm(`删除这张照片？`, () => deletePhotos([src]));
+      });
+
+      // 批量模式
+      function enterBatchMode() {
+        if (batchMode) return;
+        batchMode = true;
+        batchBar.classList.remove('hidden');
+        batchBar.classList.add('flex');
+        container.querySelectorAll('.gallery-photo-card').forEach(card => {
+          card.classList.add('ring-2', 'ring-transparent', 'ring-offset-2', 'cursor-pointer');
+        });
+      }
+
+      function exitBatchMode() {
+        batchMode = false;
+        selectedPhotos.clear();
+        batchBar.classList.add('hidden');
+        batchBar.classList.remove('flex');
+        container.querySelectorAll('.gallery-photo-card').forEach(card => {
+          card.classList.remove('ring-2', 'ring-[var(--primary)]', 'ring-transparent', 'ring-offset-2');
+        });
+        document.getElementById('select-all-photos').checked = false;
+        updateSelectedCount();
+      }
+
+      function togglePhotoSelection(card) {
+        const src = card.querySelector('[data-src]')?.dataset.src || card.querySelector('img')?.src;
+        if (!src) return;
+        if (selectedPhotos.has(src)) {
+          selectedPhotos.delete(src);
+          card.classList.remove('ring-[var(--primary)]');
+          card.classList.add('ring-transparent');
+        } else {
+          selectedPhotos.add(src);
+          card.classList.add('ring-[var(--primary)]');
+          card.classList.remove('ring-transparent');
+        }
+        updateSelectedCount();
+      }
+
+      function updateSelectedCount() {
+        document.getElementById('selected-count').textContent = `已选 ${selectedPhotos.size} 张`;
+        document.getElementById('btn-batch-delete-photos').disabled = selectedPhotos.size === 0;
+      }
+
+      // 全选
+      batchBar.querySelector('#select-all-photos').addEventListener('change', (e) => {
+        container.querySelectorAll('.gallery-photo-card').forEach(card => {
+          const src = card.querySelector('[data-src]')?.dataset.src || card.querySelector('img')?.src;
+          if (!src) return;
+          if (e.target.checked) {
+            selectedPhotos.add(src);
+            card.classList.add('ring-[var(--primary)]');
+            card.classList.remove('ring-transparent');
+          } else {
+            selectedPhotos.delete(src);
+            card.classList.remove('ring-[var(--primary)]');
+            card.classList.add('ring-transparent');
+          }
+        });
+        updateSelectedCount();
+      });
+
+      // 批量删除
+      batchBar.querySelector('#btn-batch-delete-photos').addEventListener('click', () => {
+        if (selectedPhotos.size === 0) return;
+        showPhotoConfirm(`删除选中的 ${selectedPhotos.size} 张照片？`, () => deletePhotos([...selectedPhotos]));
+      });
+
+      // 取消批量
+      batchBar.querySelector('#btn-cancel-batch').addEventListener('click', exitBatchMode);
+
+      // 行内确认条
+      function showPhotoConfirm(message, onConfirm) {
+        const bar = document.createElement('div');
+        bar.className = 'flex items-center justify-between px-4 py-2.5 mb-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm';
+        bar.innerHTML = `
+          <span class="text-amber-700 dark:text-amber-300">⚠️ ${message}</span>
+          <div class="flex gap-1.5">
+            <button class="confirm-yes px-2.5 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 cursor-pointer">确认</button>
+            <button class="confirm-no px-2.5 py-1 rounded text-xs text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">取消</button>
+          </div>
+        `;
+        container.before(bar);
+        bar.querySelector('.confirm-yes').onclick = () => { bar.remove(); onConfirm(); };
+        bar.querySelector('.confirm-no').onclick = () => { bar.remove(); };
+      }
+
+      // 删除照片（通过 GitHub API）
+      async function deletePhotos(photoSrcs) {
+        const token = localStorage.getItem('gh-editor-token');
+        const repo = localStorage.getItem('gh-editor-repo') || 'Ghost-Insititue/Fireflyblog';
+        if (!token) { alert('请先在编辑器页面配置 GitHub Token'); return; }
+
+        // 显示进度
+        const statusBar = document.createElement('div');
+        statusBar.className = 'flex items-center gap-2 px-4 py-2 mb-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-sm text-blue-600 dark:text-blue-400';
+        statusBar.textContent = '⏳ 正在删除...';
+        container.before(statusBar);
+
+        let success = 0, failed = 0;
+        for (const src of photoSrcs) {
+          try {
+            // 从 URL 提取文件路径
+            const match = src.match(/\/gallery\/([^/]+)\/(.+)$/);
+            if (!match) { failed++; continue; }
+            const [, albumDir, filename] = match;
+            const filePath = `public/gallery/${albumDir}/${filename}`;
+
+            // 获取文件 SHA
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}?ref=main`, {
+              headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+            });
+            if (!getRes.ok) { failed++; continue; }
+            const fileData = await getRes.json();
+
+            // 删除文件
+            const delRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: `gallery: delete ${filename} from ${albumDir}`,
+                sha: fileData.sha,
+                branch: 'main',
+              }),
+            });
+            if (delRes.ok) success++;
+            else failed++;
+          } catch {
+            failed++;
+          }
+        }
+
+        statusBar.className = 'flex items-center gap-2 px-4 py-2 mb-3 rounded-lg text-sm ' +
+          (success > 0 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400');
+        statusBar.textContent = `✅ 删除完成：${success} 成功，${failed} 失败`;
+
+        if (success > 0) {
+          exitBatchMode();
+          setTimeout(() => { window.location.reload(); }, 1500);
+        }
+      }
+    }
+
+    function safeInitPhotoDelete() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { initPhotoDelete(); });
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', safeInitPhotoDelete);
+    } else {
+      safeInitPhotoDelete();
+    }
+    document.addEventListener('swup:content:replaced', safeInitPhotoDelete);
   </script>

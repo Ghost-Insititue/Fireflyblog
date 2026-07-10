@@ -303,9 +303,15 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
   </div>
 
   <script is:inline>
-    (function() {
+    function initCreateAlbum() {
       const modal = document.getElementById('create-album-modal');
       const btnOpen = document.getElementById('btn-create-album');
+      if (!modal || !btnOpen) return; // 元素不在，跳过
+
+      // 防止重复绑定
+      if (btnOpen.dataset.bound) return;
+      btnOpen.dataset.bound = 'true';
+
       const btnCancel = document.getElementById('create-cancel');
       const btnConfirm = document.getElementById('create-confirm');
       const statusEl = document.getElementById('create-status');
@@ -491,5 +497,20 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
            'text-blue-500');
         statusEl.textContent = msg;
       }
-    })();
+    }
+
+    function safeInitCreateAlbum() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { initCreateAlbum(); });
+      });
+    }
+    // 首次加载
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', safeInitCreateAlbum);
+    } else {
+      safeInitCreateAlbum();
+    }
+    // swup 客户端导航后重新初始化
+    document.addEventListener('swup:content:replaced', safeInitCreateAlbum);
+
   </script>
