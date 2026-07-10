@@ -62,12 +62,12 @@ const coverLqipProps = cover
         <div class="absolute top-4 right-4 flex items-center gap-2">
           <button
             id="btn-edit-album"
-            data-album-name="{albumMeta.name}"
-            data-album-id="{albumMeta.id}"
-            data-album-desc="{albumMeta.description || ''}"
-            data-album-date="{albumMeta.date || ''}"
-            data-album-location="{albumMeta.location || ''}"
-            data-album-tags="{(albumMeta.tags || []).join(',')}"
+            data-album-name={albumMeta.name}
+            data-album-id={albumMeta.id}
+            data-album-desc={albumMeta.description || ''}
+            data-album-date={albumMeta.date || ''}
+            data-album-location={albumMeta.location || ''}
+            data-album-tags={(albumMeta.tags || []).join(',')}
             data-album-has-password={albumMeta.password ? 'true' : ''}
             class="inline-flex items-center gap-1.5 text-sm text-white/90 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             title="编辑相册"
@@ -304,7 +304,7 @@ const coverLqipProps = cover
     </div>
   </div>
 
-  <script is:inline define:vars={{ albumId: albumMeta.id }}>
+  <script is:inline data-swup-reload-script define:vars={{ albumId: albumMeta.id }}>
     function initGalleryUpload() {
       const modal = document.getElementById('gallery-upload-modal');
       const dropzone = document.getElementById('upload-dropzone');
@@ -473,7 +473,7 @@ const coverLqipProps = cover
     } else {
       safeInitGalleryUpload();
     }
-    document.addEventListener('swup:content:replaced', safeInitGalleryUpload);
+    document.addEventListener('swup:enable', safeInitGalleryUpload);
 
     // ===== 编辑/删除相册 =====
     function initAlbumEdit() {
@@ -694,7 +694,7 @@ const coverLqipProps = cover
     } else {
       safeInitAlbumEdit();
     }
-    document.addEventListener('swup:content:replaced', safeInitAlbumEdit);
+    document.addEventListener('swup:enable', safeInitAlbumEdit);
 
     // ===== 照片删除（单张 + 批量） =====
     function initPhotoDelete() {
@@ -911,5 +911,5 @@ const coverLqipProps = cover
     } else {
       safeInitPhotoDelete();
     }
-    document.addEventListener('swup:content:replaced', safeInitPhotoDelete);
+    document.addEventListener('swup:enable', safeInitPhotoDelete);
   </script>

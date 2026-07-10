@@ -302,7 +302,7 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
     </div>
   </div>
 
-  <script is:inline>
+  <script is:inline data-swup-reload-script>
     function initCreateAlbum() {
       const modal = document.getElementById('create-album-modal');
       const btnOpen = document.getElementById('btn-create-album');
@@ -511,6 +511,6 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
       safeInitCreateAlbum();
     }
     // swup 客户端导航后重新初始化
-    document.addEventListener('swup:content:replaced', safeInitCreateAlbum);
+    document.addEventListener('swup:enable', safeInitCreateAlbum);
 
   </script>
