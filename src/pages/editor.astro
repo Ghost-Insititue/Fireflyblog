@@ -1,27 +1,47 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Navbar from "@/components/layout/Navbar.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
 ---
 
-<Layout title="写文章" description="在线 Markdown 编辑器">
+<MainGridLayout title="写文章" description="在线 Markdown 编辑器">
 
-<!-- 编辑器页面不使用壁纸模式 -->
+<!-- 立即隐藏侧边栏/音乐/分类栏（CSS + JS 双重保障） -->
 <script is:inline>
-  document.documentElement.setAttribute('data-wallpaper-mode', 'none');
-  document.body.classList.remove('enable-banner', 'wallpaper-transparent');
-  document.body.classList.add('no-banner-layout');
-  var wp = document.getElementById('wallpaper-wrapper');
-  if (wp) wp.style.display = 'none';
+(function() {
+  function hideElements() {
+    document.body.classList.add('editor-page');
+    document.documentElement.style.overflow = 'hidden';
+  }
+  function restoreElements() {
+    document.body.classList.remove('editor-page');
+    document.documentElement.style.overflow = '';
+  }
+
+  // swup 钩子：根据当前页面决定隐藏还是恢复
+  function onContentReplace() {
+    if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
+      hideElements();
+    } else {
+      restoreElements();
+    }
+  }
+  // 首次加载时判断
+  if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
+    hideElements();
+  }
+  // swup 钩子：页面切换时判断
+  function registerHooks() {
+    window.swup.hooks.on('content:replace', onContentReplace);
+  }
+  if (window.swup && window.swup.hooks) {
+    registerHooks();
+  } else {
+    document.addEventListener('swup:enable', registerHooks);
+  }
+})();
 </script>
 
-<div class="flex flex-col w-full overflow-hidden" style="height: 100vh; padding-top: var(--navbar-height, 72px); box-sizing: border-box;">
+<div class="flex flex-col w-full overflow-hidden" style="height: calc(100vh - var(--navbar-height, 72px)); box-sizing: border-box;">
 
-<!-- 顶部导航栏 -->
-<div id="top-row" class="z-50 pointer-events-none fixed top-0 left-0 right-0">
-  <div id="navbar-wrapper" class="pointer-events-auto mx-auto w-full xl:w-[92vw] max-w-(--page-width) px-0 md:px-4">
-    <Navbar />
-  </div>
-</div>
 
 <!-- 编辑器主体（导航栏下方） -->
 <div class="flex flex-1 overflow-hidden">
@@ -282,11 +302,43 @@ import Navbar from "@/components/layout/Navbar.astro";
 <!-- highlight.js -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
 
-<style>
+<style is:global>
   @reference "../styles/main.css";
 
-  /* 编辑器页面禁止外层滚动 */
-  html, body { overflow: hidden !important; }
+  /* 编辑器页面：隐藏博客侧边栏、音乐播放器、分类栏、页脚 */
+  body.editor-page #left-sidebar-wrapper,
+  body.editor-page #left-sidebar-dynamic,
+  body.editor-page #right-sidebar-static,
+  body.editor-page #right-sidebar-dynamic,
+  body.editor-page #category-bar-wrapper,
+  body.editor-page .music-player-widget,
+  body.editor-page .footer,
+  body.editor-page #sidebar-sticky,
+  body.editor-page .sidebar-container {
+    display: none !important;
+  }
+  /* 重置网格布局为单列 */
+  body.editor-page #main-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    width: 100% !important;
+  }
+  body.editor-page #swup-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: 1 !important;
+  }
+  /* 移除可能的列定位 */
+  body.editor-page #swup-container[class*="col-start"],
+  body.editor-page #swup-container[class*="col-end"] {
+    grid-column: unset !important;
+  }
+
+  /* 编辑器页面禁止外层滚动（body 部分由 CSS 控制，html 部分由 JS 控制） */
+  body.editor-page { overflow: hidden !important; }
 
   .toolbar-btn {
     @apply px-2 py-1 rounded-md text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black/90 dark:hover:text-white/90 transition cursor-pointer flex items-center justify-center text-sm;
@@ -994,25 +1046,5 @@ function initEditor() {
   slidePanel.style.width = '0px';
 })();
 </script>
-<script is:inline>
-// 动态检测导航栏高度
-(function() {
-  function updateNavbarHeight() {
-    var topRow = document.getElementById('top-row');
-    if (topRow) {
-      var h = topRow.offsetHeight;
-      document.documentElement.style.setProperty('--navbar-height', h + 'px');
-    }
-  }
-  updateNavbarHeight();
-  window.addEventListener('resize', updateNavbarHeight);
-  if (window.swup && window.swup.hooks) {
-    window.swup.hooks.on('content:replace', updateNavbarHeight);
-  } else {
-    document.addEventListener('swup:enable', function() {
-      window.swup.hooks.on('content:replace', updateNavbarHeight);
-    });
-  }
-})();
-</script>
-</Layout>
+
+</MainGridLayout>

@@ -448,16 +448,17 @@ function initEditor() {
   // 自动保存
   const AUTOSAVE_KEY = 'editor-autosave-draft';
   function saveDraft() {
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
     const data = {
       content: textarea.value,
-      title: document.getElementById('post-title').value,
-      desc: document.getElementById('post-desc').value,
-      category: document.getElementById('post-category').value,
-      tags: document.getElementById('post-tags').value,
-      cover: document.getElementById('post-cover').value,
-      slug: document.getElementById('post-slug').value,
-      password: document.getElementById('post-password').value,
-      passwordHint: document.getElementById('post-password-hint').value,
+      title: getVal('post-title'),
+      desc: getVal('post-desc'),
+      category: getVal('post-category'),
+      tags: getVal('post-tags'),
+      cover: getVal('post-cover'),
+      slug: getVal('post-slug'),
+      password: getVal('post-password'),
+      passwordHint: getVal('post-password-hint'),
       pinned: !!document.getElementById('chk-pinned')?.checked,
       comment: !!document.getElementById('chk-comment')?.checked,
       savedAt: new Date().toISOString(),
@@ -554,99 +555,13 @@ function initEditor() {
     reader.readAsDataURL(file);
   });
 
-  // GitHub 发布
-  const ghModal = document.getElementById('github-modal');
-  document.getElementById('btn-github').addEventListener('click', () => ghModal.classList.remove('hidden'));
-  document.getElementById('gh-cancel').addEventListener('click', () => ghModal.classList.add('hidden'));
-  document.getElementById('gh-confirm').addEventListener('click', async () => {
-    const token = document.getElementById('gh-token').value;
-    const repo = document.getElementById('gh-repo').value;
-    const branch = document.getElementById('gh-branch').value;
-    const title = document.getElementById('post-title').value;
-    const content = textarea.value;
-    const status = document.getElementById('gh-status');
-
-    if (!token || !title) {
-      status.textContent = '❌ 请填写 Token 和标题';
-      status.className = 'text-sm text-red-500';
-      status.classList.remove('hidden');
-      return;
-    }
-
-    status.textContent = '⏳ 发布中...';
-    status.className = 'text-sm text-blue-500';
-    status.classList.remove('hidden');
-
-    try {
-      const slug = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
-      const filename = 'src/content/posts/' + slug + '.md';
-      const frontmatter = '---\ntitle: "' + title + '"\npublished: ' + new Date().toISOString().split('T')[0] + '\ndraft: false\n---\n\n';
-      const base64 = btoa(unescape(encodeURIComponent(frontmatter + content)));
-
-      const res = await fetch('https://api.github.com/repos/' + repo + '/contents/' + filename, {
-        method: 'PUT',
-        headers: {
-          'Authorization': 'token ' + token,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'post: add "' + title + '"',
-          content: base64,
-          branch: branch,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || '发布失败');
-      }
-
-      status.textContent = '✅ 发布成功！';
-      status.className = 'text-sm text-green-500';
-    } catch(e) {
-      status.textContent = '❌ ' + e.message;
-      status.className = 'text-sm text-red-500';
-    }
-  });
+  // GitHub 弹窗由 IIFE 处理，此处不再重复绑定
 
   // 图片/链接/草稿弹窗由 IIFE 处理，此处不再重复绑定
 
-  // 保存草稿
-  document.getElementById('btn-save-draft').addEventListener('click', () => {
-    const name = document.getElementById('draft-name-input').value || '未命名草稿';
-    const drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
-    drafts.push({
-      name: name,
-      title: document.getElementById('post-title').value,
-      content: textarea.value,
-      savedAt: new Date().toISOString(),
-    });
-    localStorage.setItem('editor-drafts', JSON.stringify(drafts));
-    document.getElementById('draft-name-input').value = '';
-    alert('草稿已保存');
-  });
-
-  // 快捷键保存
-  document.getElementById('btn-quick-save').addEventListener('click', saveDraft);
+  // 快捷键保存（快捷键保留，按钮由 IIFE 处理）
   document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); saveDraft(); alert('草稿已保存'); }
-  });
-
-  // 下载
-  document.getElementById('btn-download').addEventListener('click', () => {
-    const title = document.getElementById('post-title').value || 'untitled';
-    const blob = new Blob([textarea.value], { type: 'text/markdown' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = title + '.md';
-    a.click();
-  });
-
-  // 复制
-  var copyBtn = document.getElementById('btn-copy');
-  if (copyBtn) copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(textarea.value).then(() => alert('已复制'));
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); document.getElementById('btn-quick-save').click(); }
   });
 
   // 初始化
@@ -928,7 +843,7 @@ function initEditor() {
     fetch('https://api.github.com/repos/' + repo + '/contents/' + filename, {
       method: 'PUT',
       headers: {
-        'Authorization': '***' + token,
+        'Authorization': 'token ' + token,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
       },
@@ -1008,7 +923,7 @@ function initEditor() {
       fetch('https://api.github.com/repos/' + repo + '/contents/public/uploads/' + filename, {
         method: 'PUT',
         headers: {
-          'Authorization': '***' + token,
+          'Authorization': 'token ' + token,
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
