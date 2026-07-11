@@ -7,6 +7,8 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 <!-- 立即隐藏侧边栏/音乐/分类栏（CSS + JS 双重保障） -->
 <script is:inline>
 (function() {
+  var isEditorPage = window.location.pathname === '/editor/' || window.location.pathname === '/editor';
+
   function hideElements() {
     document.body.classList.add('editor-page');
     document.documentElement.style.overflow = 'hidden';
@@ -16,22 +18,26 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
     document.documentElement.style.overflow = '';
   }
 
-  // swup 钩子：根据当前页面决定隐藏还是恢复
-  function onContentReplace() {
+  // 首次加载时判断
+  if (isEditorPage) {
+    hideElements();
+  }
+
+  // swup 钩子：页面切换时判断
+  // 使用 page:view 而非 content:replace，确保在页面完全替换后执行
+  function onPageView() {
     if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
       hideElements();
     } else {
       restoreElements();
     }
   }
-  // 首次加载时判断
-  if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
-    hideElements();
-  }
-  // swup 钩子：页面切换时判断
+
   function registerHooks() {
-    window.swup.hooks.on('content:replace', onContentReplace);
+    // page:view 在页面替换和动画完成后触发，确保 DOM 已更新
+    window.swup.hooks.on('page:view', onPageView);
   }
+
   if (window.swup && window.swup.hooks) {
     registerHooks();
   } else {

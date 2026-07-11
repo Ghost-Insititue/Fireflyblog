@@ -1,27 +1,82 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Navbar from "@/components/layout/Navbar.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
 ---
 
-<Layout title="写文章" description="在线 Markdown 编辑器">
+<MainGridLayout title="写文章" description="在线 Markdown 编辑器">
 
-<!-- 编辑器页面不使用壁纸模式 -->
+<!-- 立即隐藏侧边栏/音乐/分类栏（CSS + JS 双重保障） -->
 <script is:inline>
-  document.documentElement.setAttribute('data-wallpaper-mode', 'none');
-  document.body.classList.remove('enable-banner', 'wallpaper-transparent');
-  document.body.classList.add('no-banner-layout');
-  var wp = document.getElementById('wallpaper-wrapper');
-  if (wp) wp.style.display = 'none';
+(function() {
+  var editorStyleEl = null;
+  function hideElements() {
+    if (editorStyleEl) return;
+    document.body.classList.add('editor-page');
+    document.documentElement.style.overflow = 'hidden';
+    editorStyleEl = document.createElement('style');
+    editorStyleEl.id = 'editor-dynamic-style';
+    editorStyleEl.textContent = [
+      // 布局规则
+      'body.editor-page #left-sidebar-wrapper,',
+      'body.editor-page #left-sidebar-dynamic,',
+      'body.editor-page #right-sidebar-static,',
+      'body.editor-page #right-sidebar-dynamic,',
+      'body.editor-page #category-bar-wrapper,',
+      'body.editor-page .music-player-widget,',
+      'body.editor-page .footer,',
+      'body.editor-page #sidebar-sticky,',
+      'body.editor-page .sidebar-container { display: none !important; }',
+      'body.editor-page #main-grid { display: flex !important; flex-direction: column !important; grid-template-columns: none !important; width: 100% !important; }',
+      'body.editor-page #swup-container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; flex: 1 !important; }',
+      'body.editor-page { overflow: hidden !important; }',
+      // 编辑器内部样式
+      '.toolbar-btn { padding: 4px 8px; border-radius: 6px; color: color-mix(in srgb, currentColor 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }',
+      '.toolbar-btn svg { width: 18px; height: 18px; }',
+      '.toolbar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 90%, transparent); }',
+      '.toolbar-btn.active { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }',
+      '.toggle-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 0.5rem; border: 1px solid var(--line-divider); font-size: 0.8rem; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; white-space: nowrap; user-select: none; background: transparent; }',
+      '.toggle-btn:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: color-mix(in srgb, var(--primary) 70%, transparent); }',
+      '.toggle-btn.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }',
+      '#markdown-input:focus { box-shadow: inset 0 0 0 2px var(--primary); }',
+      '#markdown-input.drag-over { box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 30px color-mix(in srgb, var(--primary) 10%, transparent); background: color-mix(in srgb, var(--primary) 3%, transparent); }',
+      '.icon-bar-btn { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; pointer-events: auto; }',
+      '.icon-bar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 80%, transparent); }',
+      '.icon-bar-btn.active { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }',
+      '@media (max-width: 768px) { #right-icon-bar { display: none; } }'
+    ].join('\n');
+    document.head.appendChild(editorStyleEl);
+  }
+  function restoreElements() {
+    document.body.classList.remove('editor-page');
+    document.documentElement.style.overflow = '';
+    if (editorStyleEl) { editorStyleEl.remove(); editorStyleEl = null; }
+  }
+
+  // swup 钩子：根据当前页面决定隐藏还是恢复
+  function onContentReplace() {
+    if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
+      hideElements();
+    } else {
+      restoreElements();
+    }
+  }
+  // 首次加载时判断
+  if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
+    hideElements();
+  }
+  // swup 钩子：页面切换时判断
+  function registerHooks() {
+    window.swup.hooks.on('content:replace', onContentReplace);
+  }
+  if (window.swup && window.swup.hooks) {
+    registerHooks();
+  } else {
+    document.addEventListener('swup:enable', registerHooks);
+  }
+})();
 </script>
 
-<div class="flex flex-col w-full overflow-hidden" style="height: 100vh; padding-top: var(--navbar-height, 72px); box-sizing: border-box;">
+<div class="flex flex-col w-full overflow-hidden" style="height: calc(100vh - var(--navbar-height, 72px)); box-sizing: border-box;">
 
-<!-- 顶部导航栏 -->
-<div id="top-row" class="z-50 pointer-events-none fixed top-0 left-0 right-0">
-  <div id="navbar-wrapper" class="pointer-events-auto mx-auto w-full xl:w-[92vw] max-w-(--page-width) px-0 md:px-4">
-    <Navbar />
-  </div>
-</div>
 
 <!-- 编辑器主体（导航栏下方） -->
 <div class="flex flex-1 overflow-hidden">
@@ -282,94 +337,7 @@ import Navbar from "@/components/layout/Navbar.astro";
 <!-- highlight.js -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
 
-<style>
-  @reference "../styles/main.css";
 
-  /* 编辑器页面禁止外层滚动 */
-  html, body { overflow: hidden !important; }
-
-  .toolbar-btn {
-    @apply px-2 py-1 rounded-md text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black/90 dark:hover:text-white/90 transition cursor-pointer flex items-center justify-center text-sm;
-  }
-  .toolbar-btn svg { width: 18px; height: 18px; }
-  .toolbar-btn.active { @apply bg-[var(--primary)]/15 text-[var(--primary)]; }
-
-  .toggle-btn {
-    display: flex;
- align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 0.5rem;
-    border: 1px solid var(--line-divider);
-    font-size: 0.8rem;
-    color: color-mix(in srgb, currentColor 50%, transparent);
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-    user-select: none;
-    background: transparent;
-  }
-  .toggle-btn:hover {
-    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-    color: color-mix(in srgb, var(--primary) 70%, transparent);
-  }
-  .toggle-btn.active {
-    border-color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 10%, transparent);
-    color: var(--primary);
-  }
-
-  #markdown-input:focus { box-shadow: inset 0 0 0 2px var(--primary); }
-  #markdown-input.drag-over {
-    box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 30px color-mix(in srgb, var(--primary) 10%, transparent);
-    background: color-mix(in srgb, var(--primary) 3%, transparent);
-  }
-
-  #preview-content :where(code):not(:where([class~="not-prose"] *)) { @apply bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded text-sm; }
-  #preview-content :where(pre):not(:where([class~="not-prose"] *)) { @apply bg-black/5 dark:bg-white/10 p-4 rounded-lg overflow-x-auto; }
-  #preview-content :where(pre code):not(:where([class~="not-prose"] *)) { @apply bg-transparent p-0; }
-  #preview-content :where(blockquote):not(:where([class~="not-prose"] *)) { @apply border-l-4 border-[var(--primary)] pl-4 italic text-black/70 dark:text-white/70; }
-  #preview-content :where(table):not(:where([class~="not-prose"] *)) { @apply w-full border-collapse; }
-  #preview-content :where(th):not(:where([class~="not-prose"] *)) { @apply bg-black/5 dark:bg-white/10 px-3 py-2 text-left font-semibold border border-[var(--line-divider)]; }
-  #preview-content :where(td):not(:where([class~="not-prose"] *)) { @apply px-3 py-2 border border-[var(--line-divider)]; }
-  #preview-content :where(img):not(:where([class~="not-prose"] *)) { @apply rounded-lg max-w-full; }
-  #preview-content :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) { @apply font-bold mt-6 mb-3 text-black/90 dark:text-white/90; }
-  #preview-content :where(h1):not(:where([class~="not-prose"] *)) { @apply text-3xl; }
-  #preview-content :where(h2):not(:where([class~="not-prose"] *)) { @apply text-2xl; }
-  #preview-content :where(h3):not(:where([class~="not-prose"] *)) { @apply text-xl; }
-  #preview-content :where(ul):not(:where([class~="not-prose"] *)) { @apply list-disc pl-6 my-2; }
-  #preview-content :where(ol):not(:where([class~="not-prose"] *)) { @apply list-decimal pl-6 my-2; }
-  #preview-content :where(li):not(:where([class~="not-prose"] *)) { @apply my-1; }
-  #preview-content :where(a):not(:where([class~="not-prose"] *)) { @apply text-[var(--primary)] underline; }
-  #preview-content :where(hr):not(:where([class~="not-prose"] *)) { @apply border-t border-[var(--line-divider)] my-6; }
-  #preview-content :where(.task-list-item):not(:where([class~="not-prose"] *)) { @apply list-none; }
-  #preview-content :where(.task-list-item input):not(:where([class~="not-prose"] *)) { @apply mr-2; }
-
-  .icon-bar-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: color-mix(in srgb, currentColor 50%, transparent);
-    cursor: pointer;
-    transition: all 0.15s;
-    pointer-events: auto;
-  }
-  .icon-bar-btn:hover {
-    background: color-mix(in srgb, currentColor 5%, transparent);
-    color: color-mix(in srgb, currentColor 80%, transparent);
-  }
-  .icon-bar-btn.active {
-    background: color-mix(in srgb, var(--primary) 10%, transparent);
-    color: var(--primary);
-  }
-
-  @media (max-width: 768px) {
-    #right-icon-bar { display: none; }
-  }
-</style>
 
 <script is:inline>
 (function loadScript(src) {
@@ -994,25 +962,5 @@ function initEditor() {
   slidePanel.style.width = '0px';
 })();
 </script>
-<script is:inline>
-// 动态检测导航栏高度
-(function() {
-  function updateNavbarHeight() {
-    var topRow = document.getElementById('top-row');
-    if (topRow) {
-      var h = topRow.offsetHeight;
-      document.documentElement.style.setProperty('--navbar-height', h + 'px');
-    }
-  }
-  updateNavbarHeight();
-  window.addEventListener('resize', updateNavbarHeight);
-  if (window.swup && window.swup.hooks) {
-    window.swup.hooks.on('content:replace', updateNavbarHeight);
-  } else {
-    document.addEventListener('swup:enable', function() {
-      window.swup.hooks.on('content:replace', updateNavbarHeight);
-    });
-  }
-})();
-</script>
-</Layout>
+
+</MainGridLayout>
