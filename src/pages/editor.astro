@@ -1,14 +1,30 @@
 ---
-import EditorLayout from "@/layouts/EditorLayout.astro";
+import Layout from "@/layouts/Layout.astro";
 import Navbar from "@/components/layout/Navbar.astro";
-import { siteConfig } from "@/config";
 ---
 
-<EditorLayout>
-<!-- 顶部导航栏（复用博客主题） -->
-<Navbar class="sticky top-0" />
+<Layout title="写文章" description="在线 Markdown 编辑器">
 
-<div class="flex" style="height: calc(100vh - 72px);">
+<!-- 编辑器页面不使用壁纸模式 -->
+<script is:inline>
+  document.documentElement.setAttribute('data-wallpaper-mode', 'none');
+  document.body.classList.remove('enable-banner', 'wallpaper-transparent');
+  document.body.classList.add('no-banner-layout');
+  var wp = document.getElementById('wallpaper-wrapper');
+  if (wp) wp.style.display = 'none';
+</script>
+
+<div class="flex flex-col w-full overflow-hidden" style="height: 100vh; padding-top: var(--navbar-height, 72px); box-sizing: border-box;">
+
+<!-- 顶部导航栏 -->
+<div id="top-row" class="z-50 pointer-events-none fixed top-0 left-0 right-0">
+  <div id="navbar-wrapper" class="pointer-events-auto mx-auto w-full xl:w-[92vw] max-w-(--page-width) px-0 md:px-4">
+    <Navbar />
+  </div>
+</div>
+
+<!-- 编辑器主体（导航栏下方） -->
+<div class="flex flex-1 overflow-hidden">
   <!-- 中间编辑区 -->
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- 标题输入 -->
@@ -124,13 +140,13 @@ import { siteConfig } from "@/config";
   <div class="flex shrink-0">
     <!-- 滑出面板（内联，不覆盖编辑区） -->
     <div id="slide-panel" class="w-0 overflow-hidden bg-[var(--card-bg)] border-l border-[var(--line-divider)] transition-all duration-300 flex flex-col">
-      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--line-divider)] w-72">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--line-divider)]">
         <h3 id="panel-title" class="text-sm font-bold text-black/90 dark:text-white/90">设置</h3>
         <button id="panel-close" class="text-black/50 dark:text-white/50 hover:text-black/90 dark:hover:text-white/90 cursor-pointer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div id="panel-content" class="flex-1 overflow-y-auto p-4 w-72"></div>
+      <div id="panel-content" class="flex-1 overflow-y-auto p-4"></div>
     </div>
 
     <!-- 图标栏 -->
@@ -149,6 +165,7 @@ import { siteConfig } from "@/config";
   </div>
 
 </div>
+</div> <!-- 关闭外层 flex-col 容器 -->
 
 <!-- GitHub 发布弹窗 -->
 <div id="github-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
@@ -267,6 +284,9 @@ import { siteConfig } from "@/config";
 
 <style>
   @reference "../styles/main.css";
+
+  /* 编辑器页面禁止外层滚动 */
+  html, body { overflow: hidden !important; }
 
   .toolbar-btn {
     @apply px-2 py-1 rounded-md text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black/90 dark:hover:text-white/90 transition cursor-pointer flex items-center justify-center text-sm;
@@ -1059,4 +1079,25 @@ function initEditor() {
   slidePanel.style.width = '0px';
 })();
 </script>
-</EditorLayout>
+<script is:inline>
+// 动态检测导航栏高度
+(function() {
+  function updateNavbarHeight() {
+    var topRow = document.getElementById('top-row');
+    if (topRow) {
+      var h = topRow.offsetHeight;
+      document.documentElement.style.setProperty('--navbar-height', h + 'px');
+    }
+  }
+  updateNavbarHeight();
+  window.addEventListener('resize', updateNavbarHeight);
+  if (window.swup && window.swup.hooks) {
+    window.swup.hooks.on('content:replace', updateNavbarHeight);
+  } else {
+    document.addEventListener('swup:enable', function() {
+      window.swup.hooks.on('content:replace', updateNavbarHeight);
+    });
+  }
+})();
+</script>
+</Layout>
