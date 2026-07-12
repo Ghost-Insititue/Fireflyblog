@@ -26,7 +26,7 @@ export type CommentConfig = {
 		emoji: string[];
 		login?: "enable" | "force" | "disable";
 		visitorCount?: boolean; // 是否统计访问量，true 启用访问量，false 关闭
-		reaction?: boolean; // 是否启用反应功能，true 启用，false 关闭
+		reaction?: boolean | string[]; // 是否启用反应功能，true 启用，false 关闭，或传入 emoji URL 数组
 		locale?: Record<string, string>;// 自定义语言包
 	};
 	artalk?: {

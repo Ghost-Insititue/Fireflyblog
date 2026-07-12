@@ -1598,10 +1598,9 @@ function disableAnimation() {
       }
     });
 
-    // 处理组件级别的 showOnPostPage 配置（只在主页显示）
-    const isCurrentHome = pathsEqual(window.location.pathname, url("/"));
-    document.querySelectorAll(".widget-home-page-only").forEach((widget) => {
-      isCurrentHome ? widget.classList.remove("hidden") : widget.classList.add("hidden");
+    // 处理组件级别的 showOnPostPage 配置
+    document.querySelectorAll(".widget-hide-on-post").forEach((widget) => {
+      isPostPage ? widget.classList.add("hidden") : widget.classList.remove("hidden");
     });
 
     // 处理 hideOnNonPostPage === true 的组件

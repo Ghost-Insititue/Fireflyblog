@@ -102,19 +102,14 @@ const getAnimationDelay = (index: number): string => {
 // 判断当前页面是否为文章页面（服务端渲染时确定）
 const isPostPage = Astro.url.pathname.includes("/posts/");
 
-// 判断当前页面是否为主页
-import { isHomePage } from "@/utils/layout-utils";
-const isHomePageCheck = isHomePage(Astro.url.pathname);
-
 // 判断组件在当前页面首屏是否可见（用于计算布局间距，避免隐藏组件占位）
 const isComponentInitiallyVisible = (
 	config: WidgetComponentConfig | MobileBottomComponentConfig,
 ): boolean => {
-	// showOnPostPage: false → 只在主页显示
 	if (
 		"showOnPostPage" in config &&
 		config.showOnPostPage === false &&
-		!isHomePageCheck
+		isPostPage
 	) {
 		return false;
 	}
@@ -139,10 +134,11 @@ const getComponentProps = (
 		widgetConfig: config,
 	};
 
-	// showOnPostPage: false → 只在主页显示，使用 widget-home-page-only class
+	// 添加 showOnPostPage 和 hideOnNonPostPage 标记class（仅WidgetComponentConfig有这些属性）
+	// 同时根据当前页面类型在服务端渲染时设置初始 hidden 状态，避免页面加载时闪烁
 	if ("showOnPostPage" in config && config.showOnPostPage === false) {
-		baseProps.class = `${baseProps.class} widget-home-page-only`;
-		if (!isHomePageCheck) {
+		baseProps.class = `${baseProps.class} widget-hide-on-post`;
+		if (isPostPage) {
 			baseProps.class = `${baseProps.class} hidden`;
 		}
 	}
