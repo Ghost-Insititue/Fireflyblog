@@ -4,90 +4,21 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
 <MainGridLayout title="写文章" description="在线 Markdown 编辑器">
 
-<!-- 立即隐藏侧边栏/音乐/分类栏（CSS + JS 双重保障） -->
-<script is:inline>
-(function() {
-  var editorStyleEl = null;
-  function hideElements() {
-    if (editorStyleEl) return;
-
-    // 先测量滚动条宽度（必须在overflow:hidden生效前）
-    var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    var homeVisibleWidth = document.documentElement.clientWidth;
-
-    document.body.classList.add('editor-page');
-    document.documentElement.classList.add('editor-page');
-    editorStyleEl = document.createElement('style');
-    editorStyleEl.id = 'editor-dynamic-style';
-    editorStyleEl.textContent = [
-      // 布局规则
-      'body.editor-page #left-sidebar-wrapper,',
-      'body.editor-page #left-sidebar-dynamic,',
-      'body.editor-page #right-sidebar-static,',
-      'body.editor-page #right-sidebar-dynamic,',
-      'body.editor-page #category-bar-wrapper,',
-      'body.editor-page .music-player-widget,',
-      'body.editor-page .footer,',
-      'body.editor-page #sidebar-sticky,',
-      'body.editor-page .sidebar-container { display: none !important; }',
-      'body.editor-page #main-grid { display: flex !important; flex-direction: column !important; grid-template-columns: none !important; width: 100% !important; }',
-      'body.editor-page #swup-container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; flex: 1 !important; }',
-      'body.editor-page #main-grid > div:first-child { max-width: 100% !important; width: 100% !important; padding: 0 !important; }',
-      'body.editor-page #main-grid { padding: 0 !important; }',
-      'body.editor-page #main-grid ~ div,',
-      'body.editor-page .pointer-events-auto { max-width: 100% !important; width: 100% !important; padding: 0 !important; }',
-      'body.editor-page #main-grid > div { max-width: 100% !important; }',
-      // 壁纸宽度 = 主页可见宽度（固定像素值，直接覆盖）
-      'body.editor-page #wallpaper-wrapper { width: ' + homeVisibleWidth + 'px !important; max-width: ' + homeVisibleWidth + 'px !important; }',
-      'body.editor-page { overflow: hidden !important; }',
-      // 编辑器内部样式
-      '.toolbar-btn { padding: 4px 8px; border-radius: 6px; color: color-mix(in srgb, currentColor 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }',
-      '.toolbar-btn svg { width: 18px; height: 18px; }',
-      '.toolbar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 90%, transparent); }',
-      '.toolbar-btn.active { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }',
-      '.toggle-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 0.5rem; border: 1px solid var(--line-divider); font-size: 0.8rem; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; white-space: nowrap; user-select: none; background: transparent; }',
-      '.toggle-btn:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: color-mix(in srgb, var(--primary) 70%, transparent); }',
-      '.toggle-btn.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }',
-      '#markdown-input:focus { box-shadow: inset 0 0 0 2px var(--primary); }',
-      '#markdown-input.drag-over { box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 30px color-mix(in srgb, var(--primary) 10%, transparent); background: color-mix(in srgb, var(--primary) 3%, transparent); }',
-      '.icon-bar-btn { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; pointer-events: auto; }',
-      '.icon-bar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 80%, transparent); }',
-      '.icon-bar-btn.active { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }',
-      '@media (max-width: 768px) { #right-icon-bar { display: none; } }'
-    ].join('\n');
-    document.head.appendChild(editorStyleEl);
-
-    // 滚动条空间已通过CSS保留（overflow-y:scroll + scrollbar-width:none），无需偏移补偿
-  }
-  function restoreElements() {
-    document.body.classList.remove('editor-page');
-    document.documentElement.classList.remove('editor-page');
-    if (editorStyleEl) { editorStyleEl.remove(); editorStyleEl = null; }
-  }
-
-  // swup 钩子：根据当前页面决定隐藏还是恢复
-  function onContentReplace() {
-    if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
-      hideElements();
-    } else {
-      restoreElements();
-    }
-  }
-  // 首次加载时判断
-  if (window.location.pathname === '/editor/' || window.location.pathname === '/editor') {
-    hideElements();
-  }
-  // swup 钩子：页面切换时判断
-  function registerHooks() {
-    window.swup.hooks.on('page:view', onContentReplace);
-  }
-  if (window.swup && window.swup.hooks) {
-    registerHooks();
-  } else {
-    document.addEventListener('swup:enable', registerHooks);
-  }
-})();
-</script>
+<style>
+.toolbar-btn { padding: 4px 8px; border-radius: 6px; color: color-mix(in srgb, currentColor 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }
+.toolbar-btn svg { width: 18px; height: 18px; }
+.toolbar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 90%, transparent); }
+.toolbar-btn.active { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }
+.toggle-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 0.5rem; border: 1px solid var(--line-divider); font-size: 0.8rem; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; white-space: nowrap; user-select: none; background: transparent; }
+.toggle-btn:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: color-mix(in srgb, var(--primary) 70%, transparent); }
+.toggle-btn.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+#markdown-input:focus { box-shadow: inset 0 0 0 2px var(--primary); }
+#markdown-input.drag-over { box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 30px color-mix(in srgb, var(--primary) 10%, transparent); background: color-mix(in srgb, var(--primary) 3%, transparent); }
+.icon-bar-btn { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; pointer-events: auto; }
+.icon-bar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 80%, transparent); }
+.icon-bar-btn.active { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+@media (max-width: 768px) { #right-icon-bar { display: none; } }
+</style>
 
 <div class="flex flex-col w-full overflow-hidden" style="height: calc(100vh - var(--navbar-height, 72px)); box-sizing: border-box;">
 
