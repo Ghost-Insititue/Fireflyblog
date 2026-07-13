@@ -11,8 +11,9 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   function hideElements() {
     if (editorStyleEl) return;
 
-    // 方案B：先测量滚动条宽度（必须在overflow:hidden生效前）
+    // 先测量滚动条宽度（必须在overflow:hidden生效前）
     var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    var homeVisibleWidth = document.documentElement.clientWidth;
 
     document.body.classList.add('editor-page');
     document.documentElement.classList.add('editor-page');
@@ -36,7 +37,8 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       'body.editor-page #main-grid ~ div,',
       'body.editor-page .pointer-events-auto { max-width: 100% !important; width: 100% !important; padding: 0 !important; }',
       'body.editor-page #main-grid > div { max-width: 100% !important; }',
-      'body.editor-page #wallpaper-wrapper { width: 100vw !important; left: 0 !important; right: 0 !important; }',
+      // 壁纸宽度 = 主页可见宽度（固定像素值，直接覆盖）
+      'body.editor-page #wallpaper-wrapper { width: ' + homeVisibleWidth + 'px !important; max-width: ' + homeVisibleWidth + 'px !important; }',
       'body.editor-page { overflow: hidden !important; }',
       // 编辑器内部样式
       '.toolbar-btn { padding: 4px 8px; border-radius: 6px; color: color-mix(in srgb, currentColor 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }',
@@ -55,29 +57,12 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
     ].join('\n');
     document.head.appendChild(editorStyleEl);
 
-    // 方案B：用transform视觉偏移补偿滚动条宽度（不破坏mx-auto居中）
-    if (scrollbarWidth > 0) {
-      var offset = '-' + (scrollbarWidth / 2) + 'px';
-      var topRow = document.getElementById('top-row');
-      if (topRow) {
-        topRow.style.transition = 'none';
-        topRow.style.transform = 'translateX(' + offset + ')';
-      }
-    }
+    // 滚动条空间已通过CSS保留（overflow-y:scroll + scrollbar-width:none），无需偏移补偿
   }
   function restoreElements() {
     document.body.classList.remove('editor-page');
     document.documentElement.classList.remove('editor-page');
     if (editorStyleEl) { editorStyleEl.remove(); editorStyleEl = null; }
-    // 恢复（先禁用transition防止动画）
-    var topRow = document.getElementById('top-row');
-    if (topRow) {
-      topRow.style.transition = 'none';
-      topRow.style.transform = '';
-      requestAnimationFrame(function() {
-        topRow.style.transition = '';
-      });
-    }
   }
 
   // swup 钩子：根据当前页面决定隐藏还是恢复
