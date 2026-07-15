@@ -1006,7 +1006,8 @@ function initEditor() {
       var tagArr = tags.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
       if (tagArr.length > 0) fm += 'tags: [' + tagArr.join(', ') + ']\n';
     }
-    if (cover) fm += 'image: "' + cover + '"\n';
+    // [Editor] 跳过 base64 数据 URL（太长不适合 frontmatter，博客不支持）
+    if (cover && cover.indexOf('data:') !== 0) fm += 'image: "' + cover + '"\n';
     if (password) fm += 'password: "' + password + '"\n';
     if (passwordHint) fm += 'passwordHint: "' + passwordHint + '"\n';
     if (pinned) fm += 'pinned: true\n';
