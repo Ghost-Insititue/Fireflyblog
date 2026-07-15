@@ -4,6 +4,128 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
 <MainGridLayout title="写文章" description="在线 Markdown 编辑器">
 
+<!-- 编辑器页面管理：class、CSS注入、Swup hooks -->
+<script is:inline>
+(function() {
+  var editorStyleEl = null;
+  var editorResizeHandler = null;
+
+  function isEditorPage() {
+    var p = window.location.pathname;
+    return p === '/editor/' || p === '/editor';
+  }
+
+  // [Editor] 导航栏偏移补偿：overflow:hidden 移除滚动条→页面宽度变化→92vw 导航栏右移
+  // 服务端已在 MainGridLayout 渲染 inline style，此处为 Swup 导航时的备用补偿
+  function applyNavbarOffset() {
+    var row = document.getElementById('top-row');
+    if (row) row.style.transform = 'translateX(-8px)';
+  }
+  // 清除偏移时先禁用过渡，避免 transform 变化被动画化（700ms 滑动）
+  function clearNavbarOffset() {
+    var row = document.getElementById('top-row');
+    if (row) {
+      row.style.transition = 'none';
+      row.style.transform = '';
+      // 下一帧恢复过渡（确保后续 sticky navbar 等动画正常）
+      requestAnimationFrame(function() { row.style.transition = ''; });
+    }
+  }
+
+  function measureScrollbarWidth() {
+    var scrollDiv = document.createElement('div');
+    scrollDiv.style.cssText = 'overflow:scroll;visibility:hidden;position:absolute;width:100px;height:100px;';
+    document.body.appendChild(scrollDiv);
+    var w = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+    document.body.removeChild(scrollDiv);
+    return w;
+  }
+
+  function applyEditorMode() {
+    if (editorStyleEl) return;
+    var scrollbarWidth = measureScrollbarWidth();
+    document.body.classList.add('editor-page');
+    document.documentElement.classList.add('editor-page');
+    editorStyleEl = document.createElement('style');
+    editorStyleEl.id = 'editor-dynamic-style';
+    editorStyleEl.textContent = [
+      'body.editor-page #left-sidebar-wrapper,',
+      'body.editor-page #left-sidebar-dynamic,',
+      'body.editor-page #right-sidebar-static,',
+      'body.editor-page #right-sidebar-dynamic,',
+      'body.editor-page #category-bar-wrapper,',
+      'body.editor-page .footer,',
+      'body.editor-page #sidebar-sticky,',
+      'body.editor-page .sidebar-container { display: none !important; }',
+      'body.editor-page #main-grid { display: flex !important; flex-direction: column !important; grid-template-columns: none !important; width: 100% !important; }',
+      'body.editor-page #swup-container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; flex: 1 !important; }',
+      'body.editor-page #main-grid > div:first-child { max-width: 100% !important; width: 100% !important; padding: 0 !important; }',
+      'body.editor-page #main-grid { padding: 0 !important; }',
+      'body.editor-page #main-grid ~ div,',
+      'body.editor-page .pointer-events-auto { max-width: 100% !important; width: 100% !important; padding: 0 !important; }',
+      'body.editor-page #main-grid > div { max-width: 100% !important; }',
+      'body.editor-page #wallpaper-wrapper { width: calc(100% - ' + scrollbarWidth + 'px) !important; max-width: calc(100% - ' + scrollbarWidth + 'px) !important; }',
+      'body.editor-page::after { content: ""; position: fixed; right: 0; top: 0; width: ' + scrollbarWidth + 'px; height: 100%; background: linear-gradient(to right, transparent, var(--page-bg)); z-index: 15; pointer-events: none; }',
+      'body.editor-page { overflow: hidden !important; }',
+      /* [Editor] 导航栏偏移 + 禁用过渡动画（避免 transform 变化产生 700ms 滑动） */
+      'body.editor-page.sticky-navbar #top-row { transform: translateX(-8px) !important; transition: none !important; }'
+    ].join('\n');
+    document.head.appendChild(editorStyleEl);
+    editorResizeHandler = function() {
+      var newSW = measureScrollbarWidth();
+      if (editorStyleEl) {
+        var rules = editorStyleEl.textContent;
+        rules = rules.replace(/calc\(100% - \d+px\)/g, 'calc(100% - ' + newSW + 'px)');
+        rules = rules.replace(/body\.editor-page::after \{ content: ""; position: fixed; right: 0; top: 0; width: \d+px;/, 'body.editor-page::after { content: ""; position: fixed; right: 0; top: 0; width: ' + newSW + 'px;');
+        rules = rules.replace(/translateX\(-\d+px\)/, 'translateX(-' + newSW + 'px)');
+        editorStyleEl.textContent = rules;
+      }
+    };
+    window.addEventListener('resize', editorResizeHandler);
+  }
+
+  function removeEditorMode() {
+    document.body.classList.remove('editor-page');
+    document.documentElement.classList.remove('editor-page');
+    if (editorStyleEl) { editorStyleEl.remove(); editorStyleEl = null; }
+    if (editorResizeHandler) { window.removeEventListener('resize', editorResizeHandler); editorResizeHandler = null; }
+    clearNavbarOffset();
+  }
+
+  // [Editor] Swup hooks：进入编辑器时应用样式，离开时清理
+  function registerSwupHooks() {
+    // 离开编辑器时清理所有样式和 class
+    window.swup.hooks.on('visit:start', function(visit) {
+      var targetPath = '';
+      try { targetPath = new URL(visit.to.url, window.location.origin).pathname; } catch(e) { targetPath = visit.to.url; }
+      if (targetPath !== '/editor/' && targetPath !== '/editor') {
+        removeEditorMode();
+      }
+    });
+    // 进入编辑器时：先清理旧状态 → 立即补偿导航栏偏移 → 下一帧注入完整 CSS
+    window.swup.hooks.on('page:view', function() {
+      if (isEditorPage()) {
+        removeEditorMode();
+        applyNavbarOffset();
+        requestAnimationFrame(applyEditorMode);
+      }
+    });
+  }
+
+  if (window.swup && window.swup.hooks) {
+    registerSwupHooks();
+  } else {
+    document.addEventListener('swup:enable', registerSwupHooks);
+  }
+
+  // 首次加载：立即应用 offset 避免弹动，再注入 CSS
+  if (isEditorPage()) {
+    applyNavbarOffset();
+    applyEditorMode();
+  }
+})();
+</script>
+
 <style>
 .toolbar-btn { padding: 4px 8px; border-radius: 6px; color: color-mix(in srgb, currentColor 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }
 .toolbar-btn svg { width: 18px; height: 18px; }
@@ -454,7 +576,8 @@ function initEditor() {
   // 置顶/评论由 IIFE 事件委托处理，此处不再重复绑定
 
   // 图片上传
-  document.getElementById('cover-upload').addEventListener('change', function(e) {
+  var coverUpload = document.getElementById('cover-upload');
+  if (coverUpload) coverUpload.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
