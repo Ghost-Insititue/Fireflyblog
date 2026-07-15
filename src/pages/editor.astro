@@ -513,8 +513,8 @@ function initEditor() {
       slug: getVal('post-slug'),
       password: getVal('post-password'),
       passwordHint: getVal('post-password-hint'),
-      pinned: !!document.getElementById('chk-pinned')?.checked,
-      comment: !!document.getElementById('chk-comment')?.checked,
+      pinned: window.__editorMetaCheckbox ? window.__editorMetaCheckbox.pinned : false,
+      comment: window.__editorMetaCheckbox ? window.__editorMetaCheckbox.comment : true,
       savedAt: new Date().toISOString(),
     };
     try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data)); } catch(e) {}
@@ -634,6 +634,11 @@ function initEditor() {
 
   if (!slidePanel) { console.error('slide-panel not found'); return; }
 
+  // [Editor] 追踪文章信息 checkbox 状态（面板关闭后 DOM 元素消失，用变量保存）
+  // 挂到 window 上供其他 IIFE（自动保存等）访问
+  if (!window.__editorMetaCheckbox) window.__editorMetaCheckbox = { pinned: false, comment: true };
+  var metaCheckboxState = window.__editorMetaCheckbox;
+
   var templates = {
     publish: { title: '发布', html: '<div class="space-y-3"><button id="btn-github" class="w-full py-2.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">发布到 GitHub</button><button id="btn-download" class="w-full py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer">下载 .md 文件</button></div>' },
     meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned-panel" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment-panel" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
@@ -671,11 +676,12 @@ function initEditor() {
         if (hidden && panel && hidden !== panel) panel.value = hidden.value;
       });
       // 同步隐藏 checkbox 到面板 checkbox（面板用 -panel 后缀避免 ID 冲突）
-      [['chk-pinned', 'chk-pinned-panel'], ['chk-comment', 'chk-comment-panel']].forEach(function(pair) {
+      [['chk-pinned', 'chk-pinned-panel', 'pinned'], ['chk-comment', 'chk-comment-panel', 'comment']].forEach(function(pair) {
         var hidden = document.getElementById(pair[0]);
         var panel = panelContent.querySelector('#' + pair[1]);
         if (hidden && panel) {
           panel.checked = hidden.checked;
+          metaCheckboxState[pair[2]] = hidden.checked;
           syncCheckboxStyle(panel);
         }
       });
@@ -735,7 +741,9 @@ function initEditor() {
   panelContent.addEventListener('change', function(e) {
     if (e.target.id === 'chk-pinned-panel' || e.target.id === 'chk-comment-panel') {
       syncCheckboxStyle(e.target);
-      // [Editor] 同步面板 checkbox 到隐藏 checkbox
+      // [Editor] 同步到追踪变量和隐藏 checkbox
+      var key = e.target.id === 'chk-pinned-panel' ? 'pinned' : 'comment';
+      metaCheckboxState[key] = e.target.checked;
       var hiddenId = e.target.id.replace('-panel', '');
       var hidden = document.getElementById(hiddenId);
       if (hidden) hidden.checked = e.target.checked;
@@ -809,8 +817,8 @@ function initEditor() {
         slug: getVal('post-slug'),
         password: getVal('post-password'),
         passwordHint: getVal('post-password-hint'),
-        pinned: getChecked('chk-pinned'),
-        comment: getChecked('chk-comment'),
+        pinned: metaCheckboxState.pinned,
+        comment: metaCheckboxState.comment,
         savedAt: new Date().toISOString()
       });
       localStorage.setItem('editor-drafts', JSON.stringify(drafts));
@@ -982,15 +990,15 @@ function initEditor() {
 
     // [Editor] 读取所有表单字段生成完整 frontmatter
     var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
-    var getChecked = function(id) { var el = document.getElementById(id); return el ? el.checked : false; };
     var desc = getVal('post-desc');
     var category = getVal('post-category');
     var tags = getVal('post-tags');
     var cover = getVal('post-cover');
     var password = getVal('post-password');
     var passwordHint = getVal('post-password-hint');
-    var pinned = getChecked('chk-pinned');
-    var comment = getChecked('chk-comment');
+    // [Editor] checkbox 从追踪变量读取（面板关闭后 DOM 元素不存在）
+    var pinned = metaCheckboxState.pinned;
+    var comment = metaCheckboxState.comment;
 
     var slug = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
     var filename = 'src/content/posts/' + slug + '.md';
