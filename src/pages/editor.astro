@@ -17,6 +17,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
   // [Editor] 导航栏偏移补偿：overflow:hidden 移除滚动条→页面宽度变化→92vw 导航栏右移
   // 服务端已在 MainGridLayout 渲染 inline style，此处为 Swup 导航时的备用补偿
+  var navbarTransitionTimer = null;
   function applyNavbarOffset() {
     var row = document.getElementById('top-row');
     if (row) row.style.transform = 'translateX(-8px)';
@@ -25,10 +26,15 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   function clearNavbarOffset() {
     var row = document.getElementById('top-row');
     if (row) {
+      // 清除前一次的恢复定时器（防止快速切换时竞态）
+      if (navbarTransitionTimer) { cancelAnimationFrame(navbarTransitionTimer); navbarTransitionTimer = null; }
       row.style.transition = 'none';
       row.style.transform = '';
       // 下一帧恢复过渡（确保后续 sticky navbar 等动画正常）
-      requestAnimationFrame(function() { row.style.transition = ''; });
+      navbarTransitionTimer = requestAnimationFrame(function() {
+        row.style.transition = '';
+        navbarTransitionTimer = null;
+      });
     }
   }
 
@@ -256,6 +262,19 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
         <button data-panel="publish" title="发布" class="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 hover:opacity-90 transition cursor-pointer text-xs font-medium">发布文章</button>
       </div>
     </div>
+  </div>
+
+  <!-- [Editor] 隐藏的文章信息表单 — 始终存在于 DOM 中，保存草稿时可读取 -->
+  <div id="meta-fields" class="hidden">
+    <input id="post-desc" type="text" />
+    <input id="post-category" type="text" />
+    <input id="post-tags" type="text" />
+    <input id="post-cover" type="text" />
+    <input id="post-slug" type="text" />
+    <input id="post-password" type="text" />
+    <input id="post-password-hint" type="text" />
+    <input id="chk-pinned" type="checkbox" />
+    <input id="chk-comment" type="checkbox" checked />
   </div>
 
   <!-- 右侧面板区（图标栏 + 滑出面板） -->
@@ -617,7 +636,7 @@ function initEditor() {
 
   var templates = {
     publish: { title: '发布', html: '<div class="space-y-3"><button id="btn-github" class="w-full py-2.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">发布到 GitHub</button><button id="btn-download" class="w-full py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer">下载 .md 文件</button></div>' },
-    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
+    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned-panel" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment-panel" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     tags: { title: '标签', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签（逗号分隔）</label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     cover: { title: '封面图', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 URL</label><input id="post-cover" type="text" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     settings: { title: '设置', html: '<div class="text-sm text-black/50 dark:text-white/50">更多设置开发中...</div>' },
@@ -639,11 +658,27 @@ function initEditor() {
     slidePanel.style.width = '288px';
     document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
-    // 标题同步
+    // [Editor] 打开文章信息面板时，从隐藏字段同步值到面板
     if (name === 'meta') {
       var titleInput = document.getElementById('post-title-input');
       var mainTitle = document.getElementById('post-title');
       if (titleInput && mainTitle) titleInput.value = mainTitle.value;
+      // 同步隐藏字段值到面板新元素（querySelector 优先找面板内的元素）
+      var syncFields = ['post-desc', 'post-category', 'post-tags', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
+      syncFields.forEach(function(id) {
+        var hidden = document.getElementById(id);
+        var panel = panelContent.querySelector('#' + id);
+        if (hidden && panel && hidden !== panel) panel.value = hidden.value;
+      });
+      // 同步隐藏 checkbox 到面板 checkbox（面板用 -panel 后缀避免 ID 冲突）
+      [['chk-pinned', 'chk-pinned-panel'], ['chk-comment', 'chk-comment-panel']].forEach(function(pair) {
+        var hidden = document.getElementById(pair[0]);
+        var panel = panelContent.querySelector('#' + pair[1]);
+        if (hidden && panel) {
+          panel.checked = hidden.checked;
+          syncCheckboxStyle(panel);
+        }
+      });
     }
     // 草稿列表
     if (name === 'drafts') renderDraftList();
@@ -653,6 +688,14 @@ function initEditor() {
     slidePanel.style.width = '0px';
     currentPanel = '';
     document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+  }
+
+  // [Editor] 格式化时间为 YYYY-MM-DD HH:mm
+  function formatDraftTime(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    var pad = function(n) { return n < 10 ? '0' + n : n; };
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
   // 草稿列表渲染
@@ -665,9 +708,13 @@ function initEditor() {
       return;
     }
     list.innerHTML = drafts.map(function(d, i) {
-      return '<div class="flex items-center justify-between p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer draft-item" data-index="' + i + '">' +
-        '<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">' + (d.name || '未命名') + '</div><div class="text-xs text-black/40 dark:text-white/40">' + (d.title || '无标题') + '</div></div>' +
-        '<button class="text-xs text-red-500 hover:text-red-700 ml-2 draft-delete" data-index="' + i + '">删除</button></div>';
+      return '<div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer draft-item border border-transparent hover:border-[var(--line-divider)] transition-colors" data-index="' + i + '">' +
+        '<div class="flex-1 min-w-0">' +
+          '<div class="text-sm font-bold text-[var(--primary)] truncate">' + (d.name || '未命名草稿') + '</div>' +
+          '<div class="text-xs text-black/50 dark:text-white/50 truncate mt-0.5">' + (d.title ? '标题：' + d.title : '无标题') + '</div>' +
+          '<div class="text-[10px] text-black/30 dark:text-white/30 mt-1">' + formatDraftTime(d.savedAt) + '</div>' +
+        '</div>' +
+        '<button class="text-xs text-red-400 hover:text-red-600 ml-2 shrink-0 draft-delete" data-index="' + i + '">删除</button></div>';
     }).join('');
   }
 
@@ -686,8 +733,20 @@ function initEditor() {
     }
   }
   panelContent.addEventListener('change', function(e) {
-    if (e.target.id === 'chk-pinned' || e.target.id === 'chk-comment') {
+    if (e.target.id === 'chk-pinned-panel' || e.target.id === 'chk-comment-panel') {
       syncCheckboxStyle(e.target);
+      // [Editor] 同步面板 checkbox 到隐藏 checkbox
+      var hiddenId = e.target.id.replace('-panel', '');
+      var hidden = document.getElementById(hiddenId);
+      if (hidden) hidden.checked = e.target.checked;
+    }
+  });
+  // [Editor] 面板输入时同步回隐藏字段（确保保存时可读取）
+  panelContent.addEventListener('input', function(e) {
+    var metaFields = ['post-desc', 'post-category', 'post-tags', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
+    if (metaFields.indexOf(e.target.id) !== -1) {
+      var hidden = document.getElementById(e.target.id);
+      if (hidden && hidden !== e.target) hidden.value = e.target.value;
     }
   });
   // 打开面板时初始化已有 checkbox 的样式
@@ -695,7 +754,7 @@ function initEditor() {
   openPanel = function(name) {
     origOpenPanel(name);
     setTimeout(function() {
-      var chks = panelContent.querySelectorAll('#chk-pinned, #chk-comment');
+      var chks = panelContent.querySelectorAll('#chk-pinned-panel, #chk-comment-panel');
       chks.forEach(function(c) { syncCheckboxStyle(c); });
     }, 0);
   };
@@ -733,12 +792,27 @@ function initEditor() {
       a.click();
       return;
     }
-    // 保存草稿
-    if (target.id === 'btn-save-draft' || target.closest('#btn-save-draft')) {
-      var name = document.getElementById('draft-name-input').value || '未命名草稿';
-      var textarea = document.getElementById('markdown-input');
+    // [Editor] 保存草稿 — 收集所有表单字段
+    if (target.id === 'btn-save-draft' || target.closest('btn-save-draft')) {
+      var draftName = document.getElementById('draft-name-input').value || '未命名草稿';
+      var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+      var getChecked = function(id) { var el = document.getElementById(id); return el ? el.checked : false; };
       var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
-      drafts.push({ name: name, title: document.getElementById('post-title').value, content: textarea.value, savedAt: new Date().toISOString() });
+      drafts.push({
+        name: draftName,
+        title: getVal('post-title'),
+        content: document.getElementById('markdown-input').value,
+        desc: getVal('post-desc'),
+        category: getVal('post-category'),
+        tags: getVal('post-tags'),
+        cover: getVal('post-cover'),
+        slug: getVal('post-slug'),
+        password: getVal('post-password'),
+        passwordHint: getVal('post-password-hint'),
+        pinned: getChecked('chk-pinned'),
+        comment: getChecked('chk-comment'),
+        savedAt: new Date().toISOString()
+      });
       localStorage.setItem('editor-drafts', JSON.stringify(drafts));
       document.getElementById('draft-name-input').value = '';
       renderDraftList();
@@ -761,9 +835,27 @@ function initEditor() {
       var idx = parseInt(item.dataset.index);
       var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
       if (drafts[idx]) {
-        document.getElementById('post-title').value = drafts[idx].title || '';
-        document.getElementById('markdown-input').value = drafts[idx].content || '';
+        var d = drafts[idx];
+        var setVal = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
+        var setChecked = function(id, val) { var el = document.getElementById(id); if (el) el.checked = !!val; };
+        // 恢复所有表单字段
+        setVal('post-title', d.title);
+        setVal('post-desc', d.desc);
+        setVal('post-category', d.category);
+        setVal('post-tags', d.tags);
+        setVal('post-cover', d.cover);
+        setVal('post-slug', d.slug);
+        setVal('post-password', d.password);
+        setVal('post-password-hint', d.passwordHint);
+        setChecked('chk-pinned', d.pinned);
+        setChecked('chk-comment', d.comment);
+        // 恢复编辑器内容
+        document.getElementById('markdown-input').value = d.content || '';
+        // 同步标题到面板内输入框（如果面板打开的话）
+        var titleInput = document.getElementById('post-title-input');
+        if (titleInput) titleInput.value = d.title || '';
         closePanel();
+        showToast('草稿已加载');
       }
       return;
     }
@@ -814,12 +906,29 @@ function initEditor() {
   });
 
   // 底部保存草稿按钮
+  // [Editor] 底部栏快速保存 — 收集所有表单字段
   var quickSaveBtn = document.getElementById('btn-quick-save');
   if (quickSaveBtn) quickSaveBtn.addEventListener('click', function() {
-    var textarea = document.getElementById('markdown-input');
+    var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    var getChecked = function(id) { var el = document.getElementById(id); return el ? el.checked : false; };
     var title = document.getElementById('post-title').value;
+    var textarea = document.getElementById('markdown-input');
     var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
-    drafts.push({ name: title || '快速保存', title: title, content: textarea.value, savedAt: new Date().toISOString() });
+    drafts.push({
+      name: title || '快速保存',
+      title: title,
+      content: textarea.value,
+      desc: getVal('post-desc'),
+      category: getVal('post-category'),
+      tags: getVal('post-tags'),
+      cover: getVal('post-cover'),
+      slug: getVal('post-slug'),
+      password: getVal('post-password'),
+      passwordHint: getVal('post-password-hint'),
+      pinned: getChecked('chk-pinned'),
+      comment: getChecked('chk-comment'),
+      savedAt: new Date().toISOString()
+    });
     localStorage.setItem('editor-drafts', JSON.stringify(drafts));
     showToast('草稿已保存');
   });
@@ -871,10 +980,40 @@ function initEditor() {
     status.className = 'text-sm text-blue-500';
     status.classList.remove('hidden');
 
+    // [Editor] 读取所有表单字段生成完整 frontmatter
+    var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    var getChecked = function(id) { var el = document.getElementById(id); return el ? el.checked : false; };
+    var desc = getVal('post-desc');
+    var category = getVal('post-category');
+    var tags = getVal('post-tags');
+    var cover = getVal('post-cover');
+    var password = getVal('post-password');
+    var passwordHint = getVal('post-password-hint');
+    var pinned = getChecked('chk-pinned');
+    var comment = getChecked('chk-comment');
+
     var slug = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
     var filename = 'src/content/posts/' + slug + '.md';
-    var frontmatter = '---\ntitle: "' + title + '"\npublished: ' + new Date().toISOString().split('T')[0] + '\ndraft: false\n---\n\n';
-    var base64 = btoa(unescape(encodeURIComponent(frontmatter + content)));
+
+    // 构建 frontmatter
+    var fm = '---\n';
+    fm += 'title: "' + title + '"\n';
+    fm += 'published: ' + new Date().toISOString().split('T')[0] + '\n';
+    fm += 'draft: false\n';
+    if (desc) fm += 'description: "' + desc + '"\n';
+    if (category) fm += 'category: "' + category + '"\n';
+    if (tags) {
+      var tagArr = tags.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+      if (tagArr.length > 0) fm += 'tags: [' + tagArr.join(', ') + ']\n';
+    }
+    if (cover) fm += 'image: "' + cover + '"\n';
+    if (password) fm += 'password: "' + password + '"\n';
+    if (passwordHint) fm += 'passwordHint: "' + passwordHint + '"\n';
+    if (pinned) fm += 'pinned: true\n';
+    if (comment === false) fm += 'comment: false\n';
+    fm += '---\n\n';
+
+    var base64 = btoa(unescape(encodeURIComponent(fm + content)));
 
     fetch('https://api.github.com/repos/' + repo + '/contents/' + filename, {
       method: 'PUT',
