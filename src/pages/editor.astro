@@ -1015,19 +1015,31 @@ function initEditor() {
     fm += '---\n\n';
 
     var base64 = btoa(unescape(encodeURIComponent(fm + content)));
+    var apiUrl = 'https://api.github.com/repos/' + repo + '/contents/' + filename;
 
-    fetch('https://api.github.com/repos/' + repo + '/contents/' + filename, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'token ' + token,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: 'post: add "' + title + '"',
+    // [Editor] 先查询文件是否存在，获取 sha（更新已有文件时 GitHub 要求提供 sha）
+    fetch(apiUrl + '?ref=' + branch, {
+      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' },
+    }).then(function(res) {
+      if (res.status === 404) return null; // 新文件，无需 sha
+      if (!res.ok) return res.json().then(function(e) { throw new Error(e.message); });
+      return res.json();
+    }).then(function(existing) {
+      var body = {
+        message: (existing ? 'update' : 'post') + ': "' + title + '"',
         content: base64,
         branch: branch,
-      }),
+      };
+      if (existing && existing.sha) body.sha = existing.sha; // 更新时提供 sha
+      return fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'token ' + token,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
     }).then(function(res) {
       if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '发布失败'); });
       return res.json();
