@@ -71,8 +71,17 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       'body.editor-page .pointer-events-auto { max-width: 100% !important; width: 100% !important; padding: 0 !important; }',
       'body.editor-page #main-grid > div { max-width: 100% !important; }',
       'body.editor-page #wallpaper-wrapper { width: calc(100% - ' + scrollbarWidth + 'px) !important; max-width: calc(100% - ' + scrollbarWidth + 'px) !important; }',
-      'body.editor-page::after { content: ""; position: fixed; right: 0; top: 0; width: ' + scrollbarWidth + 'px; height: 100%; background: linear-gradient(to right, transparent, var(--page-bg)); z-index: 15; pointer-events: none; }',
+      'body.editor-page::after { content: ""; position: fixed; right: 0; top: 0; width: ' + scrollbarWidth + 'px; height: 100%; background: linear-gradient(to right, transparent, var(--page-bg)); z-index: 15; pointer-events: none; opacity: 0.5; }',
       'body.editor-page { overflow: hidden !important; }',
+      /* 编辑器页面：隐藏原生滚动条 */
+      'body.editor-page #markdown-input { overflow-y: scroll !important; scrollbar-width: none; -ms-overflow-style: none; }',
+      'body.editor-page #markdown-input::-webkit-scrollbar { display: none; }',
+      'body.editor-page #preview-content { scrollbar-width: none; -ms-overflow-style: none; }',
+      'body.editor-page #preview-content::-webkit-scrollbar { display: none; }',
+      'body.editor-page { scrollbar-width: none; -ms-overflow-style: none; }',
+      'body.editor-page::-webkit-scrollbar { display: none; }',
+      'html.editor-page { scrollbar-width: none; -ms-overflow-style: none; }',
+      'html.editor-page::-webkit-scrollbar { display: none; }',
       /* [Editor] 导航栏偏移 + 禁用过渡动画（避免 transform 变化产生 700ms 滑动） */
       'body.editor-page.sticky-navbar #top-row { transform: translateX(-8px) !important; transition: none !important; }'
     ].join('\n');
@@ -133,10 +142,12 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 </script>
 
 <style>
-.toolbar-btn { padding: 4px 8px; border-radius: 6px; color: color-mix(in srgb, currentColor 60%, transparent); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; cursor: pointer; transition: all 0.15s; }
-.toolbar-btn svg { width: 18px; height: 18px; }
-.toolbar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 90%, transparent); }
-.toolbar-btn.active { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }
+.toolbar-btn { padding: 5px 7px; border-radius: 6px; color: color-mix(in srgb, currentColor 55%, transparent); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; position: relative; }
+.toolbar-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.toolbar-btn:hover { background: color-mix(in srgb, currentColor 8%, transparent); color: color-mix(in srgb, currentColor 100%, transparent); }
+.toolbar-btn:active { transform: scale(0.92); }
+.toolbar-btn.active { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.toolbar-btn.active:hover { background: color-mix(in srgb, var(--primary) 18%, transparent); }
 .toggle-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 0.5rem; border: 1px solid var(--line-divider); font-size: 0.8rem; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; white-space: nowrap; user-select: none; background: transparent; }
 .toggle-btn:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: color-mix(in srgb, var(--primary) 70%, transparent); }
 .toggle-btn.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
@@ -146,6 +157,11 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 .icon-bar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 80%, transparent); }
 .icon-bar-btn.active { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
 @media (max-width: 768px) { #right-icon-bar { display: none; } }
+
+/* 自定义滚动条 */
+.custom-scrollbar { position: absolute; right: 2px; top: 0; bottom: 0; width: 6px; z-index: 10; opacity: 1; pointer-events: auto; }
+.custom-scrollbar-thumb { width: 100%; border-radius: 3px; background: rgba(128, 128, 128, 0.35); cursor: pointer; position: absolute; top: 0; min-height: 20px; transition: background 0.15s; }
+.custom-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.55); }
 </style>
 
 <div class="flex flex-col w-full overflow-hidden" style="height: calc(100vh - var(--navbar-height, 72px)); box-sizing: border-box;">
@@ -217,35 +233,45 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       <button data-action="redo" title="重做 (Ctrl+Y)" class="toolbar-btn">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5c1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
       </button>
+      <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
+      <!-- 功能开关 -->
+      <button id="btn-sync-scroll" title="同步滚动" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l-4 4m0 0l4 4"/><path d="M4 7h12"/><path d="M16 21l4-4m0 0l-4-4"/><path d="M20 17H8"/></svg>
+      </button>
+      <button id="btn-typewriter" title="打字机模式" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8"/></svg>
+      </button>
       <div class="flex-1"></div>
       <!-- 视图切换 -->
-      <button id="btn-view-editor" title="仅编辑" class="toolbar-btn text-xs">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <button id="btn-view-editor" title="仅编辑" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
-      <button id="btn-view-split" title="分栏" class="toolbar-btn text-xs active">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+      <button id="btn-view-split" title="分栏" class="toolbar-btn active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
       </button>
-      <button id="btn-view-preview" title="仅预览" class="toolbar-btn text-xs">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <button id="btn-view-preview" title="仅预览" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
 
     <!-- 编辑器主体 -->
     <div id="editor-body" class="flex flex-1 overflow-hidden">
       <!-- 左侧：Markdown 输入 -->
-      <div id="editor-pane" class="flex-1 flex flex-col border-r border-[var(--line-divider)]">
+      <div id="editor-pane" class="flex-1 flex flex-col border-r border-[var(--line-divider)] relative">
         <textarea id="markdown-input" 
           class="flex-1 w-full resize-none p-5 text-sm font-mono bg-transparent text-black/90 dark:text-white/90 focus:outline-none placeholder:text-black/30 dark:placeholder:text-white/30"
           style="line-height: 1.75;"
           placeholder="开始写作吧...&#10;&#10;支持完整的 Markdown 语法：&#10;- **加粗** 和 *斜体*&#10;- # 标题&#10;- ```代码块```&#10;- > 引用&#10;- [链接](url)&#10;- ![图片](url)"
           spellcheck="false"
         ></textarea>
+        <div class="custom-scrollbar" data-target="markdown-input"><div class="custom-scrollbar-thumb"></div></div>
       </div>
       <!-- 右侧：预览 -->
-      <div id="preview-pane" class="flex-1 flex flex-col overflow-hidden">
+      <div id="preview-pane" class="flex-1 flex flex-col overflow-hidden relative">
         <div id="preview-content" class="flex-1 overflow-y-auto p-5 markdown-content prose prose-sm dark:prose-invert max-w-none">
           <div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>
         </div>
+        <div class="custom-scrollbar" data-target="preview-content"><div class="custom-scrollbar-thumb"></div></div>
       </div>
     </div>
 
@@ -474,17 +500,22 @@ function initEditor() {
 
   // 实时预览
   let previewTimer = null;
+  let previewRaf = null;
   function updatePreview() {
-    clearTimeout(previewTimer);
-    previewTimer = setTimeout(() => {
-      const md = textarea.value;
-      let html = '';
-      try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
+    if (previewRaf) return;
+    previewRaf = requestAnimationFrame(function() {
+      previewRaf = null;
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        const md = textarea.value;
+        let html = '';
+        try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
  catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
-      preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
-      if (fullscreenContent) fullscreenContent.innerHTML = preview.innerHTML;
-      updateCounts(md);
-    }, 150);
+        preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
+        if (fullscreenContent) fullscreenContent.innerHTML = preview.innerHTML;
+        updateCounts(md);
+      }, 30);
+    });
   }
 
   function updateCounts(text) {
@@ -522,38 +553,95 @@ function initEditor() {
   setInterval(saveDraft, 30000);
 
   // 工具栏按钮
+  const toolbarConfig = {
+    bold:          { prefix: '**',        suffix: '**',     placeholder: '粗体文本' },
+    italic:        { prefix: '*',         suffix: '*',      placeholder: '斜体文本' },
+    strikethrough: { prefix: '~~',        suffix: '~~',     placeholder: '删除线' },
+    h1:            { prefix: '# ',        suffix: '',       placeholder: '标题' },
+    h2:            { prefix: '## ',       suffix: '',       placeholder: '标题' },
+    h3:            { prefix: '### ',      suffix: '',       placeholder: '标题' },
+    h4:            { prefix: '#### ',     suffix: '',       placeholder: '标题' },
+    ul:            { prefix: '- ',        suffix: '',       placeholder: '列表项' },
+    ol:            { prefix: '1. ',       suffix: '',       placeholder: '列表项' },
+    checklist:     { prefix: '- [ ] ',    suffix: '',       placeholder: '任务' },
+    quote:         { prefix: '> ',        suffix: '',       placeholder: '引用' },
+    code:          { prefix: '`',         suffix: '`',      placeholder: '代码' },
+    codeblock:     { prefix: '```javascript\n', suffix: '\n```', placeholder: '代码' },
+    table:         { prefix: '| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |', suffix: '', placeholder: null },
+    hr:            { prefix: '\n---\n',   suffix: '',       placeholder: null },
+  };
+  function toolbarInsert(insert, selectStart, selectEnd) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    textarea.focus();
+    textarea.selectionStart = start;
+    textarea.selectionEnd = end;
+    document.execCommand('insertText', false, insert);
+    textarea.selectionStart = selectStart;
+    textarea.selectionEnd = selectEnd;
+    updatePreview();
+  }
   document.querySelectorAll('#toolbar [data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
+      if (action === 'link' || action === 'image') return;
+      if (action === 'undo' || action === 'redo') {
+        textarea.focus();
+        document.execCommand(action);
+        return;
+      }
+      const config = toolbarConfig[action];
+      if (!config) return;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const selected = textarea.value.substring(start, end);
-      let insert = '';
-      switch(action) {
- case 'bold': insert = '**' + (selected || '粗体文本') + '**'; break;
-        case 'italic': insert = '*' + (selected || '斜体文本') + '*'; break;
-        case 'strikethrough': insert = '~~' + (selected || '删除线') + '~~'; break;
-        case 'h1': insert = '# ' + (selected || '标题'); break;
-        case 'h2': insert = '## ' + (selected || '标题'); break;
-        case 'h3': insert = '### ' + (selected || '标题'); break;
-        case 'h4': insert = '#### ' + (selected || '标题'); break;
-        case 'ul': insert = '- ' + (selected || '列表项'); break;
-        case 'ol': insert = '1. ' + (selected || '列表项'); break;
-        case 'checklist': insert = '- [ ] ' + (selected || '任务'); break;
-        case 'quote': insert = '> ' + (selected || '引用'); break;
-        case 'code': insert = '`' + (selected || '代码') + '`'; break;
-        case 'codeblock': insert = '```javascript\n' + (selected || '代码') + '\n```'; break;
-        case 'link': insert = '[' + (selected || '链接文字') + '](https://)'; break;
-        case 'image': insert = '![' + (selected || '图片') + '](url)'; break;
-        case 'table': insert = '| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |'; break;
-        case 'hr': insert = '\n---\n'; break;
-        case 'undo': textarea.focus(); document.execCommand('undo'); return;
-        case 'redo': textarea.focus(); document.execCommand('redo'); return;
+      let insert, selectStart, selectEnd;
+      if (selected) {
+        insert = config.prefix + selected + config.suffix;
+        selectStart = start + config.prefix.length;
+        selectEnd = selectStart + selected.length;
+      } else if (config.placeholder) {
+        insert = config.prefix + config.placeholder + config.suffix;
+        selectStart = start + config.prefix.length;
+        selectEnd = selectStart + config.placeholder.length;
+      } else {
+        insert = config.prefix;
+        selectStart = selectEnd = start + insert.length;
       }
-      textarea.setRangeText(insert, start, start, 'end');
-      textarea.focus();
-      updatePreview();
+      toolbarInsert(insert, selectStart, selectEnd);
     });
+  });
+
+  // Enter 键自动延续列表（有序/无序/任务/引用）
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const start = textarea.selectionStart;
+    const val = textarea.value;
+    const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+    const line = val.substring(lineStart, start);
+    const olMatch = line.match(/^(\d+)\.\s/);
+    const clMatch = line.match(/^[-*]\s\[[ x]\]\s/);
+    const ulMatch = line.match(/^[-*]\s/);
+    const qtMatch = line.match(/^>\s/);
+    let insert = '\n';
+    if (olMatch) {
+      const num = parseInt(olMatch[1]);
+      const lineContent = line.slice(olMatch[0].length);
+      insert = lineContent.trim() ? '\n' + (num + 1) + '. ' : '\n';
+    } else if (clMatch) {
+      const lineContent = line.slice(clMatch[0].length);
+      insert = lineContent.trim() ? '\n- [ ] ' : '\n';
+    } else if (ulMatch) {
+      const lineContent = line.slice(ulMatch[0].length);
+      insert = lineContent.trim() ? '\n' + line.slice(0, ulMatch[0].length) : '\n';
+    } else if (qtMatch) {
+      const lineContent = line.slice(qtMatch[0].length);
+      insert = lineContent.trim() ? '\n> ' : '\n';
+    }
+    e.preventDefault();
+    textarea.focus();
+    document.execCommand('insertText', false, insert);
+    updatePreview();
   });
 
   // 视图切换
@@ -584,6 +672,165 @@ function initEditor() {
   btnSplit && btnSplit.addEventListener('click', () => setView('split'));
   btnPreview && btnPreview.addEventListener('click', () => setView('preview'));
 
+  // [Editor] 同步滚动 + 打字机模式
+  var syncScrollEnabled = false;
+  var typewriterEnabled = false;
+  var isSyncingScroll = false;
+  var syncScrollTimer = null;
+  var previewContent = document.getElementById('preview-content');
+  var btnSyncScroll = document.getElementById('btn-sync-scroll');
+  var btnTypewriter = document.getElementById('btn-typewriter');
+
+  // 从 localStorage 恢复状态
+  if (localStorage.getItem('editor-sync-scroll') === 'true') {
+    syncScrollEnabled = true;
+    btnSyncScroll && btnSyncScroll.classList.add('active');
+  }
+  if (localStorage.getItem('editor-typewriter') === 'true') {
+    typewriterEnabled = true;
+    btnTypewriter && btnTypewriter.classList.add('active');
+  }
+
+  btnSyncScroll && btnSyncScroll.addEventListener('click', function() {
+    syncScrollEnabled = !syncScrollEnabled;
+    this.classList.toggle('active', syncScrollEnabled);
+    localStorage.setItem('editor-sync-scroll', syncScrollEnabled);
+  });
+
+  btnTypewriter && btnTypewriter.addEventListener('click', function() {
+    typewriterEnabled = !typewriterEnabled;
+    this.classList.toggle('active', typewriterEnabled);
+    localStorage.setItem('editor-typewriter', typewriterEnabled);
+    if (typewriterEnabled) {
+      textarea.style.scrollBehavior = 'smooth';
+      scrollCursorToCenter();
+      setTimeout(function() { textarea.style.scrollBehavior = ''; }, 300);
+    }
+  });
+
+  // 同步滚动：编辑器 → 预览
+  textarea.addEventListener('scroll', function() {
+    if (!syncScrollEnabled || isSyncingScroll || !previewContent) return;
+    var editorMax = textarea.scrollHeight - textarea.clientHeight;
+    if (editorMax <= 0) return;
+    var ratio = textarea.scrollTop / editorMax;
+    isSyncingScroll = true;
+    previewContent.scrollTop = ratio * (previewContent.scrollHeight - previewContent.clientHeight);
+    cancelAnimationFrame(syncScrollTimer);
+    syncScrollTimer = requestAnimationFrame(function() { isSyncingScroll = false; });
+  });
+
+  // 同步滚动：预览 → 编辑器
+  if (previewContent) {
+    previewContent.addEventListener('scroll', function() {
+      if (!syncScrollEnabled || isSyncingScroll) return;
+      var previewMax = previewContent.scrollHeight - previewContent.clientHeight;
+      if (previewMax <= 0) return;
+      var ratio = previewContent.scrollTop / previewMax;
+      isSyncingScroll = true;
+      textarea.scrollTop = ratio * (textarea.scrollHeight - textarea.clientHeight);
+      cancelAnimationFrame(syncScrollTimer);
+      syncScrollTimer = requestAnimationFrame(function() { isSyncingScroll = false; });
+    });
+  }
+
+  // 打字机模式：光标所在行垂直居中
+  function scrollCursorToCenter() {
+    if (!typewriterEnabled) return;
+    var pos = textarea.selectionStart;
+    var text = textarea.value;
+    // 全选时跳过（selectionStart=0 会滚到顶部）
+    if (pos === 0 && textarea.selectionEnd === text.length) return;
+    var lines = text.substring(0, pos).split('\n');
+    var lineNum = lines.length - 1;
+    var style = getComputedStyle(textarea);
+    var lineHeight = parseFloat(style.lineHeight) || 28;
+    var paddingTop = parseFloat(style.paddingTop) || 0;
+    var cursorY = paddingTop + lineNum * lineHeight;
+    var textareaHeight = textarea.clientHeight;
+    var target = cursorY - textareaHeight / 2 + lineHeight / 2;
+    textarea.scrollTop = target;
+  }
+
+  textarea.addEventListener('input', function() { scrollCursorToCenter(); });
+  textarea.addEventListener('keyup', function() { scrollCursorToCenter(); });
+
+  // 初始加载时如果打字机模式开启，自动居中光标
+  if (typewriterEnabled) {
+    requestAnimationFrame(function() { scrollCursorToCenter(); });
+  }
+
+  // [Editor] 自定义滚动条
+  function initCustomScrollbars() {
+    document.querySelectorAll('.custom-scrollbar').forEach(function(bar) {
+      var targetId = bar.getAttribute('data-target');
+      var target = document.getElementById(targetId);
+      if (!target) return;
+      var thumb = bar.querySelector('.custom-scrollbar-thumb');
+      var isDragging = false;
+      var startY = 0;
+      var startScrollTop = 0;
+
+      function updateThumb() {
+        var scrollH = target.scrollHeight;
+        var clientH = target.clientHeight;
+        if (scrollH <= clientH) { bar.style.display = 'none'; return; }
+        bar.style.display = '';
+        var ratio = clientH / scrollH;
+        var thumbH = Math.max(ratio * clientH, 20);
+        var maxTop = clientH - thumbH;
+        var scrollRatio = target.scrollTop / (scrollH - clientH);
+        thumb.style.height = thumbH + 'px';
+        thumb.style.top = (scrollRatio * maxTop) + 'px';
+      }
+
+      target.addEventListener('scroll', updateThumb);
+      updateThumb();
+
+      // 点击轨道跳转
+      bar.addEventListener('click', function(e) {
+        if (e.target === thumb) return;
+        var rect = bar.getBoundingClientRect();
+        var clickY = e.clientY - rect.top;
+        var scrollH = target.scrollHeight;
+        var clientH = target.clientHeight;
+        var ratio = clickY / clientH;
+        target.scrollTop = ratio * (scrollH - clientH);
+      });
+
+      // 拖拽 thumb
+      thumb.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isDragging = true;
+        startY = e.clientY;
+        startScrollTop = target.scrollTop;
+        bar.classList.add('active');
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', onDragEnd);
+      });
+
+      function onDrag(e) {
+        if (!isDragging) return;
+        var dy = e.clientY - startY;
+        var scrollH = target.scrollHeight;
+        var clientH = target.clientHeight;
+        var thumbH = parseFloat(thumb.style.height) || 20;
+        var maxTop = clientH - thumbH;
+        var scrollRange = scrollH - clientH;
+        var deltaScroll = (dy / maxTop) * scrollRange;
+        target.scrollTop = startScrollTop + deltaScroll;
+      }
+
+      function onDragEnd() {
+        isDragging = false;
+        bar.classList.remove('active');
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', onDragEnd);
+      }
+    });
+  }
+  initCustomScrollbars();
+
   // 置顶/评论切换
   function setToggle(btnId, inputId, value) {
     const btn = document.getElementById(btnId);
@@ -594,21 +841,7 @@ function initEditor() {
 
   // 置顶/评论由 IIFE 事件委托处理，此处不再重复绑定
 
-  // 图片上传
-  var coverUpload = document.getElementById('cover-upload');
-  if (coverUpload) coverUpload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      document.getElementById('post-cover').value = ev.target.result;
-      const preview = document.getElementById('cover-preview');
-      const img = document.getElementById('cover-preview-img');
-      img.src = ev.target.result;
-      preview.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-  });
+  // [Editor] 封面图上传由右侧面板 IIFE 的事件委托处理（此处跳过）
 
   // GitHub 弹窗由 IIFE 处理，此处不再重复绑定
 
@@ -641,7 +874,7 @@ function initEditor() {
 
   var templates = {
     publish: { title: '发布', html: '<div class="space-y-3"><button id="btn-github" class="w-full py-2.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">发布到 GitHub</button><button id="btn-download" class="w-full py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer">下载 .md 文件</button></div>' },
-    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned-panel" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment-panel" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-black/40 dark:text-white/40">逗号分隔</span></label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="URL 或上传" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">文章密码 <span class="text-black/40 dark:text-white/40">加密用</span></label><input id="post-password" type="text" placeholder="留空不加密" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label><input id="post-password-hint" type="text" placeholder="可选" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
+    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned-panel" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment-panel" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签</label><div class="flex gap-2"><input id="post-tag-1" type="text" placeholder="标签1" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><input id="post-tag-2" type="text" placeholder="标签2" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div class="mt-1"><span class="text-xs text-black/40 dark:text-white/40">（用,隔开）</span><input id="post-tag-3" type="text" placeholder="自定义标签" class="w-full min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="图片 URL" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label><button id="btn-remove-cover" type="button" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-red-400 hover:text-red-600 hover:border-red-400 cursor-pointer">删除</button></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码</label><div class="flex gap-2"><input id="post-password-hint" type="text" placeholder="密码提示" class="w-1/3 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><input id="post-password" type="text" placeholder="输入密码（留空不加密）" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div></div>' },
     tags: { title: '标签', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签（逗号分隔）</label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     cover: { title: '封面图', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 URL</label><input id="post-cover" type="text" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     settings: { title: '设置', html: '<div class="text-sm text-black/50 dark:text-white/50">更多设置开发中...</div>' },
@@ -669,12 +902,23 @@ function initEditor() {
       var mainTitle = document.getElementById('post-title');
       if (titleInput && mainTitle) titleInput.value = mainTitle.value;
       // 同步隐藏字段值到面板新元素（querySelector 优先找面板内的元素）
-      var syncFields = ['post-desc', 'post-category', 'post-tags', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
+      var syncFields = ['post-desc', 'post-category', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
       syncFields.forEach(function(id) {
         var hidden = document.getElementById(id);
         var panel = panelContent.querySelector('#' + id);
         if (hidden && panel && hidden !== panel) panel.value = hidden.value;
       });
+      // [Editor] 标签：从隐藏字段拆分到输入框（前两个单标签 + 第三个自定义多标签）
+      var hiddenTags = document.getElementById('post-tags');
+      if (hiddenTags) {
+        var tagArr = hiddenTags.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+        var tag1 = panelContent.querySelector('#post-tag-1');
+        var tag2 = panelContent.querySelector('#post-tag-2');
+        var tag3 = panelContent.querySelector('#post-tag-3');
+        if (tag1) tag1.value = tagArr[0] || '';
+        if (tag2) tag2.value = tagArr[1] || '';
+        if (tag3) tag3.value = tagArr.slice(2).join(', ');
+      }
       // 同步隐藏 checkbox 到面板 checkbox（面板用 -panel 后缀避免 ID 冲突）
       [['chk-pinned', 'chk-pinned-panel', 'pinned'], ['chk-comment', 'chk-comment-panel', 'comment']].forEach(function(pair) {
         var hidden = document.getElementById(pair[0]);
@@ -751,10 +995,27 @@ function initEditor() {
   });
   // [Editor] 面板输入时同步回隐藏字段（确保保存时可读取）
   panelContent.addEventListener('input', function(e) {
-    var metaFields = ['post-desc', 'post-category', 'post-tags', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
+    var metaFields = ['post-desc', 'post-category', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
     if (metaFields.indexOf(e.target.id) !== -1) {
       var hidden = document.getElementById(e.target.id);
       if (hidden && hidden !== e.target) hidden.value = e.target.value;
+    }
+    // [Editor] 标签：输入框合并到隐藏字段（第三个框支持逗号分隔多个标签）
+    if (e.target.id === 'post-tag-1' || e.target.id === 'post-tag-2' || e.target.id === 'post-tag-3') {
+      var tags = [];
+      var tag1 = panelContent.querySelector('#post-tag-1');
+      var tag2 = panelContent.querySelector('#post-tag-2');
+      var tag3 = panelContent.querySelector('#post-tag-3');
+      if (tag1 && tag1.value.trim()) tags.push(tag1.value.trim());
+      if (tag2 && tag2.value.trim()) tags.push(tag2.value.trim());
+      if (tag3 && tag3.value.trim()) {
+        tag3.value.split(',').forEach(function(t) {
+          var trimmed = t.trim();
+          if (trimmed) tags.push(trimmed);
+        });
+      }
+      var hiddenTags = document.getElementById('post-tags');
+      if (hiddenTags) hiddenTags.value = tags.join(', ');
     }
   });
   // 打开面板时初始化已有 checkbox 的样式
@@ -876,20 +1137,73 @@ function initEditor() {
     }
   });
 
-  // 封面上传
+  // [Editor] 删除封面图
+  panelContent.addEventListener('click', function(e) {
+    if (e.target.id === 'btn-remove-cover' || e.target.closest('#btn-remove-cover')) {
+      var coverInput = document.getElementById('post-cover');
+      if (coverInput) coverInput.value = '';
+      var preview = document.getElementById('cover-preview');
+      if (preview) preview.classList.add('hidden');
+      var fileInput = document.getElementById('cover-upload');
+      if (fileInput) fileInput.value = '';
+    }
+  });
+
+  // [Editor] 封面图上传 — 通过事件委托处理（元素动态生成）
   panelContent.addEventListener('change', function(e) {
     if (e.target.id === 'cover-upload') {
       var file = e.target.files[0];
       if (!file) return;
+
+      // 预览
       var reader = new FileReader();
       reader.onload = function(ev) {
-        var coverInput = document.getElementById('post-cover');
-        if (coverInput) coverInput.value = ev.target.result;
         var preview = document.getElementById('cover-preview');
         var img = document.getElementById('cover-preview-img');
-        if (img && preview) { img.src = ev.target.result; preview.classList.remove('hidden'); }
+        if (img) img.src = ev.target.result;
+        if (preview) preview.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
+
+      // 上传到 GitHub
+      var token = localStorage.getItem('gh-token') || '';
+      var repo = localStorage.getItem('gh-repo') || '';
+      if (!token || !repo) {
+        window.__editorShowToast('请先在发布弹窗中配置 GitHub Token 和仓库');
+        return;
+      }
+
+      window.__editorShowToast('⏳ 封面图上传中...');
+      var uploadReader = new FileReader();
+      uploadReader.onload = function(ev2) {
+        var base64 = ev2.target.result.split(',')[1];
+        var ext = file.name.split('.').pop();
+        var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+
+        fetch('https://api.github.com/repos/' + repo + '/contents/public/uploads/' + filename, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'token ' + token,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: 'upload cover: ' + filename,
+            content: base64,
+            branch: 'main',
+          }),
+        }).then(function(res) {
+          if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '上传失败'); });
+          return res.json();
+        }).then(function() {
+          var coverInput = document.getElementById('post-cover');
+          if (coverInput) coverInput.value = '/uploads/' + filename;
+          window.__editorShowToast('✅ 封面图上传成功');
+        }).catch(function(err) {
+          window.__editorShowToast('❌ 上传失败: ' + err.message);
+        });
+      };
+      uploadReader.readAsDataURL(file);
     }
   });
 
@@ -942,14 +1256,16 @@ function initEditor() {
   });
 
   // 轻提示
-  function showToast(msg) {
+  // [Editor] showToast 挂到 window 上供其他 IIFE 使用
+  window.__editorShowToast = function(msg) {
     var toast = document.createElement('div');
     toast.textContent = msg;
     toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;';
     document.body.appendChild(toast);
     requestAnimationFrame(function() { toast.style.opacity = '1'; });
     setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 1500);
-  }
+  };
+  var showToast = window.__editorShowToast;
 
   // 底部发布按钮 → 直接打开 GitHub 弹窗
   var publishBtn = document.querySelector('[data-panel="publish"]');
@@ -971,6 +1287,9 @@ function initEditor() {
   if (ghConfirm) ghConfirm.addEventListener('click', function() {
     var token = document.getElementById('gh-token').value;
     var repo = document.getElementById('gh-repo').value;
+    // [Editor] 保存到 localStorage 供封面图上传等功能使用
+    if (token) localStorage.setItem('gh-token', token);
+    if (repo) localStorage.setItem('gh-repo', repo);
     var branch = document.getElementById('gh-branch').value;
     var title = document.getElementById('post-title').value;
     var textarea = document.getElementById('markdown-input');

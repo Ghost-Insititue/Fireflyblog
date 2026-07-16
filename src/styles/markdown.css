@@ -97,6 +97,10 @@
     li::marker {
       @apply text-(--primary);
     }
+
+    li:has(> input[type="checkbox"])::marker {
+      content: none;
+    }
   }
 
   blockquote {
