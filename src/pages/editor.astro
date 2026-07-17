@@ -9,6 +9,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 (function() {
   var editorStyleEl = null;
   var editorResizeHandler = null;
+  window.__editorImageMap = {};
 
   function isEditorPage() {
     var p = window.location.pathname;
@@ -323,6 +324,12 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       </button>
       <button data-panel="drafts" class="icon-bar-btn" title="草稿箱">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5.5A2.5 2.5 0 017.5 3H18a2 2 0 012 2v14a2 2 0 01-2 2H7.5A2.5 2.5 0 015 18.5v-13z"/><path d="M9 3v2h6V3"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      </button>
+      <button id="btn-toc" data-panel="toc" class="icon-bar-btn" title="目录">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button id="btn-syntax" data-panel="syntax" class="icon-bar-btn" title="语法参考">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
       </button>
       <div class="flex-1"></div>
       <button id="btn-export-md" class="icon-bar-btn" title="导出 MD">
@@ -792,6 +799,100 @@ function initEditor() {
     requestAnimationFrame(function() { scrollCursorToCenter(); });
   }
 
+  // [Editor] 粘贴图片：剪贴板图片 → Base64 存内存 → 插入 Markdown 图片语法（多张自动包裹 [grid]）
+  textarea.addEventListener('paste', function(e) {
+    var items = (e.clipboardData || window.clipboardData).items;
+    if (!items) return;
+    var imageFiles = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        var file = items[i].getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+    if (imageFiles.length === 0) return;
+    e.preventDefault();
+
+    var imageLines = [];
+    var loaded = 0;
+    imageFiles.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var dataUrl = ev.target.result;
+        var ext = file.type.split('/')[1] || 'png';
+        var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        window.__editorImageMap[filename] = dataUrl;
+        imageLines.push('![图片](./images/' + filename + ')');
+        loaded++;
+        if (loaded === imageFiles.length) {
+          var start = textarea.selectionStart;
+          var insertText;
+          if (imageLines.length > 1) {
+            insertText = '[grid]\n' + imageLines.join('\n') + '\n[/grid]\n';
+          } else {
+            insertText = imageLines[0] + '\n';
+          }
+          textarea.value = textarea.value.substring(0, start) + insertText + textarea.value.substring(textarea.selectionEnd);
+          textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+          textarea.focus();
+          textarea.dispatchEvent(new Event('input'));
+          window.__editorShowToast(imageFiles.length > 1 ? imageFiles.length + '张图片已粘贴' : '图片已粘贴');
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // [Editor] 拖拽图片：拖入图片文件 → Base64 存内存 → 插入 Markdown 图片语法（多张自动包裹 [grid]）
+  textarea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    textarea.classList.add('drag-over');
+  });
+  textarea.addEventListener('dragleave', function(e) {
+    textarea.classList.remove('drag-over');
+  });
+  textarea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    textarea.classList.remove('drag-over');
+    var files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    var imageFiles = [];
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].type.indexOf('image') !== -1) imageFiles.push(files[i]);
+    }
+    if (imageFiles.length === 0) return;
+
+    var imageLines = [];
+    var loaded = 0;
+    imageFiles.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var dataUrl = ev.target.result;
+        var ext = file.type.split('/')[1] || 'png';
+        var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        window.__editorImageMap[filename] = dataUrl;
+        imageLines.push('![图片](./images/' + filename + ')');
+        loaded++;
+        if (loaded === imageFiles.length) {
+          var start = textarea.selectionStart;
+          var insertText;
+          if (imageLines.length > 1) {
+            insertText = '[grid]\n' + imageLines.join('\n') + '\n[/grid]\n';
+          } else {
+            insertText = imageLines[0] + '\n';
+          }
+          textarea.value = textarea.value.substring(0, start) + insertText + textarea.value.substring(textarea.selectionEnd);
+          textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+          textarea.focus();
+          textarea.dispatchEvent(new Event('input'));
+          window.__editorShowToast(imageFiles.length > 1 ? imageFiles.length + '张图片已插入' : '图片已插入');
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
   // [Editor] 自定义滚动条
   function initCustomScrollbars() {
     document.querySelectorAll('.custom-scrollbar').forEach(function(bar) {
@@ -921,6 +1022,23 @@ function initEditor() {
       return;
     }
     currentPanel = name;
+    // TOC 和语法面板使用动态内容
+    if (name === 'toc') {
+      panelTitle.textContent = '目录';
+      renderTocContent();
+      slidePanel.style.width = '288px';
+      document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
+      return;
+    }
+    if (name === 'syntax') {
+      panelTitle.textContent = '语法参考';
+      renderSyntaxContent();
+      slidePanel.style.width = '288px';
+      document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
+      return;
+    }
     var t = templates[name];
     if (!t) return;
     panelTitle.textContent = t.title;
@@ -1373,6 +1491,51 @@ function initEditor() {
     if (comment === false) fm += 'comment: false\n';
     fm += '---\n\n';
 
+    // [Editor] 上传文章内图片到 src/content/posts/images/
+    function uploadDataUrlImages(text, token, repo, branch) {
+      var imageMap = window.__editorImageMap || {};
+      var imageRegex = /!\[图片\]\(\.\/images\/([^)]+)\)/g;
+      var matches = [];
+      var match;
+      while ((match = imageRegex.exec(text)) !== null) {
+        matches.push({ full: match[0], filename: match[1], index: match.index });
+      }
+      if (matches.length === 0) return Promise.resolve();
+
+      var chain = Promise.resolve();
+      matches.forEach(function(m) {
+        chain = chain.then(function() {
+          var dataUrl = imageMap[m.filename];
+          if (!dataUrl) return;
+          var base64Data = dataUrl.match(/base64,([^)]+)/);
+          if (!base64Data) return;
+          var rawBase64 = base64Data[1];
+          var imagePath = 'src/content/posts/images/' + m.filename;
+
+          return fetch('https://api.github.com/repos/' + repo + '/contents/' + imagePath, {
+            method: 'PUT',
+            headers: {
+              'Authorization': 'token ' + token,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: 'upload image: ' + m.filename,
+              content: rawBase64,
+              branch: branch,
+            }),
+          }).then(function(res) {
+            if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '图片上传失败'); });
+            return res.json();
+          }).catch(function(err) {
+            window.__editorShowToast('⚠️ 图片上传失败: ' + err.message);
+          });
+        });
+      });
+      return chain;
+    }
+
+    // 先发布文章，再上传图片
     var base64 = btoa(unescape(encodeURIComponent(fm + content)));
     var apiUrl = 'https://api.github.com/repos/' + repo + '/contents/' + filename;
 
@@ -1403,7 +1566,12 @@ function initEditor() {
       if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '发布失败'); });
       return res.json();
     }).then(function() {
-      status.textContent = '✅ 发布成功！';
+      status.textContent = '✅ 文章已发布，上传图片中...';
+      status.className = 'text-sm text-blue-500';
+      // 文章发布成功后，上传图片
+      return uploadDataUrlImages(content, token, repo, branch);
+    }).then(function() {
+      status.textContent = '✅ 发布完成！';
       status.className = 'text-sm text-green-500';
     }).catch(function(e) {
       status.textContent = '❌ ' + e.message;
@@ -1509,15 +1677,15 @@ function initEditor() {
     var insertText = '';
     if (pendingImgUrls.length > 0) {
       if (pendingImgUrls.length === 1) {
-        insertText = '\n![' + altText + '](' + pendingImgUrls[0] + ')\n';
+        insertText = '![' + altText + '](' + pendingImgUrls[0] + ')\n';
       } else {
         var lines = pendingImgUrls.map(function(url) { return '![' + altText + '](' + url + ')'; });
-        insertText = '\n[grid]\n' + lines.join('\n') + '\n[/grid]\n';
+        insertText = '[grid]\n' + lines.join('\n') + '\n[/grid]\n';
       }
     } else {
       var url = imgUrlInput ? imgUrlInput.value.trim() : '';
       if (!url) { imgUrlInput.focus(); return; }
-      insertText = '\n![' + altText + '](' + url + ')\n';
+      insertText = '![' + altText + '](' + url + ')\n';
     }
 
     var start = textarea.selectionStart;
@@ -1551,7 +1719,14 @@ function initEditor() {
   var linkConfirm = document.getElementById('link-confirm');
   var linkToolBtn = document.querySelector('[data-action="link"]');
 
-  if (linkToolBtn && linkModal) linkToolBtn.addEventListener('click', function() { linkModal.classList.remove('hidden'); });
+  if (linkToolBtn && linkModal) linkToolBtn.addEventListener('click', function() {
+    linkModal.classList.remove('hidden');
+    var linkTextInput = document.getElementById('link-text-input');
+    var linkUrlInput = document.getElementById('link-url-input');
+    if (linkTextInput) linkTextInput.value = '';
+    if (linkUrlInput) linkUrlInput.value = '';
+    setTimeout(function() { if (linkTextInput) linkTextInput.focus(); }, 100);
+  });
   if (linkCancel && linkModal) linkCancel.addEventListener('click', function() { linkModal.classList.add('hidden'); });
   if (linkConfirm && linkModal) linkConfirm.addEventListener('click', function() {
     var text = document.getElementById('link-text-input').value;
@@ -1559,7 +1734,7 @@ function initEditor() {
     if (url) {
       var textarea = document.getElementById('markdown-input');
       var start = textarea.selectionStart;
-      textarea.setRangeText('[' + (text || '链接') + '](' + url + ')', start, start, 'end');
+      textarea.setRangeText('[' + (text || '链接') + '](' + url + ')\n', start, start, 'end');
       textarea.focus();
       textarea.dispatchEvent(new Event('input'));
       linkModal.classList.add('hidden');
@@ -1568,6 +1743,191 @@ function initEditor() {
 
   // 初始化隐藏
   slidePanel.style.width = '0px';
+
+  // ========== TOC 和语法面板（复用 slide-panel）==========
+  var currentSyntaxCat = '标题';
+
+  var syntaxData = {
+    '标题': [
+      { syntax: '# 一级标题', desc: '一级标题', select: '一级标题' },
+      { syntax: '## 二级标题', desc: '二级标题', select: '二级标题' },
+      { syntax: '### 三级标题', desc: '三级标题', select: '三级标题' },
+      { syntax: '#### 四级标题', desc: '四级标题', select: '四级标题' },
+    ],
+    '文本样式': [
+      { syntax: '**加粗文本**', desc: '加粗', select: '加粗文本' },
+      { syntax: '*斜体文本*', desc: '斜体', select: '斜体文本' },
+      { syntax: '~~删除线~~', desc: '删除线', select: '删除线' },
+      { syntax: '`行内代码`', desc: '行内代码', select: '行内代码' },
+      { syntax: '==高亮文本==', desc: '高亮', select: '高亮文本' },
+    ],
+    '列表': [
+      { syntax: '- 无序列表项', desc: '无序列表', select: '无序列表项' },
+      { syntax: '1. 有序列表项', desc: '有序列表', select: '有序列表项' },
+      { syntax: '- [ ] 任务列表项', desc: '任务列表', select: '任务列表项' },
+    ],
+    '图片': [
+      { syntax: '![图片描述](图片URL)', desc: '图片', select: '图片描述' },
+      { syntax: '[grid]\n![图片1](URL1)\n![图片2](URL2)\n[/grid]', desc: '图片网格', select: '图片1' },
+    ],
+    '链接': [
+      { syntax: '[链接文字](https://example.com)', desc: '链接', select: '链接文字' },
+      { syntax: '[锚点链接](#标题)', desc: '锚点链接', select: '锚点链接' },
+    ],
+    '代码块': [
+      { syntax: '```javascript\n// 代码\n```', desc: '代码块', select: '// 代码' },
+      { syntax: '```diff\n+ 新增行\n- 删除行\n```', desc: 'diff 代码块', select: '+ 新增行' },
+    ],
+    '表格': [
+      { syntax: '| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |', desc: '表格', select: '内容' },
+    ],
+    '引用': [
+      { syntax: '> 引用内容', desc: '引用', select: '引用内容' },
+    ],
+    '分隔线': [
+      { syntax: '\n---\n', desc: '分隔线', select: null },
+    ],
+    'LaTeX': [
+      { syntax: '$公式$', desc: '行内公式', select: '公式' },
+      { syntax: '$$\n公式\n$$', desc: '块级公式', select: '公式' },
+    ],
+    'Mermaid': [
+      { syntax: '```mermaid\ngraph TD\n    A[开始] --> B[结束]\n```', desc: '流程图', select: 'A[开始]' },
+    ],
+    '快捷键': [
+      { syntax: '', desc: 'Ctrl+B 加粗', select: null },
+      { syntax: '', desc: 'Ctrl+I 斜体', select: null },
+      { syntax: '', desc: 'Ctrl+K 链接', select: null },
+      { syntax: '', desc: 'Ctrl+Z 撤销', select: null },
+      { syntax: '', desc: 'Ctrl+Shift+S 保存', select: null },
+    ],
+  };
+
+  // 渲染 TOC 内容到 panelContent
+  function renderTocContent() {
+    var textarea = document.getElementById('markdown-input');
+    if (!textarea) return;
+    var lines = textarea.value.split('\n');
+    var headings = [];
+    lines.forEach(function(line, idx) {
+      var m = line.match(/^(#{1,4})\s+(.+)/);
+      if (m) headings.push({ level: m[1].length, text: m[2], line: idx });
+    });
+    if (headings.length === 0) {
+      panelContent.innerHTML = '<div style="text-align:center;color:var(--font-color-light);font-size:13px;padding:24px 0;">暂无标题</div>';
+      return;
+    }
+    var html = '';
+    headings.forEach(function(h) {
+      var indent = (h.level - 1) * 12;
+      html += '<div class="toc-item" data-line="' + h.line + '" style="padding:6px 12px 6px ' + (12 + indent) + 'px;cursor:pointer;font-size:13px;color:var(--font-color);transition:background 0.12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:6px;margin:1px 4px;">' + h.text + '</div>';
+    });
+    panelContent.innerHTML = html;
+    panelContent.querySelectorAll('.toc-item').forEach(function(item) {
+      item.addEventListener('mouseenter', function() { item.style.background = 'color-mix(in srgb, var(--primary) 8%, transparent)'; });
+      item.addEventListener('mouseleave', function() { item.style.background = ''; });
+      item.addEventListener('click', function() {
+        var line = parseInt(item.getAttribute('data-line'));
+        var textarea = document.getElementById('markdown-input');
+        if (!textarea) return;
+        var lines = textarea.value.split('\n');
+        var pos = 0;
+        for (var i = 0; i < line; i++) pos += lines[i].length + 1;
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = pos;
+        textarea.setSelectionRange(pos, pos);
+        textarea.scrollTop = line * 24 - textarea.clientHeight / 2;
+      });
+    });
+  }
+
+  // 渲染语法内容到 panelContent
+  function renderSyntaxContent() {
+    var items = syntaxData[currentSyntaxCat] || [];
+    // 标签栏
+    var tagsHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line-divider);margin-bottom:8px;">';
+    Object.keys(syntaxData).forEach(function(cat) {
+      var active = cat === currentSyntaxCat;
+      var style = active
+        ? 'background:color-mix(in srgb, var(--primary) 12%, transparent);color:var(--primary);border-color:var(--primary);'
+        : '';
+      tagsHtml += '<span class="syntax-tag" data-cat="' + cat + '" style="padding:3px 10px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--line-divider);color:var(--font-color-light);transition:all 0.15s;user-select:none;' + style + '">' + cat + '</span>';
+    });
+    tagsHtml += '</div>';
+
+    // 快捷键分类只显示说明
+    if (currentSyntaxCat === '快捷键') {
+      var listHtml = '';
+      items.forEach(function(item) {
+        listHtml += '<div style="padding:8px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid color-mix(in srgb, var(--font-color) 5%, transparent);"><span style="font-size:13px;color:var(--font-color);">' + item.desc + '</span></div>';
+      });
+      panelContent.innerHTML = tagsHtml + listHtml;
+      bindSyntaxTagEvents();
+      return;
+    }
+
+    var listHtml = '';
+    items.forEach(function(item, idx) {
+      var codeDisplay = item.syntax ? item.syntax.replace(/</g, '&lt;').replace(/\n/g, '<br>') : '';
+      listHtml += '<div class="syntax-item" data-idx="' + idx + '" style="margin:4px 0;padding:6px 8px;cursor:pointer;transition:all 0.15s;border:1px solid var(--line-divider);border-radius:6px;"><div style="font-size:12px;font-weight:500;color:var(--font-color);margin-bottom:3px;">' + item.desc + '</div><code style="font-size:11px;color:var(--font-color-light);background:color-mix(in srgb, var(--font-color) 5%, transparent);padding:3px 6px;border-radius:4px;white-space:pre-wrap;display:block;line-height:1.4;">' + codeDisplay + '</code></div>';
+    });
+    panelContent.innerHTML = tagsHtml + listHtml;
+    bindSyntaxTagEvents();
+    bindSyntaxItemEvents();
+  }
+
+  function bindSyntaxTagEvents() {
+    panelContent.querySelectorAll('.syntax-tag').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        currentSyntaxCat = tag.getAttribute('data-cat');
+        renderSyntaxContent();
+      });
+    });
+  }
+
+  function bindSyntaxItemEvents() {
+    panelContent.querySelectorAll('.syntax-item').forEach(function(el) {
+      el.addEventListener('mouseenter', function() {
+        el.style.borderColor = 'var(--primary)';
+        el.style.background = 'color-mix(in srgb, var(--primary) 5%, transparent)';
+      });
+      el.addEventListener('mouseleave', function() {
+        el.style.borderColor = 'var(--line-divider)';
+        el.style.background = '';
+      });
+      el.addEventListener('click', function() {
+        var idx = parseInt(el.getAttribute('data-idx'));
+        var item = syntaxData[currentSyntaxCat][idx];
+        if (!item || !item.syntax) return;
+        var textarea = document.getElementById('markdown-input');
+        if (!textarea) return;
+        var start = textarea.selectionStart;
+        textarea.setRangeText(item.syntax, start, start, 'end');
+        if (item.select) {
+          var NewStart = textarea.value.indexOf(item.select, start);
+          if (NewStart !== -1) {
+            textarea.selectionStart = NewStart;
+            textarea.selectionEnd = NewStart + item.select.length;
+          }
+        }
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+      });
+    });
+  }
+
+
+  // 编辑时实时更新 TOC
+  var tocTimer = null;
+  var textareaEl = document.getElementById('markdown-input');
+  if (textareaEl) {
+    textareaEl.addEventListener('input', function() {
+      if (currentPanel === 'toc') {
+        clearTimeout(tocTimer);
+        tocTimer = setTimeout(renderTocContent, 300);
+      }
+    });
+  }
 })();
 </script>
 
