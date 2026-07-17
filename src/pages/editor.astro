@@ -372,19 +372,24 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
     <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入图片</h3>
     <div class="space-y-3">
       <div class="flex gap-2">
-        <input id="img-url-input" type="text" placeholder="粘贴图片 URL"
+        <input id="img-url-input" type="text" placeholder="粘贴图片 URL（单张）"
           class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
         <label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 hover:text-[var(--primary)]/70 transition cursor-pointer flex items-center gap-1 whitespace-nowrap">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           本地上传
-          <input id="img-file-input" type="file" accept="image/*" class="hidden" />
+          <input id="img-file-input" type="file" accept="image/*" multiple class="hidden" />
         </label>
       </div>
       <div id="img-preview" class="hidden">
-        <img id="img-preview-thumb" class="max-h-32 rounded-lg mx-auto" />
+        <div id="img-preview-grid" class="grid grid-cols-3 gap-2"></div>
+        <img id="img-preview-thumb" class="max-h-32 rounded-lg mx-auto hidden" />
+      </div>
+      <div>
+        <input id="img-alt-input" type="text" placeholder="图片描述（可选，显示在图片下方）"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
       </div>
       <div id="img-status" class="text-sm hidden"></div>
-      <p class="text-xs text-black/40 dark:text-white/40">本地图片将上传到 GitHub 仓库 public/uploads/ 目录</p>
+      <p class="text-xs text-black/40 dark:text-white/40">支持多选，多张图片自动并列显示（图片网格）</p>
     </div>
     <div class="flex justify-end gap-2 mt-4">
       <button id="img-cancel" class="px-3 py-1.5 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
@@ -507,10 +512,37 @@ function initEditor() {
       previewRaf = null;
       clearTimeout(previewTimer);
       previewTimer = setTimeout(() => {
-        const md = textarea.value;
-        let html = '';
+        var md = textarea.value;
+        // [Editor] 替换 ./images/ 路径为 Base64 Data URL 用于预览
+        var imageMap = window.__editorImageMap || {};
+        md = md.replace(/!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g, function(match, alt, filename) {
+          return imageMap[filename] ? '![' + alt + '](' + imageMap[filename] + ')' : match;
+        });
+        // [Editor] 将 [grid]...[/grid] 转换为 HTML grid 布局（包含 img 标签）
+        md = md.replace(/\[grid\]\n([\s\S]*?)\n\[\/grid\]/g, function(match, content) {
+          var images = [];
+          var imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+          var imgMatch;
+          while ((imgMatch = imgRegex.exec(content)) !== null) {
+            images.push({ alt: imgMatch[1], src: imgMatch[2] });
+          }
+          var count = images.length;
+          var cols = count === 1 ? 1 : count === 2 ? 2 : count === 3 ? 3 : 4;
+          var html = '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:8px;margin:16px 0;">';
+          images.forEach(function(img) {
+            html += '<div style="text-align:center;">';
+            html += '<img src="' + img.src + '" alt="' + img.alt + '" style="width:100%;height:auto;border-radius:8px;" />';
+            if (img.alt) {
+              html += '<p style="font-size:12px;color:#999;margin:4px 0 0;">' + img.alt + '</p>';
+            }
+            html += '</div>';
+          });
+          html += '</div>';
+          return html;
+        });
+        var html = '';
         try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
- catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
+        catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
         preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
         if (fullscreenContent) fullscreenContent.innerHTML = preview.innerHTML;
         updateCounts(md);
@@ -1386,18 +1418,24 @@ function initEditor() {
   var imgUrlInput = document.getElementById('img-url-input');
   var imgFileInput = document.getElementById('img-file-input');
   var imgPreview = document.getElementById('img-preview');
+  var imgPreviewGrid = document.getElementById('img-preview-grid');
   var imgPreviewThumb = document.getElementById('img-preview-thumb');
   var imgStatus = document.getElementById('img-status');
-  var pendingImgUrl = '';
+  var imgAltInput = document.getElementById('img-alt-input');
+  var pendingImgUrls = [];
 
   // 打开图片弹窗
   var imgToolBtn = document.querySelector('[data-action="image"]');
   if (imgToolBtn && imgModal) imgToolBtn.addEventListener('click', function() {
     imgModal.classList.remove('hidden');
     if (imgUrlInput) imgUrlInput.value = '';
+    if (imgAltInput) imgAltInput.value = '';
     if (imgPreview) imgPreview.classList.add('hidden');
+    if (imgPreviewGrid) imgPreviewGrid.innerHTML = '';
+    if (imgPreviewThumb) { imgPreviewThumb.src = ''; imgPreviewThumb.classList.add('hidden'); }
     if (imgStatus) { imgStatus.classList.add('hidden'); imgStatus.textContent = ''; }
-    pendingImgUrl = '';
+    pendingImgUrls = [];
+    if (imgFileInput) imgFileInput.value = '';
     setTimeout(function() { if (imgUrlInput) imgUrlInput.focus(); }, 100);
   });
 
@@ -1406,77 +1444,100 @@ function initEditor() {
     imgModal.classList.add('hidden');
   });
 
-  // 本地文件选择 → 上传到 GitHub
+  // 本地文件选择 → 存入 __editorImageMap（和粘贴/拖拽一致）
   if (imgFileInput) imgFileInput.addEventListener('change', function(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-
-    // 预览
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      if (imgPreviewThumb) imgPreviewThumb.src = ev.target.result;
-      if (imgPreview) imgPreview.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-
-    // 上传到 GitHub
-    var token = localStorage.getItem('gh-token') || '';
-    var repo = localStorage.getItem('gh-repo') || '';
-    if (!token || !repo) {
-      if (imgStatus) { imgStatus.textContent = '❌ 请先在发布弹窗中配置 GitHub Token 和仓库'; imgStatus.className = 'text-sm text-red-500'; imgStatus.classList.remove('hidden'); }
-      return;
+    var files = e.target.files;
+    if (!files || files.length === 0) return;
+    var imageFiles = [];
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].type.indexOf('image') !== -1) imageFiles.push(files[i]);
     }
+    if (imageFiles.length === 0) return;
 
-    if (imgStatus) { imgStatus.textContent = '⏳ 上传中...'; imgStatus.className = 'text-sm text-blue-500'; imgStatus.classList.remove('hidden'); }
+    pendingImgUrls = [];
+    var loaded = 0;
 
-    var uploadReader = new FileReader();
-    uploadReader.onload = function(ev2) {
-      var base64 = ev2.target.result.split(',')[1];
-      var ext = file.name.split('.').pop();
-      var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    if (imgPreviewGrid) imgPreviewGrid.innerHTML = '';
+    if (imgPreviewThumb) { imgPreviewThumb.src = ''; imgPreviewThumb.classList.add('hidden'); }
 
-      fetch('https://api.github.com/repos/' + repo + '/contents/public/uploads/' + filename, {
-        method: 'PUT',
-        headers: {
-          'Authorization': 'token ' + token,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'upload: ' + filename,
-          content: base64,
-          branch: 'main',
-        }),
-      }).then(function(res) {
-        if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '上传失败'); });
-        return res.json();
-      }).then(function() {
-        pendingImgUrl = '/uploads/' + filename;
-        if (imgUrlInput) imgUrlInput.value = pendingImgUrl;
-        if (imgStatus) { imgStatus.textContent = '✅ 上传成功'; imgStatus.className = 'text-sm text-green-500'; }
-      }).catch(function(err) {
-        if (imgStatus) { imgStatus.textContent = '❌ ' + err.message; imgStatus.className = 'text-sm text-red-500'; }
-      });
-    };
-    uploadReader.readAsDataURL(file);
+    if (imgStatus) { imgStatus.textContent = '⏳ 处理中...'; imgStatus.className = 'text-sm text-blue-500'; imgStatus.classList.remove('hidden'); }
+
+    imageFiles.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var dataUrl = ev.target.result;
+        var ext = file.type.split('/')[1] || 'png';
+        var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        window.__editorImageMap[filename] = dataUrl;
+        var mdPath = './images/' + filename;
+        pendingImgUrls.push(mdPath);
+
+        if (imgPreviewGrid) {
+          var thumb = document.createElement('img');
+          thumb.src = dataUrl;
+          thumb.className = 'w-full h-20 object-cover rounded-lg';
+          imgPreviewGrid.appendChild(thumb);
+        }
+
+        loaded++;
+        if (loaded === imageFiles.length) {
+          if (imgPreview) imgPreview.classList.remove('hidden');
+          if (imageFiles.length > 1) {
+            if (imgPreviewGrid) imgPreviewGrid.classList.remove('hidden');
+            if (imgPreviewThumb) imgPreviewThumb.classList.add('hidden');
+          } else {
+            if (imgPreviewGrid) imgPreviewGrid.classList.add('hidden');
+            if (imgPreviewThumb) {
+              imgPreviewThumb.src = dataUrl;
+              imgPreviewThumb.classList.remove('hidden');
+            }
+          }
+          if (imgStatus) { imgStatus.textContent = '✅ ' + imageFiles.length + ' 张图片已就绪'; imgStatus.className = 'text-sm text-green-500'; }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   });
 
   // 确认插入
   if (imgConfirm && imgModal) imgConfirm.addEventListener('click', function() {
-    var url = pendingImgUrl || (imgUrlInput ? imgUrlInput.value.trim() : '');
-    if (!url) { imgUrlInput.focus(); return; }
     var textarea = document.getElementById('markdown-input');
     if (!textarea) return;
+
+    var altText = (imgAltInput ? imgAltInput.value.trim() : '') || '图片';
+
+    var insertText = '';
+    if (pendingImgUrls.length > 0) {
+      if (pendingImgUrls.length === 1) {
+        insertText = '\n![' + altText + '](' + pendingImgUrls[0] + ')\n';
+      } else {
+        var lines = pendingImgUrls.map(function(url) { return '![' + altText + '](' + url + ')'; });
+        insertText = '\n[grid]\n' + lines.join('\n') + '\n[/grid]\n';
+      }
+    } else {
+      var url = imgUrlInput ? imgUrlInput.value.trim() : '';
+      if (!url) { imgUrlInput.focus(); return; }
+      insertText = '\n![' + altText + '](' + url + ')\n';
+    }
+
     var start = textarea.selectionStart;
-    textarea.setRangeText('\n![' + '图片' + '](' + url + ')\n', start, start, 'end');
+    textarea.setRangeText(insertText, start, start, 'end');
     textarea.focus();
     textarea.dispatchEvent(new Event('input'));
-    // 重置
+
+    var insertedCount = pendingImgUrls.length || (insertText.indexOf('![') !== -1 ? 1 : 0);
+
     if (imgUrlInput) imgUrlInput.value = '';
+    if (imgAltInput) imgAltInput.value = '';
     if (imgPreview) imgPreview.classList.add('hidden');
+    if (imgPreviewGrid) imgPreviewGrid.innerHTML = '';
+    if (imgPreviewThumb) { imgPreviewThumb.src = ''; imgPreviewThumb.classList.add('hidden'); }
     if (imgStatus) { imgStatus.classList.add('hidden'); imgStatus.textContent = ''; }
-    pendingImgUrl = '';
+    pendingImgUrls = [];
+    if (imgFileInput) imgFileInput.value = '';
     imgModal.classList.add('hidden');
+
+    window.__editorShowToast(insertedCount > 1 ? insertedCount + ' 张图片已插入（网格）' : '图片已插入');
   });
 
   // 回车确认
