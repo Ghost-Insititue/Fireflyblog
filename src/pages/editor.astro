@@ -785,17 +785,14 @@ function initEditor() {
     syncScrollEnabled = !syncScrollEnabled;
     this.classList.toggle('active', syncScrollEnabled);
     localStorage.setItem('editor-sync-scroll', syncScrollEnabled);
+    textarea.focus();
   });
 
   btnTypewriter && btnTypewriter.addEventListener('click', function() {
     typewriterEnabled = !typewriterEnabled;
     this.classList.toggle('active', typewriterEnabled);
     localStorage.setItem('editor-typewriter', typewriterEnabled);
-    if (typewriterEnabled) {
-      textarea.style.scrollBehavior = 'smooth';
-      scrollCursorToCenter();
-      setTimeout(function() { textarea.style.scrollBehavior = ''; }, 300);
-    }
+    textarea.focus();
   });
 
   // 同步滚动：编辑器 → 预览
@@ -876,17 +873,14 @@ function initEditor() {
         imageLines.push('![图片](./images/' + filename + ')');
         loaded++;
         if (loaded === imageFiles.length) {
-          var start = textarea.selectionStart;
           var insertText;
           if (imageLines.length > 1) {
             insertText = '[grid]\n' + imageLines.join('\n') + '\n[/grid]\n';
           } else {
             insertText = imageLines[0] + '\n';
           }
-          textarea.value = textarea.value.substring(0, start) + insertText + textarea.value.substring(textarea.selectionEnd);
-          textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
           textarea.focus();
-          textarea.dispatchEvent(new Event('input'));
+          document.execCommand('insertText', false, insertText);
           window.__editorShowToast(imageFiles.length > 1 ? imageFiles.length + '张图片已粘贴' : '图片已粘贴');
         }
       };
@@ -926,17 +920,14 @@ function initEditor() {
         imageLines.push('![图片](./images/' + filename + ')');
         loaded++;
         if (loaded === imageFiles.length) {
-          var start = textarea.selectionStart;
           var insertText;
           if (imageLines.length > 1) {
             insertText = '[grid]\n' + imageLines.join('\n') + '\n[/grid]\n';
           } else {
             insertText = imageLines[0] + '\n';
           }
-          textarea.value = textarea.value.substring(0, start) + insertText + textarea.value.substring(textarea.selectionEnd);
-          textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
           textarea.focus();
-          textarea.dispatchEvent(new Event('input'));
+          document.execCommand('insertText', false, insertText);
           window.__editorShowToast(imageFiles.length > 1 ? imageFiles.length + '张图片已插入' : '图片已插入');
         }
       };
@@ -1855,9 +1846,8 @@ function initEditor() {
     }
 
     var start = textarea.selectionStart;
-    textarea.setRangeText(insertText, start, start, 'end');
     textarea.focus();
-    textarea.dispatchEvent(new Event('input'));
+    document.execCommand('insertText', false, insertText);
 
     var insertedCount = pendingImgUrls.length || (insertText.indexOf('![') !== -1 ? 1 : 0);
 
