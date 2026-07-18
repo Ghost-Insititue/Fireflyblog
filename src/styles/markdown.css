@@ -98,8 +98,15 @@
       @apply text-(--primary);
     }
 
-    li:has(> input[type="checkbox"])::marker {
-      content: none;
+    li:has(> input[type="checkbox"])::marker,
+    li:has(> p > input[type="checkbox"])::marker {
+      content: none !important;
+      display: none !important;
+    }
+
+    li:has(> input[type="checkbox"]),
+    li:has(> p > input[type="checkbox"]) {
+      list-style-type: none !important;
     }
   }
 

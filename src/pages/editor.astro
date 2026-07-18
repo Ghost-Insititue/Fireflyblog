@@ -163,6 +163,30 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 .custom-scrollbar { position: absolute; right: 2px; top: 0; bottom: 0; width: 6px; z-index: 10; opacity: 1; pointer-events: auto; }
 .custom-scrollbar-thumb { width: 100%; border-radius: 3px; background: rgba(128, 128, 128, 0.35); cursor: pointer; position: absolute; top: 0; min-height: 20px; transition: background 0.15s; }
 .custom-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.55); }
+
+/* slide-panel 滚动条：默认隐藏，hover 时显示 */
+#panel-content::-webkit-scrollbar { width: 4px; }
+#panel-content::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; transition: background 0.2s; }
+#panel-content:hover::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.35); }
+#panel-content:hover::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.55); }
+#panel-content { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+#panel-content:hover { scrollbar-color: rgba(128, 128, 128, 0.35) transparent; }
+
+/* 任务列表：隐藏圆点 */
+#preview-content ul:has(li > input[type="checkbox"]),
+#preview-content ul:has(li > p > input[type="checkbox"]),
+#fullscreen-content ul:has(li > input[type="checkbox"]),
+#fullscreen-content ul:has(li > p > input[type="checkbox"]) {
+  list-style: none !important;
+}
+#preview-content ul:has(li > input[type="checkbox"]) li::marker,
+#preview-content ul:has(li > p > input[type="checkbox"]) li::marker,
+#fullscreen-content ul:has(li > input[type="checkbox"]) li::marker,
+#fullscreen-content ul:has(li > p > input[type="checkbox"]) li::marker {
+  content: "" !important;
+  width: 0 !important;
+  display: none !important;
+}
 </style>
 
 <div class="flex flex-col w-full overflow-hidden" style="height: calc(100vh - var(--navbar-height, 72px)); box-sizing: border-box;">
@@ -236,11 +260,11 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       </button>
       <div class="w-px h-4 bg-[var(--line-divider)] mx-0.5"></div>
       <!-- 功能开关 -->
+      <button id="btn-typewriter" title="打字机模式" class="toolbar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+      </button>
       <button id="btn-sync-scroll" title="同步滚动" class="toolbar-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l-4 4m0 0l4 4"/><path d="M4 7h12"/><path d="M16 21l4-4m0 0l-4-4"/><path d="M20 17H8"/></svg>
-      </button>
-      <button id="btn-typewriter" title="打字机模式" class="toolbar-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8"/></svg>
       </button>
       <div class="flex-1"></div>
       <!-- 视图切换 -->
@@ -307,14 +331,16 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   <!-- 右侧面板区（图标栏 + 滑出面板） -->
   <div class="flex shrink-0">
     <!-- 滑出面板（内联，不覆盖编辑区） -->
-    <div id="slide-panel" class="w-0 overflow-hidden bg-[var(--card-bg)] border-l border-[var(--line-divider)] transition-all duration-300 flex flex-col">
-      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--line-divider)]">
-        <h3 id="panel-title" class="text-sm font-bold text-black/90 dark:text-white/90">设置</h3>
-        <button id="panel-close" class="text-black/50 dark:text-white/50 hover:text-black/90 dark:hover:text-white/90 cursor-pointer">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+    <div id="slide-panel" class="w-0 overflow-hidden bg-[var(--card-bg)] border-l border-[var(--line-divider)] flex flex-col">
+      <div id="panel-inner" style="width: 288px; transform: translateX(-100%);">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--line-divider)]">
+          <h3 id="panel-title" class="text-sm font-bold text-black/90 dark:text-white/90">设置</h3>
+          <button id="panel-close" class="text-black/50 dark:text-white/50 hover:text-black/90 dark:hover:text-white/90 cursor-pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="panel-content" class="flex-1 overflow-hidden p-4"></div>
       </div>
-      <div id="panel-content" class="flex-1 overflow-y-auto p-4"></div>
     </div>
 
     <!-- 图标栏 -->
@@ -326,10 +352,10 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5.5A2.5 2.5 0 017.5 3H18a2 2 0 012 2v14a2 2 0 01-2 2H7.5A2.5 2.5 0 015 18.5v-13z"/><path d="M9 3v2h6V3"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
       </button>
       <button id="btn-toc" data-panel="toc" class="icon-bar-btn" title="目录">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
       </button>
       <button id="btn-syntax" data-panel="syntax" class="icon-bar-btn" title="语法参考">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="10 12 8 14 10 16"/><polyline points="14 12 16 14 14 16"/></svg>
       </button>
       <div class="flex-1"></div>
       <button id="btn-export-md" class="icon-bar-btn" title="导出 MD">
@@ -493,6 +519,17 @@ function initEditor() {
   // marked 配置
   if (typeof marked !== 'undefined') {
     const renderer = new marked.Renderer();
+    // 任务列表：隐藏圆点，用内联样式强制覆盖
+    renderer.listitem = function(obj) {
+      const token = typeof obj === 'object' ? obj : { text: arguments[0], task: arguments[1], checked: arguments[2] };
+      let text = token.tokens ? this.parser.parse(token.tokens, token.loose) : token.text;
+      if (token.task) {
+        const checkbox = '<input ' + (token.checked ? 'checked="" ' : '') + 'disabled="" type="checkbox">';
+        text = checkbox + ' ' + text;
+        return '<li style="list-style:none !important;">' + text + '</li>\n';
+      }
+      return '<li>' + text + '</li>\n';
+    };
     renderer.code = function(obj) {
       const code = typeof obj === 'object' ? obj.text : obj;
       const lang = typeof obj === 'object' ? obj.lang : arguments[1];
@@ -634,8 +671,25 @@ function initEditor() {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const selected = textarea.value.substring(start, end);
+      const val = textarea.value;
       let insert, selectStart, selectEnd;
       if (selected) {
+        // 检测选区前后是否已有 prefix/suffix → 取消包裹
+        const hasPrefix = start >= config.prefix.length && val.substring(start - config.prefix.length, start) === config.prefix;
+        const hasSuffix = val.substring(end, end + config.suffix.length) === config.suffix;
+        if (config.suffix && hasPrefix && hasSuffix) {
+          // 取消：移除前后的 prefix/suffix
+          insert = selected;
+          selectStart = start - config.prefix.length;
+          selectEnd = end - config.prefix.length;
+          textarea.setRangeText(insert, selectStart, end + config.suffix.length, 'select');
+          textarea.selectionStart = selectStart;
+          textarea.selectionEnd = selectStart + selected.length;
+          textarea.focus();
+          textarea.dispatchEvent(new Event('input'));
+          updatePreview();
+          return;
+        }
         insert = config.prefix + selected + config.suffix;
         selectStart = start + config.prefix.length;
         selectEnd = selectStart + selected.length;
@@ -994,6 +1048,7 @@ function initEditor() {
 <script is:inline>
 (function() {
   var slidePanel = document.getElementById('slide-panel');
+  var panelInner = document.getElementById('panel-inner');
   var panelTitle = document.getElementById('panel-title');
   var panelContent = document.getElementById('panel-content');
   var panelClose = document.getElementById('panel-close');
@@ -1016,78 +1071,71 @@ function initEditor() {
 
   var currentPanel = '';
 
+
   function openPanel(name) {
     if (currentPanel === name && slidePanel.style.width === '288px') {
       closePanel();
       return;
     }
     currentPanel = name;
-    // TOC 和语法面板使用动态内容
+    document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
+    panelContent.classList.remove('overflow-hidden');
+    panelContent.classList.add('overflow-y-auto');
     if (name === 'toc') {
       panelTitle.textContent = '目录';
       renderTocContent();
-      slidePanel.style.width = '288px';
-      document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
-      return;
-    }
-    if (name === 'syntax') {
+    } else if (name === 'syntax') {
       panelTitle.textContent = '语法参考';
       renderSyntaxContent();
-      slidePanel.style.width = '288px';
-      document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
-      return;
-    }
-    var t = templates[name];
-    if (!t) return;
-    panelTitle.textContent = t.title;
-    panelContent.innerHTML = t.html;
-    slidePanel.style.width = '288px';
-    document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
-    document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
-    // [Editor] 打开文章信息面板时，从隐藏字段同步值到面板
-    if (name === 'meta') {
-      var titleInput = document.getElementById('post-title-input');
-      var mainTitle = document.getElementById('post-title');
-      if (titleInput && mainTitle) titleInput.value = mainTitle.value;
-      // 同步隐藏字段值到面板新元素（querySelector 优先找面板内的元素）
-      var syncFields = ['post-desc', 'post-category', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
-      syncFields.forEach(function(id) {
-        var hidden = document.getElementById(id);
-        var panel = panelContent.querySelector('#' + id);
-        if (hidden && panel && hidden !== panel) panel.value = hidden.value;
-      });
-      // [Editor] 标签：从隐藏字段拆分到输入框（前两个单标签 + 第三个自定义多标签）
-      var hiddenTags = document.getElementById('post-tags');
-      if (hiddenTags) {
-        var tagArr = hiddenTags.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
-        var tag1 = panelContent.querySelector('#post-tag-1');
-        var tag2 = panelContent.querySelector('#post-tag-2');
-        var tag3 = panelContent.querySelector('#post-tag-3');
-        if (tag1) tag1.value = tagArr[0] || '';
-        if (tag2) tag2.value = tagArr[1] || '';
-        if (tag3) tag3.value = tagArr.slice(2).join(', ');
-      }
-      // 同步隐藏 checkbox 到面板 checkbox（面板用 -panel 后缀避免 ID 冲突）
-      [['chk-pinned', 'chk-pinned-panel', 'pinned'], ['chk-comment', 'chk-comment-panel', 'comment']].forEach(function(pair) {
-        var hidden = document.getElementById(pair[0]);
-        var panel = panelContent.querySelector('#' + pair[1]);
-        if (hidden && panel) {
-          panel.checked = hidden.checked;
-          metaCheckboxState[pair[2]] = hidden.checked;
-          syncCheckboxStyle(panel);
+    } else {
+      var t = templates[name];
+      if (!t) return;
+      panelTitle.textContent = t.title;
+      panelContent.innerHTML = t.html;
+      if (name === 'meta') {
+        var titleInput = document.getElementById('post-title-input');
+        var mainTitle = document.getElementById('post-title');
+        if (titleInput && mainTitle) titleInput.value = mainTitle.value;
+        var syncFields = ['post-desc', 'post-category', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
+        syncFields.forEach(function(id) {
+          var hidden = document.getElementById(id);
+          var panel = panelContent.querySelector('#' + id);
+          if (hidden && panel && hidden !== panel) panel.value = hidden.value;
+        });
+        var hiddenTags = document.getElementById('post-tags');
+        if (hiddenTags) {
+          var tagArr = hiddenTags.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+          var tag1 = panelContent.querySelector('#post-tag-1');
+          var tag2 = panelContent.querySelector('#post-tag-2');
+          var tag3 = panelContent.querySelector('#post-tag-3');
+          if (tag1) tag1.value = tagArr[0] || '';
+          if (tag2) tag2.value = tagArr[1] || '';
+          if (tag3) tag3.value = tagArr.slice(2).join(', ');
         }
-      });
+        [['chk-pinned', 'chk-pinned-panel', 'pinned'], ['chk-comment', 'chk-comment-panel', 'comment']].forEach(function(pair) {
+          var hidden = document.getElementById(pair[0]);
+          var panel = panelContent.querySelector('#' + pair[1]);
+          if (hidden && panel) {
+            panel.checked = hidden.checked;
+            metaCheckboxState[pair[2]] = hidden.checked;
+            syncCheckboxStyle(panel);
+          }
+        });
+      }
+      if (name === 'drafts') renderDraftList();
     }
-    // 草稿列表
-    if (name === 'drafts') renderDraftList();
+    slidePanel.style.width = '288px';
+    panelInner.style.transform = 'translateX(0)';
   }
 
   function closePanel() {
     slidePanel.style.width = '0px';
+    panelInner.style.transform = 'translateX(-100%)';
     currentPanel = '';
     document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+    panelContent.classList.remove('overflow-y-auto');
+    panelContent.classList.add('overflow-hidden');
   }
 
   // [Editor] 格式化时间为 YYYY-MM-DD HH:mm
@@ -1869,7 +1917,7 @@ function initEditor() {
     var listHtml = '';
     items.forEach(function(item, idx) {
       var codeDisplay = item.syntax ? item.syntax.replace(/</g, '&lt;').replace(/\n/g, '<br>') : '';
-      listHtml += '<div class="syntax-item" data-idx="' + idx + '" style="margin:4px 0;padding:6px 8px;cursor:pointer;transition:all 0.15s;border:1px solid var(--line-divider);border-radius:6px;"><div style="font-size:12px;font-weight:500;color:var(--font-color);margin-bottom:3px;">' + item.desc + '</div><code style="font-size:11px;color:var(--font-color-light);background:color-mix(in srgb, var(--font-color) 5%, transparent);padding:3px 6px;border-radius:4px;white-space:pre-wrap;display:block;line-height:1.4;">' + codeDisplay + '</code></div>';
+      listHtml += '<div class="syntax-item" data-idx="' + idx + '" style="margin:4px 0;padding:6px 8px;cursor:pointer;transition:all 0.15s;border:1px solid var(--line-divider);border-radius:6px;"><div style="font-size:12px;font-weight:600;color:color-mix(in srgb, currentColor 80%, transparent);margin-bottom:3px;">' + item.desc + '</div><code style="font-size:11px;color:color-mix(in srgb, currentColor 55%, transparent);background:color-mix(in srgb, currentColor 8%, transparent);padding:4px 6px;border-radius:4px;white-space:pre-wrap;display:block;line-height:1.4;border:1px solid color-mix(in srgb, currentColor 8%, transparent);">' + codeDisplay + '</code></div>';
     });
     panelContent.innerHTML = tagsHtml + listHtml;
     bindSyntaxTagEvents();
@@ -1902,12 +1950,34 @@ function initEditor() {
         var textarea = document.getElementById('markdown-input');
         if (!textarea) return;
         var start = textarea.selectionStart;
-        textarea.setRangeText(item.syntax, start, start, 'end');
-        if (item.select) {
-          var NewStart = textarea.value.indexOf(item.select, start);
-          if (NewStart !== -1) {
-            textarea.selectionStart = NewStart;
-            textarea.selectionEnd = NewStart + item.select.length;
+        var end = textarea.selectionEnd;
+        var selected = textarea.value.substring(start, end);
+        if (selected && item.select) {
+          var prefix = item.syntax.substring(0, item.syntax.indexOf(item.select));
+          var suffix = item.syntax.substring(item.syntax.indexOf(item.select) + item.select.length);
+          // 检测选区前后是否已有 prefix/suffix → 取消包裹
+          if (suffix && start >= prefix.length && end <= textarea.value.length - suffix.length) {
+            var beforePrefix = textarea.value.substring(start - prefix.length, start);
+            var afterSuffix = textarea.value.substring(end, end + suffix.length);
+            if (beforePrefix === prefix && afterSuffix === suffix) {
+              textarea.setRangeText(selected, start - prefix.length, end + suffix.length, 'select');
+              textarea.focus();
+              textarea.dispatchEvent(new Event('input'));
+              return;
+            }
+          }
+          textarea.setRangeText(prefix + selected + suffix, start, end, 'end');
+          textarea.selectionStart = start + prefix.length;
+          textarea.selectionEnd = start + prefix.length + selected.length;
+        } else {
+          // 无选中文本时：插入语法并选中占位符
+          textarea.setRangeText(item.syntax, start, start, 'end');
+          if (item.select) {
+            var NewStart = textarea.value.indexOf(item.select, start);
+            if (NewStart !== -1) {
+              textarea.selectionStart = NewStart;
+              textarea.selectionEnd = NewStart + item.select.length;
+            }
           }
         }
         textarea.focus();
