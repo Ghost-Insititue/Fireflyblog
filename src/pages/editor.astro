@@ -163,6 +163,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 .custom-scrollbar { position: absolute; right: 2px; top: 0; bottom: 0; width: 6px; z-index: 10; opacity: 1; pointer-events: auto; }
 .custom-scrollbar-thumb { width: 100%; border-radius: 3px; background: rgba(128, 128, 128, 0.35); cursor: pointer; position: absolute; top: 0; min-height: 20px; transition: background 0.15s; }
 .custom-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.55); }
+#draft-list::-webkit-scrollbar { display: none; }
 
 /* slide-panel 滚动条：默认隐藏，hover 时显示 */
 #panel-content::-webkit-scrollbar { width: 4px; }
@@ -548,49 +549,45 @@ function initEditor() {
   }
 
   // 实时预览
-  let previewTimer = null;
   let previewRaf = null;
   function updatePreview() {
     if (previewRaf) return;
     previewRaf = requestAnimationFrame(function() {
       previewRaf = null;
-      clearTimeout(previewTimer);
-      previewTimer = setTimeout(() => {
-        var md = textarea.value;
-        // [Editor] 替换 ./images/ 路径为 Base64 Data URL 用于预览
-        var imageMap = window.__editorImageMap || {};
-        md = md.replace(/!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g, function(match, alt, filename) {
-          return imageMap[filename] ? '![' + alt + '](' + imageMap[filename] + ')' : match;
-        });
-        // [Editor] 将 [grid]...[/grid] 转换为 HTML grid 布局（包含 img 标签）
-        md = md.replace(/\[grid\]\n([\s\S]*?)\n\[\/grid\]/g, function(match, content) {
-          var images = [];
-          var imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-          var imgMatch;
-          while ((imgMatch = imgRegex.exec(content)) !== null) {
-            images.push({ alt: imgMatch[1], src: imgMatch[2] });
+      var md = textarea.value;
+      // [Editor] 替换 ./images/ 路径为 Base64 Data URL 用于预览
+      var imageMap = window.__editorImageMap || {};
+      md = md.replace(/!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g, function(match, alt, filename) {
+        return imageMap[filename] ? '![' + alt + '](' + imageMap[filename] + ')' : match;
+      });
+      // [Editor] 将 [grid]...[/grid] 转换为 HTML grid 布局（包含 img 标签）
+      md = md.replace(/\[grid\]\n([\s\S]*?)\n\[\/grid\]/g, function(match, content) {
+        var images = [];
+        var imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+        var imgMatch;
+        while ((imgMatch = imgRegex.exec(content)) !== null) {
+          images.push({ alt: imgMatch[1], src: imgMatch[2] });
+        }
+        var count = images.length;
+        var cols = count === 1 ? 1 : count === 2 ? 2 : count === 3 ? 3 : 4;
+        var html = '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:8px;margin:16px 0;">';
+        images.forEach(function(img) {
+          html += '<div style="text-align:center;">';
+          html += '<img src="' + img.src + '" alt="' + img.alt + '" style="width:100%;height:auto;border-radius:8px;" />';
+          if (img.alt) {
+            html += '<p style="font-size:12px;color:#999;margin:4px 0 0;">' + img.alt + '</p>';
           }
-          var count = images.length;
-          var cols = count === 1 ? 1 : count === 2 ? 2 : count === 3 ? 3 : 4;
-          var html = '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:8px;margin:16px 0;">';
-          images.forEach(function(img) {
-            html += '<div style="text-align:center;">';
-            html += '<img src="' + img.src + '" alt="' + img.alt + '" style="width:100%;height:auto;border-radius:8px;" />';
-            if (img.alt) {
-              html += '<p style="font-size:12px;color:#999;margin:4px 0 0;">' + img.alt + '</p>';
-            }
-            html += '</div>';
-          });
           html += '</div>';
-          return html;
         });
-        var html = '';
-        try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
-        catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
-        preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
-        if (fullscreenContent) fullscreenContent.innerHTML = preview.innerHTML;
-        updateCounts(md);
-      }, 30);
+        html += '</div>';
+        return html;
+      });
+      var html = '';
+      try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
+      catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
+      preview.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
+      if (fullscreenContent) fullscreenContent.innerHTML = preview.innerHTML;
+      updateCounts(md);
     });
   }
 
@@ -1066,7 +1063,7 @@ function initEditor() {
     tags: { title: '标签', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签（逗号分隔）</label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     cover: { title: '封面图', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 URL</label><input id="post-cover" type="text" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     settings: { title: '设置', html: '<div class="text-sm text-black/50 dark:text-white/50">更多设置开发中...</div>' },
-    drafts: { title: '草稿箱', html: '<div class="space-y-3"><div class="flex gap-2"><input id="draft-name-input" type="text" placeholder="草稿名称" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none" /><button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm cursor-pointer">保存</button></div><div id="draft-list" class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无草稿</div></div>' }
+    drafts: { title: '草稿箱', html: '<div style="padding:0 16px;"><div class="space-y-1"><div class="flex gap-2"><input id="draft-name-input" type="text" placeholder="草稿名称" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none" /><button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm cursor-pointer">保存</button></div><div id="draft-toolbar" class="flex items-center justify-between" style="padding:4px 0;"><label class="flex items-center gap-1 text-xs text-black/50 dark:text-white/50 cursor-pointer select-none" style="opacity:0;pointer-events:none;"><input type="checkbox" id="draft-select-all" class="rounded" /> 全选</label><button id="btn-delete-selected" class="text-xs text-red-400 hover:text-red-600 cursor-pointer" style="opacity:0;pointer-events:none;">删除选中</button></div></div></div><div id="draft-list" class="text-sm text-black/40 dark:text-white/40" style="max-height:calc(100vh - 200px);overflow-y:auto;padding:0 14px 0 14px;scrollbar-width:none;-ms-overflow-style:none;"></div>' }
   };
 
   var currentPanel = '';
@@ -1077,11 +1074,20 @@ function initEditor() {
       closePanel();
       return;
     }
+    _tocCache = '';
     currentPanel = name;
     document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('[data-panel="' + name + '"]').forEach(function(b) { b.classList.add('active'); });
     panelContent.classList.remove('overflow-hidden');
-    panelContent.classList.add('overflow-y-auto');
+    if (name === 'drafts') {
+      panelContent.classList.remove('overflow-y-auto');
+      panelContent.classList.add('overflow-hidden');
+      panelContent.style.padding = '0';
+    } else {
+      panelContent.classList.add('overflow-y-auto', 'overflow-x-hidden');
+      panelContent.style.padding = '';
+    }
+    panelContent.classList.add('overflow-x-hidden');
     if (name === 'toc') {
       panelTitle.textContent = '目录';
       renderTocContent();
@@ -1133,6 +1139,7 @@ function initEditor() {
     slidePanel.style.width = '0px';
     panelInner.style.transform = 'translateX(-100%)';
     currentPanel = '';
+    _tocCache = '';
     document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
     panelContent.classList.remove('overflow-y-auto');
     panelContent.classList.add('overflow-hidden');
@@ -1151,18 +1158,30 @@ function initEditor() {
     var list = document.getElementById('draft-list');
     if (!list) return;
     var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+    drafts.sort(function(a, b) { return (b.savedAt || '').localeCompare(a.savedAt || ''); });
+    var toolbar = document.getElementById('draft-toolbar');
     if (drafts.length === 0) {
       list.innerHTML = '<div class="text-sm text-black/40 dark:text-white/40 text-center py-8">暂无草稿</div>';
+      if (toolbar) toolbar.classList.add('hidden');
       return;
     }
+    if (toolbar) toolbar.classList.remove('hidden');
     list.innerHTML = drafts.map(function(d, i) {
-      return '<div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer draft-item border border-transparent hover:border-[var(--line-divider)] transition-colors" data-index="' + i + '">' +
-        '<div class="flex-1 min-w-0">' +
-          '<div class="text-sm font-bold text-[var(--primary)] truncate">' + (d.name || '未命名草稿') + '</div>' +
-          '<div class="text-xs text-black/50 dark:text-white/50 truncate mt-0.5">' + (d.title ? '标题：' + d.title : '无标题') + '</div>' +
-          '<div class="text-[10px] text-black/30 dark:text-white/30 mt-1">' + formatDraftTime(d.savedAt) + '</div>' +
+      return '<div class="draft-item rounded-lg border border-[var(--line-divider)] hover:border-[var(--primary)]/30 hover:bg-black/5 dark:hover:bg-white/5 transition-colors" data-index="' + i + '" style="padding:4px 12px;margin-bottom:4px;">' +
+        '<div class="flex items-center gap-2">' +
+          '<input type="checkbox" class="draft-checkbox shrink-0 rounded" data-index="' + i + '" />' +
+          '<div class="flex-1 min-w-0 cursor-pointer draft-load" data-index="' + i + '">' +
+            '<div class="flex items-center justify-between">' +
+              '<div class="text-xs font-bold text-black/80 dark:text-white/80 truncate">' + (d.name || '未命名草稿') + '</div>' +
+              '<button class="text-xs text-red-400 hover:text-red-600 shrink-0 draft-delete" data-index="' + i + '">删除</button>' +
+            '</div>' +
+            '<div class="text-xs text-black/50 dark:text-white/50 mt-1.5" style="background:color-mix(in srgb, currentColor 8%, transparent);padding:8px 12px;border-radius:6px;">' +
+              '<div>' + (d.title ? '标题：' + d.title : '无标题') + '</div>' +
+              '<div class="mt-1">' + formatDraftTime(d.savedAt) + '</div>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
-        '<button class="text-xs text-red-400 hover:text-red-600 ml-2 shrink-0 draft-delete" data-index="' + i + '">删除</button></div>';
+      '</div>';
     }).join('');
   }
 
@@ -1189,6 +1208,18 @@ function initEditor() {
       var hiddenId = e.target.id.replace('-panel', '');
       var hidden = document.getElementById(hiddenId);
       if (hidden) hidden.checked = e.target.checked;
+    }
+    // 草稿复选框变化时更新工具栏可见性
+    if (e.target.classList.contains('draft-checkbox')) {
+      var checkedCount = panelContent.querySelectorAll('.draft-checkbox:checked').length;
+      var toolbar = document.getElementById('draft-toolbar');
+      if (toolbar) {
+        var label = toolbar.querySelector('label');
+        var btn = toolbar.querySelector('button');
+        var show = checkedCount > 0;
+        if (label) { label.style.opacity = show ? '1' : '0'; label.style.pointerEvents = show ? 'auto' : 'none'; }
+        if (btn) { btn.style.opacity = show ? '1' : '0'; btn.style.pointerEvents = show ? 'auto' : 'none'; }
+      }
     }
   });
   // [Editor] 面板输入时同步回隐藏字段（确保保存时可读取）
@@ -1251,8 +1282,34 @@ function initEditor() {
     // 下载 MD
     if (target.id === 'btn-download' || target.closest('#btn-download')) {
       var title = document.getElementById('post-title').value || 'untitled';
+      var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+      var desc = getVal('post-desc');
+      var category = getVal('post-category');
+      var tags = getVal('post-tags');
+      var cover = getVal('post-cover');
+      var password = getVal('post-password');
+      var passwordHint = getVal('post-password-hint');
+      var pinned = (metaCheckboxState && metaCheckboxState.pinned) || false;
+      var comment = (metaCheckboxState && metaCheckboxState.comment !== undefined) ? metaCheckboxState.comment : true;
+      // 构建 frontmatter
+      var fm = '---\n';
+      fm += 'title: "' + title + '"\n';
+      fm += 'published: ' + new Date().toISOString().split('T')[0] + '\n';
+      fm += 'draft: false\n';
+      if (desc) fm += 'description: "' + desc + '"\n';
+      if (category) fm += 'category: "' + category + '"\n';
+      if (tags) {
+        var tagArr = tags.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+        if (tagArr.length > 0) fm += 'tags: [' + tagArr.join(', ') + ']\n';
+      }
+      if (cover && cover.indexOf('data:') !== 0) fm += 'image: "' + cover + '"\n';
+      if (password) fm += 'password: "' + password + '"\n';
+      if (passwordHint) fm += 'passwordHint: "' + passwordHint + '"\n';
+      if (pinned) fm += 'pinned: true\n';
+      if (comment === false) fm += 'comment: false\n';
+      fm += '---\n\n';
       var textarea = document.getElementById('markdown-input');
-      var blob = new Blob([textarea.value], { type: 'text/markdown' });
+      var blob = new Blob([fm + textarea.value], { type: 'text/markdown' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = title + '.md';
@@ -1296,9 +1353,34 @@ function initEditor() {
       renderDraftList();
       return;
     }
+    // 全选/取消全选
+    if (target.id === 'draft-select-all') {
+      var checkboxes = panelContent.querySelectorAll('.draft-checkbox');
+      checkboxes.forEach(function(cb) { cb.checked = target.checked; });
+      var toolbar = document.getElementById('draft-toolbar');
+      if (toolbar) {
+        var label = toolbar.querySelector('label');
+        var btn = toolbar.querySelector('button');
+        var show = target.checked;
+        if (label) { label.style.opacity = show ? '1' : '0'; label.style.pointerEvents = show ? 'auto' : 'none'; }
+        if (btn) { btn.style.opacity = show ? '1' : '0'; btn.style.pointerEvents = show ? 'auto' : 'none'; }
+      }
+      return;
+    }
+    // 删除选中
+    if (target.id === 'btn-delete-selected' || target.closest('#btn-delete-selected')) {
+      var checkedBoxes = panelContent.querySelectorAll('.draft-checkbox:checked');
+      if (checkedBoxes.length === 0) return;
+      var indices = Array.from(checkedBoxes).map(function(cb) { return parseInt(cb.dataset.index); }).sort(function(a, b) { return b - a; });
+      var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
+      indices.forEach(function(idx) { drafts.splice(idx, 1); });
+      localStorage.setItem('editor-drafts', JSON.stringify(drafts));
+      renderDraftList();
+      return;
+    }
     // 加载草稿
-    if (target.classList.contains('draft-item') || target.closest('.draft-item')) {
-      var item = target.classList.contains('draft-item') ? target : target.closest('.draft-item');
+    if (target.classList.contains('draft-load') || target.closest('.draft-load')) {
+      var item = target.classList.contains('draft-load') ? target : target.closest('.draft-load');
       var idx = parseInt(item.dataset.index);
       var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
       if (drafts[idx]) {
@@ -1334,6 +1416,15 @@ function initEditor() {
       document.getElementById('post-title').value = e.target.value;
     }
   });
+
+  // 标题同步（顶部标题 → 面板内输入）
+  var mainTitleInput = document.getElementById('post-title');
+  if (mainTitleInput) {
+    mainTitleInput.addEventListener('input', function() {
+      var panelTitleInput = document.getElementById('post-title-input');
+      if (panelTitleInput) panelTitleInput.value = mainTitleInput.value;
+    });
+  }
 
   // [Editor] 删除封面图
   panelContent.addEventListener('click', function(e) {
@@ -1417,8 +1508,34 @@ function initEditor() {
   var exportBtn = document.getElementById('btn-export-md');
   if (exportBtn) exportBtn.addEventListener('click', function() {
     var title = document.getElementById('post-title').value || 'untitled';
+    var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    var desc = getVal('post-desc');
+    var category = getVal('post-category');
+    var tags = getVal('post-tags');
+    var cover = getVal('post-cover');
+    var password = getVal('post-password');
+    var passwordHint = getVal('post-password-hint');
+    var pinned = (metaCheckboxState && metaCheckboxState.pinned) || false;
+    var comment = (metaCheckboxState && metaCheckboxState.comment !== undefined) ? metaCheckboxState.comment : true;
+    // 构建 frontmatter
+    var fm = '---\n';
+    fm += 'title: "' + title + '"\n';
+    fm += 'published: ' + new Date().toISOString().split('T')[0] + '\n';
+    fm += 'draft: false\n';
+    if (desc) fm += 'description: "' + desc + '"\n';
+    if (category) fm += 'category: "' + category + '"\n';
+    if (tags) {
+      var tagArr = tags.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+      if (tagArr.length > 0) fm += 'tags: [' + tagArr.join(', ') + ']\n';
+    }
+    if (cover && cover.indexOf('data:') !== 0) fm += 'image: "' + cover + '"\n';
+    if (password) fm += 'password: "' + password + '"\n';
+    if (passwordHint) fm += 'passwordHint: "' + passwordHint + '"\n';
+    if (pinned) fm += 'pinned: true\n';
+    if (comment === false) fm += 'comment: false\n';
+    fm += '---\n\n';
     var textarea = document.getElementById('markdown-input');
-    var blob = new Blob([textarea.value], { type: 'text/markdown' });
+    var blob = new Blob([fm + textarea.value], { type: 'text/markdown' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = title + '.md';
@@ -1451,6 +1568,7 @@ function initEditor() {
     });
     localStorage.setItem('editor-drafts', JSON.stringify(drafts));
     showToast('草稿已保存');
+    if (currentPanel === 'drafts') renderDraftList();
   });
 
   // 轻提示
@@ -1851,6 +1969,9 @@ function initEditor() {
     ],
   };
 
+  // 缓存上次 TOC 数据，避免全量重建
+  var _tocCache = '';
+
   // 渲染 TOC 内容到 panelContent
   function renderTocContent() {
     var textarea = document.getElementById('markdown-input');
@@ -1862,14 +1983,20 @@ function initEditor() {
       if (m) headings.push({ level: m[1].length, text: m[2], line: idx });
     });
     if (headings.length === 0) {
-      panelContent.innerHTML = '<div style="text-align:center;color:var(--font-color-light);font-size:13px;padding:24px 0;">暂无标题</div>';
+      var emptyHtml = '<div style="text-align:center;color:var(--font-color-light);font-size:13px;padding:24px 0;">暂无标题</div>';
+      if (_tocCache !== emptyHtml) {
+        panelContent.innerHTML = emptyHtml;
+        _tocCache = emptyHtml;
+      }
       return;
     }
     var html = '';
     headings.forEach(function(h) {
       var indent = (h.level - 1) * 12;
-      html += '<div class="toc-item" data-line="' + h.line + '" style="padding:6px 12px 6px ' + (12 + indent) + 'px;cursor:pointer;font-size:13px;color:var(--font-color);transition:background 0.12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:6px;margin:1px 4px;">' + h.text + '</div>';
+      html += '<div class="toc-item" data-line="' + h.line + '" title="' + h.text + '" style="padding:6px 12px 6px ' + (12 + indent) + 'px;cursor:pointer;font-size:13px;color:var(--font-color);transition:background 0.12s;border-radius:6px;margin:1px 4px;"><span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + h.text + '</span></div>';
     });
+    if (html === _tocCache) return;
+    _tocCache = html;
     panelContent.innerHTML = html;
     panelContent.querySelectorAll('.toc-item').forEach(function(item) {
       item.addEventListener('mouseenter', function() { item.style.background = 'color-mix(in srgb, var(--primary) 8%, transparent)'; });
@@ -1988,13 +2115,16 @@ function initEditor() {
 
 
   // 编辑时实时更新 TOC
-  var tocTimer = null;
+  var tocRaf = null;
   var textareaEl = document.getElementById('markdown-input');
   if (textareaEl) {
     textareaEl.addEventListener('input', function() {
       if (currentPanel === 'toc') {
-        clearTimeout(tocTimer);
-        tocTimer = setTimeout(renderTocContent, 300);
+        if (tocRaf) return;
+        tocRaf = requestAnimationFrame(function() {
+          tocRaf = null;
+          renderTocContent();
+        });
       }
     });
   }
