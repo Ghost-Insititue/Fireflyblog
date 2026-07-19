@@ -582,6 +582,11 @@ function initEditor() {
         html += '</div>';
         return html;
       });
+      // 单张图片添加描述文字（grid 内的图片已在上方处理，不会匹配此正则）
+      md = md.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, function(match, alt, src) {
+        if (!alt) return match;
+        return match + '\n<p style="font-size:12px;color:var(--font-color, #999);opacity:0.6;margin:4px 0 0;text-align:center;">' + alt + '</p>';
+      });
       var html = '';
       try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
       catch(e) { html = '<p style="color:red">渲染错误: ' + e.message + '</p>'; }
@@ -1052,6 +1057,8 @@ function initEditor() {
   if (!window.__editorCoverValue) window.__editorCoverValue = '';
   // [Editor] 封面图 data URL（用于本地预览和发布时上传）
   if (!window.__editorCoverDataUrl) window.__editorCoverDataUrl = '';
+  // [Editor] 封面图文件名（用于发布时上传到 GitHub）
+  if (!window.__editorCoverFilename) window.__editorCoverFilename = '';
   // 封面图数据不持久化到 localStorage（刷新后需重新上传），草稿加载时从 editor-draft-cover-{savedAt} 恢复
 
   var templates = {
@@ -1331,7 +1338,7 @@ function initEditor() {
       return;
     }
     // [Editor] 保存草稿 — 收集所有表单字段
-    if (target.id === 'btn-save-draft' || target.closest('btn-save-draft')) {
+    if (target.id === 'btn-save-draft' || target.closest('#btn-save-draft')) {
       var draftName = document.getElementById('draft-name-input').value || '未命名草稿';
       var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
       var getChecked = function(id) { var el = document.getElementById(id); return el ? el.checked : false; };
@@ -1458,6 +1465,9 @@ function initEditor() {
             window.__editorShowToast('草稿图片加载异常，部分图片可能无法显示');
           }
         }
+        // 先清空封面相关全局变量，防止加载无封面草稿时残留上一次的值
+        window.__editorCoverDataUrl = '';
+        window.__editorCoverFilename = '';
         // 恢复封面图 data URL（从草稿独立存储的 key）和路径/文件名（仅内存，不持久化）
         try {
           var savedCover = localStorage.getItem('editor-draft-cover-' + d.savedAt);
@@ -1820,7 +1830,7 @@ function initEditor() {
     // [Editor] 上传文章内图片到 src/content/posts/images/
     function uploadDataUrlImages(text, token, repo, branch) {
       var imageMap = window.__editorImageMap || {};
-      var imageRegex = /!\[图片\]\(\.\/images\/([^)]+)\)/g;
+      var imageRegex = /!\[[^\]]*\]\(\.\/images\/([^)]+)\)/g;
       var matches = [];
       var match;
       while ((match = imageRegex.exec(text)) !== null) {
