@@ -34,14 +34,6 @@ export const galleryConfig: GalleryConfig = {
 			password: "331700",
 			passwordHint: "请输入密码查看相册内容",
 		},
-			{
-			id: "小埋生活",
-			name: "小埋生活",
-			description: "学习埋学文化",
-			location: "异次元",
-			date: "2026-07-10",
-			tags: ["异次元"],
-		},
 	],
 
 	// 瀑布流最小列宽(px)，浏览器根据容器宽度自动计算列数，默认 240

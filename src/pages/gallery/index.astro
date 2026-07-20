@@ -382,7 +382,7 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
           return;
         }
 
-        const token = localStorage.getItem('gh-editor-token');
+        const token = localStorage.getItem('gh-token') || localStorage.getItem('gh-editor-token');
         const repo = localStorage.getItem('gh-editor-repo') || 'Ghost-Insititue/Fireflyblog';
         if (!token) {
           showStatus('请先在编辑器页面配置 GitHub Token（点击「发布到 GitHub」设置）', 'error');
@@ -512,5 +512,10 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
     }
     // swup 客户端导航后重新初始化
     document.addEventListener('swup:enable', safeInitCreateAlbum);
+
+    // 修复 Swup 竞态：如果 swup 已经启用（脚本在 swup:enable 之后才执行），直接初始化
+    if (window.swup && window.swup.enabled) {
+      safeInitCreateAlbum();
+    }
 
   </script>
