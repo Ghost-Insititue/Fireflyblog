@@ -11,6 +11,109 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   var editorResizeHandler = null;
   window.__editorImageMap = {};
 
+  // ─── IndexedDB 工具（替代 localStorage 存储草稿图片，容量无上限） ───
+  var _idb = null;
+  window.idbOpen = function idbOpen() {
+    if (_idb) return Promise.resolve(_idb);
+    return new Promise(function(resolve, reject) {
+      var req = indexedDB.open('editor-drafts', 1);
+      req.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+      };
+      req.onsuccess = function(e) { _idb = e.target.result; resolve(_idb); };
+      req.onerror = function(e) { reject(e.target.error); };
+    });
+  }
+  window.idbGet = function idbGet(key) {
+    return idbOpen().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction('kv', 'readonly');
+        var req = tx.objectStore('kv').get(key);
+        req.onsuccess = function() { resolve(req.result); };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+  window.idbSet = function idbSet(key, value) {
+    return idbOpen().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction('kv', 'readwrite');
+        var req = tx.objectStore('kv').put(value, key);
+        req.onsuccess = function() { resolve(); };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+  window.idbDel = function idbDel(key) {
+    return idbOpen().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction('kv', 'readwrite');
+        var req = tx.objectStore('kv').delete(key);
+        req.onsuccess = function() { resolve(); };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+  // 批量删除（前缀匹配）
+  window.idbDelPrefix = function idbDelPrefix(prefix) {
+    return idbOpen().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction('kv', 'readwrite');
+        var store = tx.objectStore('kv');
+        var req = store.openCursor();
+        var keys = [];
+        req.onsuccess = function(e) {
+          var cursor = e.target.result;
+          if (cursor) {
+            if (typeof cursor.key === 'string' && cursor.key.indexOf(prefix) === 0) keys.push(cursor.key);
+            cursor.continue();
+          } else {
+            keys.forEach(function(k) { store.delete(k); });
+            resolve();
+          }
+        };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+
+  // ─── 图片压缩工具 ───
+  var MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB 压缩阈值
+  var MAX_IMAGE_DIMENSION = 2048; // 最大边长
+  window.compressImage = function compressImage(file) {
+    return new Promise(function(resolve) {
+      if (file.size <= MAX_IMAGE_SIZE) {
+        // 小文件直接读取，不压缩
+        var reader = new FileReader();
+        reader.onload = function(ev) { resolve(ev.target.result); };
+        reader.readAsDataURL(file);
+        return;
+      }
+      var img = new Image();
+      img.onload = function() {
+        var w = img.width, h = img.height;
+        // 按最大边长等比缩放
+        if (w > MAX_IMAGE_DIMENSION || h > MAX_IMAGE_DIMENSION) {
+          if (w > h) { h = Math.round(h * MAX_IMAGE_DIMENSION / w); w = MAX_IMAGE_DIMENSION; }
+          else { w = Math.round(w * MAX_IMAGE_DIMENSION / h); h = MAX_IMAGE_DIMENSION; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        // 转 JPEG，质量 0.85
+        var compressed = canvas.toDataURL('image/jpeg', 0.85);
+        var originalSize = file.size;
+        var compressedSize = Math.round(compressed.length * 3 / 4);
+        console.log('图片压缩: ' + (originalSize / 1024).toFixed(0) + 'KB → ' + (compressedSize / 1024).toFixed(0) + 'KB');
+        resolve(compressed);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   function isEditorPage() {
     var p = window.location.pathname;
     return p === '/editor/' || p === '/editor';
@@ -158,6 +261,8 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 .icon-bar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 80%, transparent); }
 .icon-bar-btn.active { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
 @media (max-width: 768px) { #right-icon-bar { display: none; } }
+/* 单栏模式（仅编辑/仅预览）左右留白 */
+#editor-body.single-view { padding: 0 210px; }
 
 /* 自定义滚动条 */
 .custom-scrollbar { position: absolute; right: 2px; top: 0; bottom: 0; width: 6px; z-index: 10; opacity: 1; pointer-events: auto; }
@@ -285,7 +390,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       <!-- 左侧：Markdown 输入 -->
       <div id="editor-pane" class="flex-1 flex flex-col border-r border-[var(--line-divider)] relative">
         <textarea id="markdown-input" 
-          class="flex-1 w-full resize-none p-5 text-sm font-mono bg-transparent text-black/90 dark:text-white/90 focus:outline-none placeholder:text-black/30 dark:placeholder:text-white/30"
+          class="flex-1 w-full resize-none p-5 text-base font-mono bg-transparent text-black/90 dark:text-white/90 focus:outline-none placeholder:text-black/30 dark:placeholder:text-white/30"
           style="line-height: 1.75;"
           placeholder="开始写作吧...&#10;&#10;支持完整的 Markdown 语法：&#10;- **加粗** 和 *斜体*&#10;- # 标题&#10;- ```代码块```&#10;- > 引用&#10;- [链接](url)&#10;- ![图片](url)"
           spellcheck="false"
@@ -294,7 +399,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       </div>
       <!-- 右侧：预览 -->
       <div id="preview-pane" class="flex-1 flex flex-col overflow-hidden relative">
-        <div id="preview-content" class="flex-1 overflow-y-auto p-5 markdown-content prose prose-sm dark:prose-invert max-w-none">
+        <div id="preview-content" class="flex-1 overflow-y-auto p-5 markdown-content prose prose-base dark:prose-invert max-w-none">
           <div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>
         </div>
         <div class="custom-scrollbar" data-target="preview-content"><div class="custom-scrollbar-thumb"></div></div>
@@ -358,6 +463,9 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       <button id="btn-syntax" data-panel="syntax" class="icon-bar-btn" title="语法参考">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="10 12 8 14 10 16"/><polyline points="14 12 16 14 14 16"/></svg>
       </button>
+      <button data-panel="github" class="icon-bar-btn" title="GitHub 设置">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      </button>
       <div class="flex-1"></div>
       <button id="btn-export-md" class="icon-bar-btn" title="导出 MD">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -373,25 +481,8 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
     <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">发布到 GitHub</h3>
     <div class="space-y-3">
-      <div>
-        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">GitHub Token</label>
-        <input id="gh-token" type="password" placeholder="ghp_xxxxx"
-          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        <p class="text-xs text-black/40 dark:text-white/40 mt-1">🔒 仅保存在本浏览器</p>
-      </div>
-      <div class="flex gap-3">
-        <div class="flex-1">
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">仓库</label>
-          <input id="gh-repo" type="text" value="Ghost-Insititue/Fireflyblog"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-        <div style="width: 80px;">
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">分支</label>
-          <input id="gh-branch" type="text" value="main"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-      </div>
       <div id="gh-status" class="text-sm hidden"></div>
+      <p class="text-xs text-black/40 dark:text-white/40">Token、仓库、分支在右侧 🔑 图标中设置</p>
     </div>
     <div class="flex justify-end gap-2 mt-5">
       <button id="gh-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
@@ -582,10 +673,14 @@ function initEditor() {
         html += '</div>';
         return html;
       });
-      // 单张图片添加描述文字（grid 内的图片已在上方处理，不会匹配此正则）
-      md = md.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, function(match, alt, src) {
-        if (!alt) return match;
-        return match + '\n<p style="font-size:12px;color:var(--font-color, #999);opacity:0.6;margin:4px 0 0;text-align:center;">' + alt + '</p>';
+      // 单张图片转为 HTML img 标签（grid 内的图片已在上方处理，不会匹配此正则）
+      // 不依赖 marked 渲染，避免 data URL 过长导致渲染失败
+      md = md.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+        var imgHtml = '<img src="' + src + '" alt="' + alt + '" style="max-width:100%;border-radius:8px;" />';
+        if (alt) {
+          imgHtml += '\n<p style="font-size:12px;color:var(--font-color, #999);opacity:0.6;margin:4px 0 0;text-align:center;">' + alt + '</p>';
+        }
+        return imgHtml;
       });
       var html = '';
       try { html = (typeof marked !== 'undefined') ? marked.parse(md) : md.replace(/\n/g, '<br>'); }
@@ -746,20 +841,24 @@ function initEditor() {
   const btnSplit = document.getElementById('btn-view-split');
   const btnPreview = document.getElementById('btn-view-preview');
 
+  var editorBody = document.getElementById('editor-body');
   function setView(view) {
     [btnEditor, btnSplit, btnPreview].forEach(b => b && b.classList.remove('active'));
     if (view === 'editor') {
       editorPane.style.display = 'flex';
       previewPane.style.display = 'none';
       btnEditor && btnEditor.classList.add('active');
+      editorBody && editorBody.classList.add('single-view');
     } else if (view === 'preview') {
       editorPane.style.display = 'none';
       previewPane.style.display = 'flex';
       btnPreview && btnPreview.classList.add('active');
+      editorBody && editorBody.classList.add('single-view');
     } else {
       editorPane.style.display = 'flex';
       previewPane.style.display = 'flex';
       btnSplit && btnSplit.classList.add('active');
+      editorBody && editorBody.classList.remove('single-view');
     }
   }
 
@@ -869,9 +968,7 @@ function initEditor() {
     var imageLines = [];
     var loaded = 0;
     imageFiles.forEach(function(file) {
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        var dataUrl = ev.target.result;
+      compressImage(file).then(function(dataUrl) {
         var ext = file.type.split('/')[1] || 'png';
         var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
         window.__editorImageMap[filename] = dataUrl;
@@ -888,8 +985,7 @@ function initEditor() {
           document.execCommand('insertText', false, insertText);
           window.__editorShowToast(imageFiles.length > 1 ? imageFiles.length + '张图片已粘贴' : '图片已粘贴');
         }
-      };
-      reader.readAsDataURL(file);
+      });
     });
   });
 
@@ -916,9 +1012,7 @@ function initEditor() {
     var imageLines = [];
     var loaded = 0;
     imageFiles.forEach(function(file) {
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        var dataUrl = ev.target.result;
+      compressImage(file).then(function(dataUrl) {
         var ext = file.type.split('/')[1] || 'png';
         var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
         window.__editorImageMap[filename] = dataUrl;
@@ -935,8 +1029,7 @@ function initEditor() {
           document.execCommand('insertText', false, insertText);
           window.__editorShowToast(imageFiles.length > 1 ? imageFiles.length + '张图片已插入' : '图片已插入');
         }
-      };
-      reader.readAsDataURL(file);
+      });
     });
   });
 
@@ -1063,10 +1156,11 @@ function initEditor() {
 
   var templates = {
     publish: { title: '发布', html: '<div class="space-y-3"><button id="btn-github" class="w-full py-2.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">发布到 GitHub</button><button id="btn-download" class="w-full py-2 rounded-lg border border-[var(--line-divider)] text-sm text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer">下载 .md 文件</button></div>' },
-    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 📌 置顶 <input type="checkbox" id="chk-pinned-panel" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 💬 评论 <input type="checkbox" id="chk-comment-panel" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签</label><div class="flex gap-2"><input id="post-tag-1" type="text" placeholder="标签1" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><input id="post-tag-2" type="text" placeholder="标签2" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div class="mt-1"><span class="text-xs text-black/40 dark:text-white/40">（用,隔开）</span><input id="post-tag-3" type="text" placeholder="自定义标签" class="w-full min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2"><input id="post-cover" type="text" placeholder="图片 URL" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label><button id="btn-remove-cover" type="button" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-red-400 hover:text-red-600 hover:border-red-400 cursor-pointer">删除</button></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码</label><div class="flex gap-2"><input id="post-password-hint" type="text" placeholder="密码提示" class="w-1/3 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><input id="post-password" type="text" placeholder="输入密码（留空不加密）" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div></div>' },
+    meta: { title: '文章信息', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标题 <span class="text-red-500">*</span></label><div class="flex gap-2"><input id="post-title-input" type="text" placeholder="请输入文章标题" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-pinned"> 置顶 <input type="checkbox" id="chk-pinned-panel" class="hidden" /> </label> <label class="px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs cursor-pointer select-none flex items-center gap-1 hover:border-[var(--primary)]/40 transition" id="lbl-comment"> 评论 <input type="checkbox" id="chk-comment-panel" class="hidden" checked /> </label></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label><textarea id="post-desc" rows="2" placeholder="一句话描述文章内容" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 resize-none"></textarea></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">分类</label><input id="post-category" type="text" placeholder="如：技术笔记" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-xs text-black/40 dark:text-white/40">（自定义用,隔开）</span></label><div class="flex gap-2"><input id="post-tag-1" type="text" placeholder="标签1" class="w-1/4 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><input id="post-tag-3" type="text" placeholder="自定义标签" class="w-3/4 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图</label><div class="flex gap-2 flex-nowrap"><input id="post-cover" type="text" placeholder="图片 URL" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><label class="flex items-center px-2 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 cursor-pointer whitespace-nowrap shrink-0">上传<input id="cover-upload" type="file" accept="image/*" class="hidden" /></label><button id="btn-remove-cover" type="button" class="flex items-center px-2 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-red-400 hover:text-red-600 hover:border-red-400 cursor-pointer whitespace-nowrap shrink-0">删除</button></div><div id="cover-preview" class="mt-2 hidden"><img id="cover-preview-img" class="w-full h-24 object-cover rounded-lg" /></div></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码</label><div class="flex gap-2"><input id="post-password-hint" type="text" placeholder="密码提示" class="w-1/3 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><input id="post-password" type="text" placeholder="输入密码（留空不加密）" class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div></div>' },
     tags: { title: '标签', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签（逗号分隔）</label><input id="post-tags" type="text" placeholder="JavaScript, Astro" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     cover: { title: '封面图', html: '<div class="space-y-3"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 URL</label><input id="post-cover" type="text" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     settings: { title: '设置', html: '<div class="text-sm text-black/50 dark:text-white/50">更多设置开发中...</div>' },
+    github: { title: 'GitHub 设置', html: '<div class="space-y-4"><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">GitHub Token</label><div class="flex gap-2"><input id="gh-token-panel" type="password" placeholder="ghp_xxxxx" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /><button id="btn-save-token" class="px-3 py-2 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-xs font-medium hover:opacity-90 transition cursor-pointer whitespace-nowrap">保存</button><button id="btn-clear-gh" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-black/60 dark:text-white/60 text-xs hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer whitespace-nowrap">清空</button></div><p class="text-xs text-black/40 dark:text-white/40 mt-1">🔒 仅保存在本浏览器，刷新不丢失</p></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">仓库</label><input id="gh-repo-panel" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div><div><label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1.5">分支</label><input id="gh-branch-panel" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" /></div></div>' },
     drafts: { title: '草稿箱', html: '<div style="padding:0 16px;"><div class="space-y-1"><div class="flex gap-2"><input id="draft-name-input" type="text" placeholder="草稿名称" class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none" /><button id="btn-save-draft" class="px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm cursor-pointer">保存</button></div><div id="draft-toolbar" class="flex items-center justify-between" style="padding:4px 0;"><label class="flex items-center gap-1 text-xs text-black/50 dark:text-white/50 cursor-pointer select-none" style="opacity:0;pointer-events:none;"><input type="checkbox" id="draft-select-all" class="rounded" /> 全选</label><button id="btn-delete-selected" class="text-xs text-red-400 hover:text-red-600 cursor-pointer" style="opacity:0;pointer-events:none;">删除选中</button></div></div></div><div id="draft-list" class="text-sm text-black/40 dark:text-white/40" style="max-height:calc(100vh - 200px);overflow-y:auto;padding:0 14px 0 14px;scrollbar-width:none;-ms-overflow-style:none;"></div>' }
   };
 
@@ -1133,11 +1227,9 @@ function initEditor() {
         if (hiddenTags) {
           var tagArr = hiddenTags.value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
           var tag1 = panelContent.querySelector('#post-tag-1');
-          var tag2 = panelContent.querySelector('#post-tag-2');
           var tag3 = panelContent.querySelector('#post-tag-3');
           if (tag1) tag1.value = tagArr[0] || '';
-          if (tag2) tag2.value = tagArr[1] || '';
-          if (tag3) tag3.value = tagArr.slice(2).join(', ');
+          if (tag3) tag3.value = tagArr.slice(1).join(', ');
         }
         [['chk-pinned', 'chk-pinned-panel', 'pinned'], ['chk-comment', 'chk-comment-panel', 'comment']].forEach(function(pair) {
           var hidden = document.getElementById(pair[0]);
@@ -1150,6 +1242,15 @@ function initEditor() {
         });
       }
       if (name === 'drafts') renderDraftList();
+      if (name === 'github') {
+        // 从 localStorage 恢复 GitHub 设置
+        var ghTokenPanel = document.getElementById('gh-token-panel');
+        var ghRepoPanel = document.getElementById('gh-repo-panel');
+        var ghBranchPanel = document.getElementById('gh-branch-panel');
+        if (ghTokenPanel) ghTokenPanel.value = localStorage.getItem('gh-token') || '';
+        if (ghRepoPanel) ghRepoPanel.value = localStorage.getItem('gh-repo') || '';
+        if (ghBranchPanel) ghBranchPanel.value = localStorage.getItem('gh-branch') || '';
+      }
     }
     slidePanel.style.width = '288px';
     panelInner.style.transform = 'translateX(0)';
@@ -1164,6 +1265,34 @@ function initEditor() {
     panelContent.classList.remove('overflow-y-auto');
     panelContent.classList.add('overflow-hidden');
   }
+
+  // [Editor] GitHub 设置保存/清空按钮
+  panelContent.addEventListener('click', function(e) {
+    if (e.target.id === 'btn-save-token' || e.target.closest('#btn-save-token')) {
+      var tokenInput = document.getElementById('gh-token-panel');
+      var repoInput = document.getElementById('gh-repo-panel');
+      var branchInput = document.getElementById('gh-branch-panel');
+      var token = tokenInput ? tokenInput.value.trim() : '';
+      var repo = repoInput ? repoInput.value.trim() : '';
+      var branch = branchInput ? branchInput.value.trim() : '';
+      if (token) localStorage.setItem('gh-token', token); else localStorage.removeItem('gh-token');
+      if (repo) localStorage.setItem('gh-repo', repo); else localStorage.removeItem('gh-repo');
+      if (branch) localStorage.setItem('gh-branch', branch); else localStorage.removeItem('gh-branch');
+      window.__editorShowToast('GitHub 设置已保存');
+    }
+    if (e.target.id === 'btn-clear-gh' || e.target.closest('#btn-clear-gh')) {
+      var tokenInput = document.getElementById('gh-token-panel');
+      var repoInput = document.getElementById('gh-repo-panel');
+      var branchInput = document.getElementById('gh-branch-panel');
+      if (tokenInput) tokenInput.value = '';
+      if (repoInput) repoInput.value = '';
+      if (branchInput) branchInput.value = '';
+      localStorage.removeItem('gh-token');
+      localStorage.removeItem('gh-repo');
+      localStorage.removeItem('gh-branch');
+      window.__editorShowToast('GitHub 设置已清空');
+    }
+  });
 
   // [Editor] 格式化时间为 YYYY-MM-DD HH:mm
   function formatDraftTime(isoStr) {
@@ -1245,19 +1374,20 @@ function initEditor() {
   });
   // [Editor] 面板输入时同步回隐藏字段（确保保存时可读取）
   panelContent.addEventListener('input', function(e) {
+    // GitHub 设置面板：仓库和分支输入时自动保存，Token 需手动点保存按钮
+    if (e.target.id === 'gh-repo-panel') localStorage.setItem('gh-repo', e.target.value);
+    if (e.target.id === 'gh-branch-panel') localStorage.setItem('gh-branch', e.target.value);
     var metaFields = ['post-desc', 'post-category', 'post-cover', 'post-slug', 'post-password', 'post-password-hint'];
     if (metaFields.indexOf(e.target.id) !== -1) {
       var hidden = document.getElementById(e.target.id);
       if (hidden && hidden !== e.target) hidden.value = e.target.value;
     }
-    // [Editor] 标签：输入框合并到隐藏字段（第三个框支持逗号分隔多个标签）
-    if (e.target.id === 'post-tag-1' || e.target.id === 'post-tag-2' || e.target.id === 'post-tag-3') {
+    // [Editor] 标签：输入框合并到隐藏字段（第二个框支持逗号分隔多个标签）
+    if (e.target.id === 'post-tag-1' || e.target.id === 'post-tag-3') {
       var tags = [];
       var tag1 = panelContent.querySelector('#post-tag-1');
-      var tag2 = panelContent.querySelector('#post-tag-2');
       var tag3 = panelContent.querySelector('#post-tag-3');
       if (tag1 && tag1.value.trim()) tags.push(tag1.value.trim());
-      if (tag2 && tag2.value.trim()) tags.push(tag2.value.trim());
       if (tag3 && tag3.value.trim()) {
         tag3.value.split(',').forEach(function(t) {
           var trimmed = t.trim();
@@ -1360,31 +1490,31 @@ function initEditor() {
         savedAt: savedAt
       });
       localStorage.setItem('editor-drafts', JSON.stringify(drafts));
-      // 保存图片映射（每个草稿独立 key，避免整体过大）
-      try {
-        var content = document.getElementById('markdown-input').value;
-        var usedFiles = {};
-        var imgRegex2 = /!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g;
-        var m2;
-        while ((m2 = imgRegex2.exec(content)) !== null) { usedFiles[m2[2]] = true; }
-        var imageMap = window.__editorImageMap || {};
-        var draftImages = {};
-        Object.keys(usedFiles).forEach(function(k) { if (imageMap[k]) draftImages[k] = imageMap[k]; });
-        if (Object.keys(draftImages).length > 0) {
-          localStorage.setItem('editor-draft-img-' + savedAt, JSON.stringify(draftImages));
-        }
-      } catch(e) { console.warn('图片映射保存失败:', e); }
-      // 封面图 data URL 单独存储（避免和其他图片合并导致 JSON 过大）
-      try {
-        if (window.__editorCoverDataUrl) {
-          localStorage.setItem('editor-draft-cover-' + savedAt, window.__editorCoverDataUrl);
-        } else {
-          localStorage.removeItem('editor-draft-cover-' + savedAt);
-        }
-      } catch(e) { console.warn('封面图保存失败:', e); }
-      document.getElementById('draft-name-input').value = '';
-      renderDraftList();
-      showToast('草稿已保存');
+      // 保存图片映射到 IndexedDB（容量无上限）
+      var content = document.getElementById('markdown-input').value;
+      var usedFiles = {};
+      var imgRegex2 = /!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g;
+      var m2;
+      while ((m2 = imgRegex2.exec(content)) !== null) { usedFiles[m2[2]] = true; }
+      var imageMap = window.__editorImageMap || {};
+      var imageKeys = Object.keys(usedFiles).filter(function(k) { return !!imageMap[k]; });
+      var imgSavePromises = imageKeys.map(function(k) {
+        return idbSet('img-' + savedAt + '-' + k, imageMap[k]).catch(function() {});
+      });
+      if (imageKeys.length > 0) {
+        imgSavePromises.push(idbSet('imgkeys-' + savedAt, imageKeys).catch(function() {}));
+      }
+      // 封面图保存到 IndexedDB
+      if (window.__editorCoverDataUrl) {
+        imgSavePromises.push(idbSet('cover-' + savedAt, window.__editorCoverDataUrl).catch(function() {}));
+      } else {
+        imgSavePromises.push(idbDel('cover-' + savedAt).catch(function() {}));
+      }
+      Promise.all(imgSavePromises).then(function() {
+        document.getElementById('draft-name-input').value = '';
+        renderDraftList();
+        showToast('草稿已保存');
+      });
       return;
     }
     // 删除草稿（必须在加载草稿之前判断）
@@ -1392,8 +1522,13 @@ function initEditor() {
       e.stopPropagation();
       var delSid = target.dataset.savedat;
       var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
-      // 删除对应的图片映射和封面图
+      // 从 IndexedDB 删除图片和封面
+      idbDelPrefix('img-' + delSid + '-').catch(function() {});
+      idbDel('imgkeys-' + delSid).catch(function() {});
+      idbDel('cover-' + delSid).catch(function() {});
+      // 兼容清理旧 localStorage 数据
       localStorage.removeItem('editor-draft-img-' + delSid);
+      localStorage.removeItem('editor-draft-imgkeys-' + delSid);
       localStorage.removeItem('editor-draft-cover-' + delSid);
       drafts = drafts.filter(function(d) { return d.savedAt !== delSid; });
       localStorage.setItem('editor-drafts', JSON.stringify(drafts));
@@ -1420,9 +1555,14 @@ function initEditor() {
       if (checkedBoxes.length === 0) return;
       var sids = Array.from(checkedBoxes).map(function(cb) { return cb.dataset.savedat; });
       var drafts = JSON.parse(localStorage.getItem('editor-drafts') || '[]');
-      // 删除对应的图片映射和封面图
+      // 从 IndexedDB 删除图片和封面
       sids.forEach(function(sid) {
+        idbDelPrefix('img-' + sid + '-').catch(function() {});
+        idbDel('imgkeys-' + sid).catch(function() {});
+        idbDel('cover-' + sid).catch(function() {});
+        // 兼容清理旧 localStorage 数据
         localStorage.removeItem('editor-draft-img-' + sid);
+        localStorage.removeItem('editor-draft-imgkeys-' + sid);
         localStorage.removeItem('editor-draft-cover-' + sid);
       });
       drafts = drafts.filter(function(d) { return sids.indexOf(d.savedAt) === -1; });
@@ -1454,47 +1594,74 @@ function initEditor() {
         // 恢复编辑器内容
         var mdInput = document.getElementById('markdown-input');
         mdInput.value = d.content || '';
-        // 恢复图片映射（合并而非替换，防止解析失败丢失已有图片）
-        var savedImages = localStorage.getItem('editor-draft-img-' + d.savedAt);
-        if (savedImages) {
-          try {
-            var draftImgMap = JSON.parse(savedImages);
-            Object.assign(window.__editorImageMap, draftImgMap);
-          } catch(imgErr) {
-            console.warn('草稿图片映射解析失败:', imgErr);
-            window.__editorShowToast('草稿图片加载异常，部分图片可能无法显示');
-          }
-        }
         // 先清空封面相关全局变量，防止加载无封面草稿时残留上一次的值
         window.__editorCoverDataUrl = '';
         window.__editorCoverFilename = '';
-        // 恢复封面图 data URL（从草稿独立存储的 key）和路径/文件名（仅内存，不持久化）
-        try {
-          var savedCover = localStorage.getItem('editor-draft-cover-' + d.savedAt);
-          if (savedCover) {
-            window.__editorCoverDataUrl = savedCover;
-          }
-          if (d.cover) {
-            window.__editorCoverValue = d.cover;
-            var extractedFilename = d.cover.split('/').pop();
-            if (extractedFilename) {
-              window.__editorCoverFilename = extractedFilename;
-            }
-          }
-        } catch(e) {}
-        // 恢复封面图预览（在 data URL 恢复之后）
-        var coverPreviewUrl = window.__editorCoverDataUrl || d.cover || '';
-        if (coverPreviewUrl) {
-          var coverPreviewEl = document.getElementById('cover-preview');
-          var coverImgEl = document.getElementById('cover-preview-img');
-          if (coverImgEl) coverImgEl.src = coverPreviewUrl;
-          if (coverPreviewEl) coverPreviewEl.classList.remove('hidden');
-          // 同步面板中的封面 input
-          var coverPanelInput = panelContent.querySelector('#post-cover');
-          if (coverPanelInput) coverPanelInput.value = d.cover || '';
+        if (d.cover) {
+          window.__editorCoverValue = d.cover;
+          var extractedFilename = d.cover.split('/').pop();
+          if (extractedFilename) window.__editorCoverFilename = extractedFilename;
         }
-        // 强制预览更新：直接调用 updatePreview 并重置状态
-        setTimeout(function() {
+        // 异步从 IndexedDB 恢复图片和封面（兼容旧 localStorage 格式）
+        var loadSid = d.savedAt;
+        var imgPromises = [];
+        // IndexedDB 新格式
+        imgPromises.push(
+          idbGet('imgkeys-' + loadSid).then(function(keyList) {
+            if (!keyList || !keyList.length) return 0;
+            var subPromises = keyList.map(function(k) {
+              return idbGet('img-' + loadSid + '-' + k).then(function(dataUrl) {
+                if (dataUrl) window.__editorImageMap[k] = dataUrl;
+              });
+            });
+            return Promise.all(subPromises).then(function() { return keyList.length; });
+          }).catch(function() { return 0; })
+        );
+        // 旧 localStorage 格式兼容
+        imgPromises.push(
+          new Promise(function(resolve) {
+            var savedImages = localStorage.getItem('editor-draft-img-' + loadSid);
+            if (savedImages) {
+              try {
+                var draftImgMap = JSON.parse(savedImages);
+                Object.assign(window.__editorImageMap, draftImgMap);
+                localStorage.removeItem('editor-draft-img-' + loadSid);
+              } catch(e) {}
+            }
+            resolve();
+          })
+        );
+        // 封面从 IndexedDB 恢复
+        imgPromises.push(
+          idbGet('cover-' + loadSid).then(function(savedCover) {
+            if (savedCover) window.__editorCoverDataUrl = savedCover;
+          }).catch(function() {})
+        );
+        // 旧 localStorage 封面兼容
+        imgPromises.push(
+          new Promise(function(resolve) {
+            var savedCover = localStorage.getItem('editor-draft-cover-' + loadSid);
+            if (savedCover) {
+              window.__editorCoverDataUrl = savedCover;
+              localStorage.removeItem('editor-draft-cover-' + loadSid);
+            }
+            resolve();
+          })
+        );
+        // 所有异步操作完成后更新预览
+        Promise.all(imgPromises).then(function() {
+          // 恢复封面图预览
+          var coverPreviewUrl = window.__editorCoverDataUrl || d.cover || '';
+          if (coverPreviewUrl) {
+            var coverPreviewEl = document.getElementById('cover-preview');
+            var coverImgEl = document.getElementById('cover-preview-img');
+            if (coverImgEl) coverImgEl.src = coverPreviewUrl;
+            if (coverPreviewEl) coverPreviewEl.classList.remove('hidden');
+            var coverPanelInput = panelContent.querySelector('#post-cover');
+            if (coverPanelInput) coverPanelInput.value = d.cover || '';
+          }
+          // 强制预览更新
+          setTimeout(function() {
           previewRaf = null;
           previewTimer = null;
           var md = document.getElementById('markdown-input').value;
@@ -1531,6 +1698,7 @@ function initEditor() {
             previewEl.innerHTML = html || '<div class="text-black/30 dark:text-white/30 text-sm italic">预览区域</div>';
           }
         }, 150);
+        }); // end Promise.all
         // 同步标题到面板内输入框（如果面板打开的话）
         var titleInput = document.getElementById('post-title-input');
         if (titleInput) titleInput.value = d.title || '';
@@ -1584,10 +1752,8 @@ function initEditor() {
       var file = e.target.files[0];
       if (!file) return;
 
-      // 读取 data URL 并存储
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        var dataUrl = ev.target.result;
+      // 读取 data URL 并存储（大图自动压缩）
+      compressImage(file).then(function(dataUrl) {
         var ext = file.type.split('/')[1] || 'png';
         var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
 
@@ -1600,7 +1766,6 @@ function initEditor() {
         window.__editorCoverValue = coverPath;
         // 同时存储文件名用于发布时上传
         window.__editorCoverFilename = filename;
-        // 不持久化到 localStorage，草稿加载时从 editor-draft-cover-{savedAt} 恢复
 
         // 预览
         var preview = document.getElementById('cover-preview');
@@ -1609,8 +1774,7 @@ function initEditor() {
         if (preview) preview.classList.remove('hidden');
 
         window.__editorShowToast('封面图已选择，发布时将上传');
-      };
-      reader.readAsDataURL(file);
+      });
     }
   });
 
@@ -1715,30 +1879,30 @@ function initEditor() {
       savedAt: savedAt
     });
     localStorage.setItem('editor-drafts', JSON.stringify(drafts));
-    // 保存图片映射（每个草稿独立 key）
-    try {
-      var content = textarea.value;
-      var usedFiles = {};
-      var imgRegex2 = /!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g;
-      var m2;
-      while ((m2 = imgRegex2.exec(content)) !== null) { usedFiles[m2[2]] = true; }
-      var imageMap = window.__editorImageMap || {};
-      var draftImages = {};
-      Object.keys(usedFiles).forEach(function(k) { if (imageMap[k]) draftImages[k] = imageMap[k]; });
-      if (Object.keys(draftImages).length > 0) {
-        localStorage.setItem('editor-draft-img-' + savedAt, JSON.stringify(draftImages));
-      }
-    } catch(e) { console.warn('图片映射保存失败:', e); }
-    // 封面图 data URL 单独存储（避免和其他图片合并导致 JSON 过大）
-    try {
-      if (window.__editorCoverDataUrl) {
-        localStorage.setItem('editor-draft-cover-' + savedAt, window.__editorCoverDataUrl);
-      } else {
-        localStorage.removeItem('editor-draft-cover-' + savedAt);
-      }
-    } catch(e) { console.warn('封面图保存失败:', e); }
-    showToast('草稿已保存');
-    if (currentPanel === 'drafts') renderDraftList();
+    // 保存图片映射到 IndexedDB
+    var content = textarea.value;
+    var usedFiles = {};
+    var imgRegex2 = /!\[([^\]]*)\]\(\.\/images\/([^)]+)\)/g;
+    var m2;
+    while ((m2 = imgRegex2.exec(content)) !== null) { usedFiles[m2[2]] = true; }
+    var imageMap = window.__editorImageMap || {};
+    var imageKeys = Object.keys(usedFiles).filter(function(k) { return !!imageMap[k]; });
+    var imgSavePromises = imageKeys.map(function(k) {
+      return idbSet('img-' + savedAt + '-' + k, imageMap[k]).catch(function() {});
+    });
+    if (imageKeys.length > 0) {
+      imgSavePromises.push(idbSet('imgkeys-' + savedAt, imageKeys).catch(function() {}));
+    }
+    // 封面图保存到 IndexedDB
+    if (window.__editorCoverDataUrl) {
+      imgSavePromises.push(idbSet('cover-' + savedAt, window.__editorCoverDataUrl).catch(function() {}));
+    } else {
+      imgSavePromises.push(idbDel('cover-' + savedAt).catch(function() {}));
+    }
+    Promise.all(imgSavePromises).then(function() {
+      showToast('草稿已保存');
+      if (currentPanel === 'drafts') renderDraftList();
+    });
   });
 
   // 轻提示
@@ -1771,12 +1935,13 @@ function initEditor() {
     if (modal) modal.classList.add('hidden');
   });
   if (ghConfirm) ghConfirm.addEventListener('click', function() {
-    var token = document.getElementById('gh-token').value;
-    var repo = document.getElementById('gh-repo').value;
-    // [Editor] 保存到 localStorage 供封面图上传等功能使用
-    if (token) localStorage.setItem('gh-token', token);
-    if (repo) localStorage.setItem('gh-repo', repo);
-    var branch = document.getElementById('gh-branch').value;
+    // 从 GitHub 设置面板读取配置（优先面板，fallback localStorage）
+    var tokenEl = document.getElementById('gh-token-panel');
+    var repoEl = document.getElementById('gh-repo-panel');
+    var branchEl = document.getElementById('gh-branch-panel');
+    var token = (tokenEl ? tokenEl.value : '') || localStorage.getItem('gh-token') || '';
+    var repo = (repoEl ? repoEl.value : '') || localStorage.getItem('gh-repo') || 'Ghost-Insititue/Fireflyblog';
+    var branch = (branchEl ? branchEl.value : '') || localStorage.getItem('gh-branch') || 'main';
     var title = document.getElementById('post-title').value;
     var textarea = document.getElementById('markdown-input');
     var content = textarea.value;
@@ -1836,16 +2001,18 @@ function initEditor() {
       while ((match = imageRegex.exec(text)) !== null) {
         matches.push({ full: match[0], filename: match[1], index: match.index });
       }
-      if (matches.length === 0) return Promise.resolve();
+      if (matches.length === 0) return Promise.resolve([]);
 
+      var uploaded = new Set();
+      var failed = [];
       var chain = Promise.resolve();
       matches.forEach(function(m) {
         chain = chain.then(function() {
+          if (uploaded.has(m.filename)) return;
           var dataUrl = imageMap[m.filename];
           if (!dataUrl) return;
-          var base64Data = dataUrl.match(/base64,([^)]+)/);
-          if (!base64Data) return;
-          var rawBase64 = base64Data[1];
+          var rawBase64 = dataUrl.replace(/^data:image\/[^;]+;base64,/, '');
+          if (!rawBase64) return;
           var imagePath = 'src/content/posts/images/' + m.filename;
 
           return fetch('https://api.github.com/repos/' + repo + '/contents/' + imagePath, {
@@ -1862,24 +2029,65 @@ function initEditor() {
             }),
           }).then(function(res) {
             if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '图片上传失败'); });
+            uploaded.add(m.filename);
             return res.json();
           }).catch(function(err) {
-            window.__editorShowToast('⚠️ 图片上传失败: ' + err.message);
+            failed.push(m.filename + ': ' + err.message);
+            window.__editorShowToast('⚠️ 图片上传失败: ' + m.filename);
           });
         });
       });
-      return chain;
+      return chain.then(function() { return failed; });
     }
 
-    // 先发布文章，再上传图片
+    // 先上传图片，最后发布文章（确保 Vercel 构建时所有文件已存在）
     var base64 = btoa(unescape(encodeURIComponent(fm + content)));
     var apiUrl = 'https://api.github.com/repos/' + repo + '/contents/' + filename;
 
-    // [Editor] 先查询文件是否存在，获取 sha（更新已有文件时 GitHub 要求提供 sha）
-    fetch(apiUrl + '?ref=' + branch, {
-      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' },
+    // 第一步：上传封面图（如果有）
+    var coverDataUrl = window.__editorCoverDataUrl;
+    var coverFilename = window.__editorCoverFilename;
+    var uploadCover = Promise.resolve();
+    if (coverDataUrl && coverFilename) {
+      var coverBase64 = coverDataUrl.replace(/^data:image\/[^;]+;base64,/, '');
+      if (coverBase64) {
+        status.textContent = '⏳ 上传封面图...';
+        uploadCover = fetch('https://api.github.com/repos/' + repo + '/contents/src/content/posts/images/' + coverFilename, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'token ' + token,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: 'upload cover: ' + coverFilename,
+            content: coverBase64,
+            branch: branch,
+          }),
+        }).then(function(res) {
+          if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '封面图上传失败'); });
+          return res.json();
+        });
+      }
+    }
+
+    // 第二步：上传文章内图片
+    var imageUploadFailed = [];
+    uploadCover.then(function() {
+      status.textContent = '⏳ 上传文章图片...';
+      return uploadDataUrlImages(content, token, repo, branch);
+    }).then(function(failed) {
+      imageUploadFailed = failed || [];
+      if (imageUploadFailed.length > 0) {
+        throw new Error('以下图片上传失败，文章已取消发布：\n' + imageUploadFailed.join('\n'));
+      }
+      // 第三步：最后发布文章（此时所有图片已在 GitHub 上）
+      status.textContent = '⏳ 发布文章...';
+      return fetch(apiUrl + '?ref=' + branch, {
+        headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' },
+      });
     }).then(function(res) {
-      if (res.status === 404) return null; // 新文件，无需 sha
+      if (res.status === 404) return null;
       if (!res.ok) return res.json().then(function(e) { throw new Error(e.message); });
       return res.json();
     }).then(function(existing) {
@@ -1888,7 +2096,7 @@ function initEditor() {
         content: base64,
         branch: branch,
       };
-      if (existing && existing.sha) body.sha = existing.sha; // 更新时提供 sha
+      if (existing && existing.sha) body.sha = existing.sha;
       return fetch(apiUrl, {
         method: 'PUT',
         headers: {
@@ -1901,36 +2109,6 @@ function initEditor() {
     }).then(function(res) {
       if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '发布失败'); });
       return res.json();
-    }).then(function() {
-      status.textContent = '✅ 文章已发布，上传图片中...';
-      status.className = 'text-sm text-blue-500';
-      // 上传封面图（如果有）
-      var coverDataUrl = window.__editorCoverDataUrl;
-      var coverFilename = window.__editorCoverFilename;
-      if (coverDataUrl && coverFilename) {
-        var base64Data = coverDataUrl.match(/base64,([^)]+)/);
-        if (base64Data) {
-          return fetch('https://api.github.com/repos/' + repo + '/contents/src/content/posts/images/' + coverFilename, {
-            method: 'PUT',
-            headers: {
-              'Authorization': 'token ' + token,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: 'upload cover: ' + coverFilename,
-              content: base64Data[1],
-              branch: branch,
-            }),
-          }).then(function(res) {
-            if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || '封面图上传失败'); });
-            return res.json();
-          });
-        }
-      }
-    }).then(function() {
-      // 文章发布成功后，上传图片
-      return uploadDataUrlImages(content, token, repo, branch);
     }).then(function() {
       status.textContent = '✅ 发布完成！';
       status.className = 'text-sm text-green-500';
@@ -1992,9 +2170,7 @@ function initEditor() {
     if (imgStatus) { imgStatus.textContent = '⏳ 处理中...'; imgStatus.className = 'text-sm text-blue-500'; imgStatus.classList.remove('hidden'); }
 
     imageFiles.forEach(function(file) {
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        var dataUrl = ev.target.result;
+      compressImage(file).then(function(dataUrl) {
         var ext = file.type.split('/')[1] || 'png';
         var filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
         window.__editorImageMap[filename] = dataUrl;
@@ -2023,8 +2199,7 @@ function initEditor() {
           }
           if (imgStatus) { imgStatus.textContent = '✅ ' + imageFiles.length + ' 张图片已就绪'; imgStatus.className = 'text-sm text-green-500'; }
         }
-      };
-      reader.readAsDataURL(file);
+      });
     });
   });
 
