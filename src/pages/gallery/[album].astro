@@ -542,7 +542,13 @@ const coverLqipProps = cover
           document.getElementById('delete-confirm').disabled = true;
           document.getElementById('delete-confirm').textContent = '删除中...';
           try {
-            await modifyGalleryConfig(token, repo, 'delete', { oldId: document.getElementById('btn-edit-album').dataset.albumId || albumId });
+            const targetId = document.getElementById('btn-edit-album').dataset.albumId || albumId;
+            // Step 1: 删除相册目录下的所有文件
+            showDeleteStatus('⏳ 正在删除相册文件...', 'uploading');
+            await deleteAlbumDirectory(token, repo, targetId);
+            // Step 2: 删除配置中的相册条目
+            showDeleteStatus('⏳ 正在删除配置...', 'uploading');
+            await modifyGalleryConfig(token, repo, 'delete', { oldId: targetId });
             showDeleteStatus('✅ 删除成功，正在返回...', 'success');
             setTimeout(() => { window.location.href = '/gallery/'; }, 1000);
           } catch (e) {
@@ -556,6 +562,42 @@ const coverLqipProps = cover
           el.classList.remove('hidden');
           el.className = 'text-sm ' + (type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-500' : 'text-blue-500');
           el.textContent = msg;
+        }
+      }
+    }
+
+    // 删除相册目录下的所有文件
+    async function deleteAlbumDirectory(token, repo, albumId) {
+      const dirPath = `public/gallery/${albumId}`;
+      // 列出目录内容
+      const listRes = await fetch(`https://api.github.com/repos/${repo}/contents/${dirPath}?ref=main`, {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+      });
+      if (!listRes.ok) {
+        // 目录不存在，跳过
+        if (listRes.status === 404) return;
+        throw new Error('读取相册目录失败');
+      }
+      const files = await listRes.json();
+      if (!Array.isArray(files)) return;
+
+      // 逐个删除文件
+      for (const file of files) {
+        const delRes = await fetch(`https://api.github.com/repos/${repo}/contents/${dirPath}/${file.name}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: `gallery: delete ${file.name} from ${albumId}`,
+            sha: file.sha,
+            branch: 'main',
+          }),
+        });
+        if (!delRes.ok) {
+          console.error(`Failed to delete ${file.name}`);
         }
       }
     }
