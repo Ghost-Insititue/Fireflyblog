@@ -15,17 +15,6 @@ export const galleryConfig: GalleryConfig = {
 		// password: 访问密码，设置后需要输入密码才能查看相册内容（可选）
 		// passwordHint: 密码提示，设置后在输入密码错误时显示（可选，需配合password使用）
 		// 每添加一个数组项就相当于添加了一个相册，记得在 public/gallery/ 目录下创建对应的子目录并放入图片
-		{
-			id: "私人相册",
-			name: "私人相册",
-			description:
-				"噫......戏，别说话",
-			location: "本地",
-			date: "2026-06-30",
-			tags: ["私人"],
-			password: "331700",
-			passwordHint: "请输入密码查看相册内容",
-		},
 			{
 			id: "小埋生活",
 			name: "小埋生活",
