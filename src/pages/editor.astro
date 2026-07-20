@@ -260,6 +260,8 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 .icon-bar-btn { width: 36px; height: 36px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, currentColor 50%, transparent); cursor: pointer; transition: all 0.15s; pointer-events: auto; }
 .icon-bar-btn:hover { background: color-mix(in srgb, currentColor 5%, transparent); color: color-mix(in srgb, currentColor 80%, transparent); }
 .icon-bar-btn.active { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+.icon-bar-btn:focus { outline: none; }
+.icon-bar-btn:focus-visible { outline: none; box-shadow: none; }
 @media (max-width: 768px) { #right-icon-bar { display: none; } }
 /* 单栏模式（仅编辑/仅预览）左右留白 */
 #editor-body.single-view { padding: 0 210px; }
@@ -493,9 +495,15 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
 <!-- 图片上传弹窗 -->
 <div id="image-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 420px;">
-    <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">插入图片</h3>
-    <div class="space-y-3">
+  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 520px; max-height: 80vh; display: flex; flex-direction: column;">
+    <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-3">插入图片</h3>
+    <!-- 标签切换 -->
+    <div class="flex gap-1 mb-3 bg-black/5 dark:bg-white/5 rounded-lg p-1">
+      <button id="img-tab-local" class="img-tab flex-1 px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-neutral-800 text-black/90 dark:text-white/90 shadow-sm transition cursor-pointer">本地</button>
+      <button id="img-tab-cloud" class="img-tab flex-1 px-3 py-1.5 rounded-md text-sm font-medium text-black/50 dark:text-white/50 hover:text-black/70 dark:hover:text-white/70 transition cursor-pointer">云端图片</button>
+    </div>
+    <!-- 本地上传面板 -->
+    <div id="img-panel-local" class="space-y-3">
       <div class="flex gap-2">
         <input id="img-url-input" type="text" placeholder="粘贴图片 URL（单张）"
           class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
@@ -509,14 +517,50 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
         <div id="img-preview-grid" class="grid grid-cols-3 gap-2"></div>
         <img id="img-preview-thumb" class="max-h-32 rounded-lg mx-auto hidden" />
       </div>
-      <div>
-        <input id="img-alt-input" type="text" placeholder="图片描述（可选，显示在图片下方）"
-          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-      </div>
       <div id="img-status" class="text-sm hidden"></div>
       <p class="text-xs text-black/40 dark:text-white/40">支持多选，多张图片自动并列显示（图片网格）</p>
     </div>
-    <div class="flex justify-end gap-2 mt-4">
+    <!-- 云端图片面板 -->
+    <div id="img-panel-cloud" class="hidden flex-1" style="display: none; flex-direction: column;">
+      <!-- 云端提示 -->
+      <div id="cloud-no-token" class="hidden text-center py-8">
+        <p class="text-sm text-black/50 dark:text-white/50 mb-2">请先在右侧 🔑 面板中设置 GitHub Token</p>
+        <p class="text-xs text-black/30 dark:text-white/30">设置后即可浏览仓库中的相簿图片和文章图片</p>
+      </div>
+      <!-- 来源选择 -->
+      <div id="cloud-source-bar" class="flex gap-2 mb-3">
+        <button id="cloud-src-album" class="cloud-src-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--primary)] text-white dark:text-black/80 transition cursor-pointer whitespace-nowrap">相簿图片</button>
+        <button id="cloud-src-post" class="cloud-src-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--line-divider)] text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 transition cursor-pointer whitespace-nowrap">文章图片</button>
+      </div>
+      <!-- 相簿选择下拉 -->
+      <div id="cloud-album-selector" class="mb-3">
+        <select id="cloud-album-select" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 cursor-pointer">
+          <option value="">选择相簿...</option>
+        </select>
+      </div>
+      <!-- 图片列表 -->
+      <div id="cloud-images-container" class="flex-1 overflow-y-auto min-h-0" style="max-height: 320px;">
+        <div id="cloud-images-loading" class="hidden text-center py-6">
+          <span class="text-sm text-black/40 dark:text-white/40">加载中...</span>
+        </div>
+        <div id="cloud-images-empty" class="text-center py-6">
+          <span class="text-sm text-black/40 dark:text-white/40">请选择一个相簿或切换到文章图片</span>
+        </div>
+        <div id="cloud-images-grid" class="grid grid-cols-4 gap-2"></div>
+      </div>
+      <div class="flex items-center justify-between mt-2">
+        <span id="cloud-images-count" class="text-xs text-black/40 dark:text-white/40">已选 0 张</span>
+        <p class="text-xs text-black/40 dark:text-white/40">点击图片选中，多选后自动网格插入</p>
+      </div>
+    </div>
+    <!-- 公共区域 -->
+    <div>
+      <div class="mt-3">
+        <input id="img-alt-input" type="text" placeholder="图片描述（可选，显示在图片下方）"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-3">
       <button id="img-cancel" class="px-3 py-1.5 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
       <button id="img-confirm" class="px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">插入</button>
     </div>
@@ -1264,6 +1308,10 @@ function initEditor() {
     document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
     panelContent.classList.remove('overflow-y-auto');
     panelContent.classList.add('overflow-hidden');
+    // 移除焦点，避免按钮残留 focus 样式
+    if (document.activeElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
   }
 
   // [Editor] GitHub 设置保存/清空按钮
@@ -2209,9 +2257,44 @@ function initEditor() {
     if (!textarea) return;
 
     var altText = (imgAltInput ? imgAltInput.value.trim() : '') || '图片';
-
     var insertText = '';
-    if (pendingImgUrls.length > 0) {
+
+    // 优先处理云端选中图片
+    var isCloudActive = imgPanelCloud && imgPanelCloud.style.display !== 'none' && typeof cloudSelectedUrls !== 'undefined' && cloudSelectedUrls.length > 0;
+    if (isCloudActive) {
+      // 确保所有选中的图片都已缓存到 __editorImageMap
+      var needFetch = cloudSelectedPaths.filter(function(p) {
+        var fn = p.split('/').pop();
+        return !window.__editorImageMap[fn];
+      });
+      var fetchChain = Promise.resolve();
+      needFetch.forEach(function(filePath) {
+        fetchChain = fetchChain.then(function() {
+          return cloudFetchFileBase64(filePath).then(function(dataUrl) {
+            var fn = filePath.split('/').pop();
+            window.__editorImageMap[fn] = dataUrl;
+          }).catch(function() {});
+        });
+      });
+      fetchChain.then(function() {
+        if (cloudSelectedUrls.length === 1) {
+          insertText = '![' + altText + '](' + cloudSelectedUrls[0] + ')\n';
+        } else {
+          var cloudLines = cloudSelectedUrls.map(function(url) { return '![' + altText + '](' + url + ')'; });
+          insertText = '[grid]\n' + cloudLines.join('\n') + '\n[/grid]\n';
+        }
+        textarea.focus();
+        document.execCommand('insertText', false, insertText);
+        var insertedCount = cloudSelectedUrls.length;
+        cloudSelectedUrls = [];
+        cloudSelectedPaths = [];
+        cloudUpdateCount();
+        if (imgAltInput) imgAltInput.value = '';
+        imgModal.classList.add('hidden');
+        window.__editorShowToast(insertedCount > 1 ? insertedCount + ' 张图片已插入（网格）' : '图片已插入');
+      });
+      return; // 异步处理，提前返回
+    } else if (pendingImgUrls.length > 0) {
       if (pendingImgUrls.length === 1) {
         insertText = '![' + altText + '](' + pendingImgUrls[0] + ')\n';
       } else {
@@ -2224,7 +2307,6 @@ function initEditor() {
       insertText = '![' + altText + '](' + url + ')\n';
     }
 
-    var start = textarea.selectionStart;
     textarea.focus();
     document.execCommand('insertText', false, insertText);
 
@@ -2248,7 +2330,287 @@ function initEditor() {
     if (e.key === 'Enter') { e.preventDefault(); if (imgConfirm) imgConfirm.click(); }
   });
 
-  // 链接弹窗
+  // ========== 云端图片功能 ==========
+  var imgTabLocal = document.getElementById('img-tab-local');
+  var imgTabCloud = document.getElementById('img-tab-cloud');
+  var imgPanelLocal = document.getElementById('img-panel-local');
+  var imgPanelCloud = document.getElementById('img-panel-cloud');
+  var cloudNoToken = document.getElementById('cloud-no-token');
+  var cloudSourceBar = document.getElementById('cloud-source-bar');
+  var cloudAlbumSelector = document.getElementById('cloud-album-selector');
+  var cloudAlbumSelect = document.getElementById('cloud-album-select');
+  var cloudImagesContainer = document.getElementById('cloud-images-container');
+  var cloudImagesLoading = document.getElementById('cloud-images-loading');
+  var cloudImagesEmpty = document.getElementById('cloud-images-empty');
+  var cloudImagesGrid = document.getElementById('cloud-images-grid');
+  var cloudImagesCount = document.getElementById('cloud-images-count');
+  var cloudSrcAlbum = document.getElementById('cloud-src-album');
+  var cloudSrcPost = document.getElementById('cloud-src-post');
+  var cloudSelectedUrls = [];    // 插入 Markdown 的 URL
+  var cloudSelectedPaths = [];   // GitHub 仓库文件路径（用于 API 读取）
+
+  function cloudGetGithubConfig() {
+    var token = localStorage.getItem('gh-token') || '';
+    var repo = localStorage.getItem('gh-repo') || 'Ghost-Insititue/Fireflyblog';
+    var branch = localStorage.getItem('gh-branch') || 'main';
+    return { token: token, repo: repo, branch: branch };
+  }
+
+  function cloudFetchDir(path) {
+    var cfg = cloudGetGithubConfig();
+    if (!cfg.token) return Promise.reject('no_token');
+    var url = 'https://api.github.com/repos/' + cfg.repo + '/contents/' + path + '?ref=' + cfg.branch;
+    return fetch(url, { headers: { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' } })
+      .then(function(res) { if (!res.ok) throw new Error('请求失败: ' + res.status); return res.json(); });
+  }
+
+  // 构建 Markdown 插入 URL（同仓库内用相对路径，无需代理）
+  function cloudBuildInsertUrl(filePath) {
+    // public/gallery/{albumId}/{filename} → /gallery/{albumId}/{filename}
+    if (filePath.startsWith('public/gallery/')) {
+      return '/' + filePath.substring('public/'.length);
+    }
+    // src/content/posts/images/{filename} → ./images/{filename}
+    if (filePath.startsWith('src/content/posts/images/')) {
+      return './images/' + filePath.substring('src/content/posts/images/'.length);
+    }
+    // 兜底：用代理 URL
+    var cfg = cloudGetGithubConfig();
+    var rawUrl = 'https://raw.githubusercontent.com/' + cfg.repo + '/' + cfg.branch + '/' + filePath;
+    return 'https://ghproxy.com/' + rawUrl;
+  }
+
+  // 通过 GitHub API 获取文件 base64 内容（用于预览）
+  function cloudFetchFileBase64(filePath) {
+    var cfg = cloudGetGithubConfig();
+    var url = 'https://api.github.com/repos/' + cfg.repo + '/contents/' + filePath + '?ref=' + cfg.branch;
+    return fetch(url, { headers: { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' } })
+      .then(function(res) { if (!res.ok) throw new Error('API请求失败: ' + res.status); return res.json(); })
+      .then(function(data) {
+        // GitHub API 返回的 content 是 base64 编码的
+        var mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif' };
+        var ext = filePath.match(/\.(\w+)$/);
+        var mime = ext ? (mimeMap['.' + ext[1].toLowerCase()] || 'image/png') : 'image/png';
+        return 'data:' + mime + ';base64,' + data.content;
+      });
+  }
+
+  // 标签切换
+  function switchImgTab(tab) {
+    if (tab === 'local') {
+      imgTabLocal.className = 'img-tab flex-1 px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-neutral-800 text-black/90 dark:text-white/90 shadow-sm transition cursor-pointer';
+      imgTabCloud.className = 'img-tab flex-1 px-3 py-1.5 rounded-md text-sm font-medium text-black/50 dark:text-white/50 hover:text-black/70 dark:hover:text-white/70 transition cursor-pointer';
+      imgPanelLocal.style.display = '';
+      imgPanelCloud.classList.add('hidden');
+      imgPanelCloud.style.display = 'none';
+    } else {
+      imgTabCloud.className = 'img-tab flex-1 px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-neutral-800 text-black/90 dark:text-white/90 shadow-sm transition cursor-pointer';
+      imgTabLocal.className = 'img-tab flex-1 px-3 py-1.5 rounded-md text-sm font-medium text-black/50 dark:text-white/50 hover:text-black/70 dark:hover:text-white/70 transition cursor-pointer';
+      imgPanelLocal.style.display = 'none';
+      imgPanelCloud.classList.remove('hidden');
+      imgPanelCloud.style.display = 'flex';
+      // 检查 token
+      var cfg = cloudGetGithubConfig();
+      if (!cfg.token) {
+        cloudNoToken.classList.remove('hidden');
+        cloudSourceBar.classList.add('hidden');
+        cloudAlbumSelector.classList.add('hidden');
+        cloudImagesGrid.innerHTML = '';
+        cloudImagesEmpty.classList.add('hidden');
+      } else {
+        cloudNoToken.classList.add('hidden');
+        cloudSourceBar.classList.remove('hidden');
+        // 自动加载相簿列表
+        cloudLoadAlbums();
+      }
+    }
+  }
+
+  if (imgTabLocal) imgTabLocal.addEventListener('click', function() { switchImgTab('local'); });
+  if (imgTabCloud) imgTabCloud.addEventListener('click', function() { switchImgTab('cloud'); });
+
+  // 来源切换
+  function switchCloudSource(src) {
+    cloudCurrentSource = src;
+    cloudSelectedUrls = [];
+    cloudSelectedPaths = [];
+    cloudUpdateCount();
+    // 清除旧图片网格
+    cloudImagesGrid.innerHTML = '';
+    cloudImagesEmpty.classList.remove('hidden');
+    cloudImagesEmpty.querySelector('span').textContent = '请选择一个相簿或切换到文章图片';
+    cloudImagesLoading.classList.add('hidden');
+    if (src === 'album') {
+      cloudSrcAlbum.className = 'cloud-src-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--primary)] text-white dark:text-black/80 transition cursor-pointer whitespace-nowrap';
+      cloudSrcPost.className = 'cloud-src-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--line-divider)] text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 transition cursor-pointer whitespace-nowrap';
+      cloudAlbumSelector.classList.remove('hidden');
+      cloudAlbumSelect.value = '';
+      cloudLoadAlbums();
+    } else {
+      cloudSrcPost.className = 'cloud-src-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--primary)] text-white dark:text-black/80 transition cursor-pointer whitespace-nowrap';
+      cloudSrcAlbum.className = 'cloud-src-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--line-divider)] text-black/60 dark:text-white/60 hover:border-[var(--primary)]/40 transition cursor-pointer whitespace-nowrap';
+      cloudAlbumSelector.classList.add('hidden');
+      cloudLoadPostImages();
+    }
+  }
+
+  if (cloudSrcAlbum) cloudSrcAlbum.addEventListener('click', function() { switchCloudSource('album'); });
+  if (cloudSrcPost) cloudSrcPost.addEventListener('click', function() { switchCloudSource('post'); });
+
+  // 加载相簿列表
+  function cloudLoadAlbums() {
+    cloudFetchDir('public/gallery').then(function(items) {
+      var dirs = items.filter(function(i) { return i.type === 'dir'; });
+      cloudAlbumSelect.innerHTML = '<option value="">选择相簿 (' + dirs.length + ' 个)...</option>';
+      dirs.forEach(function(d) {
+        var opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = d.name;
+        cloudAlbumSelect.appendChild(opt);
+      });
+    }).catch(function() {
+      cloudAlbumSelect.innerHTML = '<option value="">加载失败</option>';
+    });
+  }
+
+  // 相簿选择 → 加载图片
+  if (cloudAlbumSelect) cloudAlbumSelect.addEventListener('change', function() {
+    var albumId = this.value;
+    cloudSelectedUrls = [];
+    cloudSelectedPaths = [];
+    cloudUpdateCount();
+    if (!albumId) {
+      cloudImagesGrid.innerHTML = '';
+      cloudImagesEmpty.classList.remove('hidden');
+      cloudImagesEmpty.querySelector('span').textContent = '请选择一个相簿';
+      return;
+    }
+    cloudLoadAlbumPhotos(albumId);
+  });
+
+  function cloudLoadAlbumPhotos(albumId) {
+    cloudImagesLoading.classList.remove('hidden');
+    cloudImagesEmpty.classList.add('hidden');
+    cloudImagesGrid.innerHTML = '';
+    cloudFetchDir('public/gallery/' + albumId).then(function(items) {
+      cloudImagesLoading.classList.add('hidden');
+      var imageExts = /\.(jpe?g|png|webp|avif|gif)$/i;
+      var images = items.filter(function(i) { return i.type === 'file' && imageExts.test(i.name) && !/^cover\./i.test(i.name); });
+      if (images.length === 0) {
+        cloudImagesEmpty.classList.remove('hidden');
+        cloudImagesEmpty.querySelector('span').textContent = '该相簿暂无图片';
+        return;
+      }
+      cloudRenderImages(images.map(function(img) {
+        var filePath = 'public/gallery/' + albumId + '/' + img.name;
+        return { name: img.name, path: filePath, insertUrl: cloudBuildInsertUrl(filePath) };
+      }));
+    }).catch(function(e) {
+      cloudImagesLoading.classList.add('hidden');
+      cloudImagesEmpty.classList.remove('hidden');
+      cloudImagesEmpty.querySelector('span').textContent = '加载失败: ' + (e.message || e);
+    });
+  }
+
+  // 加载文章图片
+  function cloudLoadPostImages() {
+    cloudImagesLoading.classList.remove('hidden');
+    cloudImagesEmpty.classList.add('hidden');
+    cloudImagesGrid.innerHTML = '';
+    cloudFetchDir('src/content/posts/images').then(function(items) {
+      cloudImagesLoading.classList.add('hidden');
+      var imageExts = /\.(jpe?g|png|webp|avif|gif)$/i;
+      var images = items.filter(function(i) { return i.type === 'file' && imageExts.test(i.name); });
+      if (images.length === 0) {
+        cloudImagesEmpty.classList.remove('hidden');
+        cloudImagesEmpty.querySelector('span').textContent = '文章图片目录为空';
+        return;
+      }
+      cloudRenderImages(images.map(function(img) {
+        var filePath = 'src/content/posts/images/' + img.name;
+        return { name: img.name, path: filePath, insertUrl: cloudBuildInsertUrl(filePath) };
+      }));
+    }).catch(function(e) {
+      cloudImagesLoading.classList.add('hidden');
+      cloudImagesEmpty.classList.remove('hidden');
+      cloudImagesEmpty.querySelector('span').textContent = '加载失败: ' + (e.message || e);
+    });
+  }
+
+  // 渲染图片网格（预览用 base64，存储代理 URL 用于插入）
+  function cloudRenderImages(imgList) {
+    cloudImagesGrid.innerHTML = '';
+    imgList.forEach(function(img) {
+      var item = document.createElement('div');
+      item.className = 'relative rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-[var(--primary)]/50 transition group';
+      item.setAttribute('data-insert-url', img.insertUrl);
+      item.setAttribute('data-file-path', img.path);
+      // 占位 loading
+      item.innerHTML = '<div class="w-full h-20 bg-black/5 dark:bg-white/5 animate-pulse rounded-lg"></div>' +
+        '<div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition">' + img.name + '</div>';
+      // 通过 API 加载 base64 预览
+      cloudFetchFileBase64(img.path).then(function(dataUrl) {
+        var imgEl = document.createElement('img');
+        imgEl.src = dataUrl;
+        imgEl.className = 'w-full h-20 object-cover rounded-lg';
+        imgEl.loading = 'lazy';
+        item.innerHTML = '';
+        item.appendChild(imgEl);
+        var label = document.createElement('div');
+        label.className = 'absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition';
+        label.textContent = img.name;
+        item.appendChild(label);
+        // 缓存 data URL 到 __editorImageMap，供预览使用
+        var filename = img.path.split('/').pop();
+        if (!window.__editorImageMap[filename]) {
+          window.__editorImageMap[filename] = dataUrl;
+        }
+      }).catch(function() {
+        // 加载失败时显示错误提示
+        item.innerHTML = '<div class="w-full h-20 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-lg"><span class="text-xs text-black/30 dark:text-white/30">加载失败</span></div>';
+      });
+      item.addEventListener('click', function() {
+        var insertUrl = this.getAttribute('data-insert-url');
+        var filePath = this.getAttribute('data-file-path');
+        var idx = cloudSelectedUrls.indexOf(insertUrl);
+        if (idx >= 0) {
+          cloudSelectedUrls.splice(idx, 1);
+          cloudSelectedPaths.splice(idx, 1);
+          this.style.borderColor = 'transparent';
+        } else {
+          cloudSelectedUrls.push(insertUrl);
+          cloudSelectedPaths.push(filePath);
+          this.style.borderColor = 'var(--primary)';
+        }
+        cloudUpdateCount();
+      });
+      cloudImagesGrid.appendChild(item);
+    });
+  }
+
+  function cloudUpdateCount() {
+    if (cloudImagesCount) {
+      cloudImagesCount.textContent = cloudSelectedUrls.length > 0 ? '已选 ' + cloudSelectedUrls.length + ' 张' : '';
+    }
+  }
+
+  // 打开图片弹窗时重置云端状态
+  if (imgToolBtn && imgModal) {
+    imgToolBtn.addEventListener('click', function() {
+      setTimeout(function() {
+        cloudSelectedUrls = [];
+        cloudSelectedPaths = [];
+        cloudUpdateCount();
+        if (cloudImagesGrid) cloudImagesGrid.innerHTML = '';
+        if (cloudImagesEmpty) { cloudImagesEmpty.classList.remove('hidden'); cloudImagesEmpty.querySelector('span').textContent = '请选择一个相簿或切换到文章图片'; }
+        if (cloudImagesLoading) cloudImagesLoading.classList.add('hidden');
+        if (cloudAlbumSelect) cloudAlbumSelect.value = '';
+        switchImgTab('local');
+      }, 0);
+    });
+  }
+
+  // ========== 链接弹窗 ==========
   var linkModal = document.getElementById('link-modal');
   var linkCancel = document.getElementById('link-cancel');
   var linkConfirm = document.getElementById('link-confirm');
@@ -2497,6 +2859,30 @@ function initEditor() {
       }
     });
   }
+
+  // ESC 键关闭弹窗和面板（优先关闭弹窗，再关闭面板）
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var modals = [
+        document.getElementById('fullscreen-preview'),
+        document.getElementById('image-modal'),
+        document.getElementById('github-modal'),
+        document.getElementById('draft-modal'),
+        document.getElementById('link-modal')
+      ];
+      // 优先关闭最上层的弹窗，每次只关闭一个
+      for (var i = 0; i < modals.length; i++) {
+        if (modals[i] && !modals[i].classList.contains('hidden')) {
+          modals[i].classList.add('hidden');
+          return;
+        }
+      }
+      // 没有弹窗打开时，关闭侧面板
+      if (currentPanel && slidePanel.style.width === '288px') {
+        closePanel();
+      }
+    }
+  });
 })();
 </script>
 
