@@ -306,8 +306,21 @@ const coverLqipProps = cover
     // ===== 事件委托：打开/关闭弹窗（不依赖 getElementById 时序） =====
     if (!window.__albumBtnDelegate) {
       window.__albumBtnDelegate = true;
+
+      // ESC 关闭所有弹窗
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          var modals = document.querySelectorAll('#gallery-upload-modal, #edit-album-modal, #delete-album-modal');
+          modals.forEach(function(m) { if (!m.classList.contains('hidden')) m.classList.add('hidden'); });
+        }
+      });
+
       document.addEventListener('click', function(e) {
         var t = e.target;
+        // 点击后移除焦点，避免黑色轮廓残留
+        if (t.closest && t.closest('button')) {
+          setTimeout(function() { t.blur(); }, 10);
+        }
         // 上传
         if (t.closest('#btn-upload-photo')) {
           var m = document.getElementById('gallery-upload-modal');
@@ -915,5 +928,11 @@ const coverLqipProps = cover
     document.addEventListener('swup:contentReplaced', reinitInternal);
     document.addEventListener('swup:enable', reinitInternal);
   </script>
+
+  <style is:inline>
+    /* 隐藏浏览器自带的密码眼睛按钮（Edge: ::-ms-reveal, Firefox: ::-moz-reveal） */
+    input[type="password"]::-ms-reveal { display: none !important; }
+    input[type="password"]::-moz-reveal { display: none !important; }
+  </style>
 
 </MainGridLayout>
