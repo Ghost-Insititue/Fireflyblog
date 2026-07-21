@@ -15,15 +15,13 @@ export const galleryConfig: GalleryConfig = {
 		// password: 访问密码，设置后需要输入密码才能查看相册内容（可选）
 		// passwordHint: 密码提示，设置后在输入密码错误时显示（可选，需配合password使用）
 		// 每添加一个数组项就相当于添加了一个相册，记得在 public/gallery/ 目录下创建对应的子目录并放入图片
-			{
+		{
 			id: "测试相簿",
 			name: "测试相簿",
 			description: "测试1",
 			location: "网页",
 			date: "2026-07-21",
 			tags: ["异次元", "测试", "相册"],
-			password: "123",
-			passwordHint: "测试123",
 		},
 	],
 
