@@ -741,55 +741,66 @@ const coverLqipProps = cover
       `;
       container.before(batchBar);
 
-      // 长按进入批量模式 / 点击删除单张
-      let longPressTimer = null;
-      container.addEventListener('mousedown', (e) => {
-        const photoCard = e.target.closest('.gallery-photo-card');
-        if (!photoCard) return;
-        longPressTimer = setTimeout(() => {
-          enterBatchMode();
-          togglePhotoSelection(photoCard);
-        }, 500);
-      });
-      container.addEventListener('mouseup', () => clearTimeout(longPressTimer));
-      container.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
-
-      // 单张删除按钮
+      // 点击勾选框：进入批量模式 + 切换选中
       container.addEventListener('click', (e) => {
-        const deleteBtn = e.target.closest('[data-action="delete-photo"]');
-        if (!deleteBtn) return;
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (batchMode) {
-          const card = deleteBtn.closest('.gallery-photo-card');
+        const selectBtn = e.target.closest('[data-action="select-photo"]');
+        if (selectBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const card = selectBtn.closest('.gallery-photo-card');
+          if (!card) return;
+          if (!batchMode) enterBatchMode();
           togglePhotoSelection(card);
           return;
         }
 
-        // 单张删除确认
-        const src = deleteBtn.dataset.src;
-        showPhotoConfirm(`删除这张照片？`, () => deletePhotos([src]));
-      });
+        // 批量模式下点击照片切换选中
+        if (batchMode) {
+          const photoCard = e.target.closest('.gallery-photo-card');
+          if (photoCard) {
+            e.preventDefault();
+            e.stopPropagation();
+            togglePhotoSelection(photoCard);
+          }
+        }
+        // 非批量模式：不阻止，让 Fancybox 处理点击
+      }, true);
 
       // 批量模式
       function enterBatchMode() {
         if (batchMode) return;
         batchMode = true;
+        selectedPhotos.clear();
         batchBar.classList.remove('hidden');
         batchBar.classList.add('flex');
         container.querySelectorAll('.gallery-photo-card').forEach(card => {
-          card.classList.add('ring-2', 'ring-transparent', 'ring-offset-2', 'cursor-pointer');
+          const checkbox = card.querySelector('.photo-checkbox');
+          if (checkbox) {
+            checkbox.style.opacity = '1';
+          }
         });
       }
 
       function exitBatchMode() {
         batchMode = false;
+        deleteConfirmMode = false;
         selectedPhotos.clear();
         batchBar.classList.add('hidden');
         batchBar.classList.remove('flex');
+        // 重置删除按钮状态
+        batchDeleteBtn.textContent = '删除选中';
+        batchDeleteBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+        batchDeleteBtn.classList.add('bg-red-500', 'hover:bg-red-600');
         container.querySelectorAll('.gallery-photo-card').forEach(card => {
-          card.classList.remove('ring-2', 'ring-[var(--primary)]', 'ring-transparent', 'ring-offset-2');
+          const checkbox = card.querySelector('.photo-checkbox');
+          if (checkbox) {
+            checkbox.style.opacity = '';
+            // 重置勾选框样式
+            checkbox.style.backgroundColor = '';
+            checkbox.style.borderColor = '';
+            const checkIcon = checkbox.querySelector('.check-icon');
+            if (checkIcon) checkIcon.style.display = 'none';
+          }
         });
         document.getElementById('select-all-photos').checked = false;
         updateSelectedCount();
@@ -798,14 +809,25 @@ const coverLqipProps = cover
       function togglePhotoSelection(card) {
         const src = card.querySelector('[data-src]')?.dataset.src || card.querySelector('img')?.src;
         if (!src) return;
+        const checkbox = card.querySelector('.photo-checkbox');
+        const checkIcon = checkbox?.querySelector('.check-icon');
+
         if (selectedPhotos.has(src)) {
           selectedPhotos.delete(src);
-          card.classList.remove('ring-[var(--primary)]');
-          card.classList.add('ring-transparent');
+          // 取消选中：恢复勾选框样式
+          if (checkbox) {
+            checkbox.style.backgroundColor = '';
+            checkbox.style.borderColor = '';
+          }
+          if (checkIcon) checkIcon.style.display = 'none';
         } else {
           selectedPhotos.add(src);
-          card.classList.add('ring-[var(--primary)]');
-          card.classList.remove('ring-transparent');
+          // 选中：勾选框变主题色 + 显示勾
+          if (checkbox) {
+            checkbox.style.backgroundColor = 'var(--primary)';
+            checkbox.style.borderColor = 'var(--primary)';
+          }
+          if (checkIcon) checkIcon.style.display = 'block';
         }
         updateSelectedCount();
       }
@@ -820,43 +842,61 @@ const coverLqipProps = cover
         container.querySelectorAll('.gallery-photo-card').forEach(card => {
           const src = card.querySelector('[data-src]')?.dataset.src || card.querySelector('img')?.src;
           if (!src) return;
+          const checkbox = card.querySelector('.photo-checkbox');
+          const checkIcon = checkbox?.querySelector('.check-icon');
           if (e.target.checked) {
             selectedPhotos.add(src);
-            card.classList.add('ring-[var(--primary)]');
-            card.classList.remove('ring-transparent');
+            if (checkbox) {
+              checkbox.style.backgroundColor = 'var(--primary)';
+              checkbox.style.borderColor = 'var(--primary)';
+            }
+            if (checkIcon) checkIcon.style.display = 'block';
           } else {
             selectedPhotos.delete(src);
-            card.classList.remove('ring-[var(--primary)]');
-            card.classList.add('ring-transparent');
+            if (checkbox) {
+              checkbox.style.backgroundColor = '';
+              checkbox.style.borderColor = '';
+            }
+            if (checkIcon) checkIcon.style.display = 'none';
           }
         });
         updateSelectedCount();
       });
 
-      // 批量删除
-      batchBar.querySelector('#btn-batch-delete-photos').addEventListener('click', () => {
+      // 批量删除 - 按钮状态切换
+      let deleteConfirmMode = false;
+      const batchDeleteBtn = batchBar.querySelector('#btn-batch-delete-photos');
+      const batchCancelBtn = batchBar.querySelector('#btn-cancel-batch');
+
+      batchDeleteBtn.addEventListener('click', () => {
         if (selectedPhotos.size === 0) return;
-        showPhotoConfirm(`删除选中的 ${selectedPhotos.size} 张照片？`, () => deletePhotos([...selectedPhotos]));
+
+        if (!deleteConfirmMode) {
+          // 第一次点击：进入确认模式
+          deleteConfirmMode = true;
+          batchDeleteBtn.textContent = '确认删除';
+          batchDeleteBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+          batchDeleteBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+        } else {
+          // 第二次点击：执行删除
+          deleteConfirmMode = false;
+          deletePhotos([...selectedPhotos]);
+        }
       });
 
       // 取消批量
-      batchBar.querySelector('#btn-cancel-batch').addEventListener('click', exitBatchMode);
-
-      // 行内确认条
-      function showPhotoConfirm(message, onConfirm) {
-        const bar = document.createElement('div');
-        bar.className = 'flex items-center justify-between px-4 py-2.5 mb-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm';
-        bar.innerHTML = `
-          <span class="text-amber-700 dark:text-amber-300">⚠️ ${message}</span>
-          <div class="flex gap-1.5">
-            <button class="confirm-yes px-2.5 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 cursor-pointer">确认</button>
-            <button class="confirm-no px-2.5 py-1 rounded text-xs text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">取消</button>
-          </div>
-        `;
-        container.before(bar);
-        bar.querySelector('.confirm-yes').onclick = () => { bar.remove(); onConfirm(); };
-        bar.querySelector('.confirm-no').onclick = () => { bar.remove(); };
-      }
+      batchCancelBtn.addEventListener('click', () => {
+        if (deleteConfirmMode) {
+          // 确认模式下点取消：恢复按钮状态
+          deleteConfirmMode = false;
+          batchDeleteBtn.textContent = '删除选中';
+          batchDeleteBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+          batchDeleteBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+        } else {
+          // 非确认模式：退出批量模式
+          exitBatchMode();
+        }
+      });
 
       // 删除照片（通过 GitHub API）
       async function deletePhotos(photoSrcs) {
