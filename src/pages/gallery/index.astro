@@ -137,6 +137,83 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
     </div>
   </div>
 
+  <!-- 新建相册弹窗 -->
+  <div id="create-album-modal" class="fixed inset-0 z-50 hidden bg-black/50">
+    <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="position: absolute; top: 7vh; left: 50%; transform: translateX(-50%); width: 480px; max-height: 90vh; overflow-y: auto;">
+      <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">📁 新建相册</h3>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
+          <input id="new-album-name" type="text" placeholder="如：2026 旅行日记"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID <span class="text-xs text-black/40 dark:text-white/40">（用于 URL 和目录名，自动生成）</span></label>
+          <input id="new-album-id" type="text" placeholder="travel-2026"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label>
+          <input id="new-album-desc" type="text" placeholder="一句话描述相册内容"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        </div>
+
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">拍摄地点</label>
+            <input id="new-album-location" type="text" placeholder="如：杭州"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+          <div style="width: 160px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">日期</label>
+            <input id="new-album-date" type="date"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签</label>
+          <div class="flex gap-2">
+            <input id="new-album-tag1" type="text" placeholder="标签1"
+              class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <input id="new-album-tag2" type="text" placeholder="标签2"
+              class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <input id="new-album-tagcustom" type="text" placeholder="自定义标签"
+              class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <div style="width: 180px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码 <span class="text-xs text-black/40 dark:text-white/40">（留空公开）</span></label>
+            <input id="new-album-hint" type="text" placeholder="密码提示（可选）"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">&nbsp;</label>
+            <div class="relative">
+              <input id="new-album-password" type="password" placeholder="设置密码（留空不加密）"
+                class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              <button id="toggle-new-pwd" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="create-status" class="text-sm hidden"></div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5">
+        <button id="create-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
+        <button id="create-confirm" class="px-5 py-2 rounded-lg bg-(--primary) text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">创建</button>
+      </div>
+    </div>
+  </div>
+
   <script slot="head" is:inline>
     if (!customElements.get("gallery-filter")) {
       class GalleryFilter extends HTMLElement {
@@ -466,83 +543,6 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
     // Swup 导航后重新绑定
     document.addEventListener('swup:content:replaced', setupCreateAlbumDelegate);
   </script>
-
-<!-- 新建相册弹窗（在 MainLayout 内部，确保 Swup 导航时能注入 DOM） -->
-<div id="create-album-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-  <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 480px; max-height: 90vh; overflow-y: auto;">
-    <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">📁 新建相册</h3>
-
-    <div class="space-y-3">
-      <div>
-        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
-        <input id="new-album-name" type="text" placeholder="如：2026 旅行日记"
-          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID <span class="text-xs text-black/40 dark:text-white/40">（用于 URL 和目录名，自动生成）</span></label>
-        <input id="new-album-id" type="text" placeholder="travel-2026"
-          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label>
-        <input id="new-album-desc" type="text" placeholder="一句话描述相册内容"
-          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-      </div>
-
-      <div class="flex gap-3">
-        <div class="flex-1">
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">拍摄地点</label>
-          <input id="new-album-location" type="text" placeholder="如：杭州"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-        <div style="width: 160px;">
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">日期</label>
-          <input id="new-album-date" type="date"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签</label>
-        <div class="flex gap-2">
-          <input id="new-album-tag1" type="text" placeholder="标签1"
-            class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-          <input id="new-album-tag2" type="text" placeholder="标签2"
-            class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-          <input id="new-album-tagcustom" type="text" placeholder="自定义标签"
-            class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-      </div>
-
-      <div class="flex gap-3">
-        <div style="width: 180px;">
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码 <span class="text-xs text-black/40 dark:text-white/40">（留空公开）</span></label>
-          <input id="new-album-hint" type="text" placeholder="密码提示（可选）"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-        <div class="flex-1">
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">&nbsp;</label>
-          <div class="relative">
-            <input id="new-album-password" type="password" placeholder="设置密码（留空不加密）"
-              class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-            <button id="toggle-new-pwd" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div id="create-status" class="text-sm hidden"></div>
-    </div>
-
-    <div class="flex justify-end gap-2 mt-5">
-      <button id="create-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
-      <button id="create-confirm" class="px-5 py-2 rounded-lg bg-(--primary) text-white dark:text-black/80 text-sm font-medium hover:opacity-90 transition cursor-pointer">创建</button>
-    </div>
-  </div>
-</div>
 
 </MainGridLayout>
 
