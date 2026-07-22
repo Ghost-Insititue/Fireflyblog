@@ -10,6 +10,28 @@ import "@/styles/fancybox-custom.css";
   const LINK_SELECTOR = ".moment-images a[data-fancybox], [data-fancybox]:not(.moment-images a)";
   const svgBlobUrlCache = new Map<string, string>();
 
+  // ===== 彻底禁用 Fancybox 缩放动画 =====
+  // 拦截 Web Animations API，Fancybox 元素的动画瞬间完成
+  const _origAnimate = Element.prototype.animate;
+  Element.prototype.animate = function (this: Element, ...args: any[]) {
+    if (this.closest && this.closest(".fancybox__container")) {
+      // 立即跳到最终状态，不播放动画
+      const anim = _origAnimate.call(this, [], { duration: 0 });
+      return anim;
+    }
+    return _origAnimate.call(this, ...args);
+  };
+
+  // 拦截 Fancybox 设置的 inline style transition/transform
+  const _origSetAttribute = Element.prototype.setAttribute;
+  Element.prototype.setAttribute = function (this: Element, name: string, value: string) {
+    if (name === "style" && this.closest && this.closest(".fancybox__container")) {
+      // 移除 transition 和 transform 相关的内联样式
+      value = value.replace(/transition:[^;]+;?/gi, "").replace(/transform:[^;]+;?/gi, "");
+    }
+    return _origSetAttribute.call(this, name, value);
+  };
+
   function isSvgSrc(src: string): boolean {
     if (!src) return false;
     try {
@@ -77,8 +99,12 @@ import "@/styles/fancybox-custom.css";
           right: ["slideshow", "thumbs", "close"],
         },
       },
-      animated: true,
-      dragToClose: true,
+      animated: false,
+      dragToClose: false,
+      Carousel: {
+        transition: "none",
+        preload: 1,
+      },
       keyboard: {
         Escape: "close",
         Delete: "close",
@@ -90,8 +116,8 @@ import "@/styles/fancybox-custom.css";
         ArrowRight: "next",
         ArrowLeft: "prev",
       },
-      fitToView: true,
-      preload: 3,
+      fitToView: false,
+      preload: 1,
       infinite: true,
       Panzoom: {
         maxScale: 3,

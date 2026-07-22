@@ -240,43 +240,57 @@ const coverLqipProps = cover
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
-          <input id="edit-album-name" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          <input id="edit-album-name" type="text" placeholder="如：2026 旅行日记"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID</label>
-          <input id="edit-album-id" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID <span class="text-xs text-black/40 dark:text-white/40">（用于 URL 和目录名）</span></label>
+          <input id="edit-album-id" type="text" placeholder="travel-2026"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
         </div>
         <div>
           <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">描述</label>
-          <input id="edit-album-desc" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          <input id="edit-album-desc" type="text" placeholder="一句话描述相册内容"
+            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
         </div>
         <div class="flex gap-3">
           <div class="flex-1">
             <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">拍摄地点</label>
-            <input id="edit-album-location" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <input id="edit-album-location" type="text" placeholder="如：杭州"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           </div>
           <div style="width: 160px;">
             <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">日期</label>
-            <input id="edit-album-date" type="date" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <input id="edit-album-date" type="date"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           </div>
         </div>
         <div>
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签 <span class="text-xs text-black/40 dark:text-white/40">（逗号分隔）</span></label>
-          <input id="edit-album-tags" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签</label>
+          <div class="flex gap-2">
+            <input id="edit-album-tag1" type="text" placeholder="标签1"
+              class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <input id="edit-album-tag2" type="text" placeholder="标签2"
+              class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <input id="edit-album-tagcustom" type="text" placeholder="自定义标签"
+              class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
         </div>
         <div class="flex gap-3">
+          <div style="width: 180px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码 <span class="text-xs text-black/40 dark:text-white/40">（留空公开）</span></label>
+            <input id="edit-album-hint" type="text" placeholder="密码提示（可选）"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
           <div class="flex-1">
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码</label>
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">&nbsp;</label>
             <div class="relative">
-              <input id="edit-album-password" type="password" class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              <input id="edit-album-password" type="password" placeholder="设置密码（留空不加密）"
+                class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
               <button id="toggle-edit-pwd" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
-          </div>
-          <div style="width: 140px;">
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">密码提示</label>
-            <input id="edit-album-hint" type="text" class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           </div>
         </div>
         <div id="edit-status" class="text-sm hidden"></div>
@@ -293,7 +307,7 @@ const coverLqipProps = cover
     <div class="rounded-2xl p-6 shadow-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)]" style="width: 400px;">
       <h3 class="text-base font-bold text-red-500 mb-2">⚠️ 删除相册</h3>
       <p class="text-sm text-black/70 dark:text-white/70 mb-1">确定要删除相册「<span id="delete-album-name"></span>」吗？</p>
-      <p class="text-xs text-black/40 dark:text-white/40 mb-4">此操作会从配置中移除相册条目，但不会删除服务器上的照片文件。</p>
+      <p class="text-xs text-black/40 dark:text-white/40 mb-4">此操作会同时删除相册配置和服务器上的所有照片文件，操作不可恢复。</p>
       <div id="delete-status" class="text-sm mb-3 hidden"></div>
       <div class="flex justify-end gap-2">
         <button id="delete-cancel" class="px-4 py-2 rounded-lg text-sm text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer">取消</button>
@@ -330,7 +344,7 @@ const coverLqipProps = cover
         // 编辑
         if (t.closest('#btn-edit-album')) {
           var btn=document.getElementById('btn-edit-album'),em=document.getElementById('edit-album-modal');
-          if(btn&&em){document.getElementById('edit-album-name').value=btn.dataset.albumName||'';document.getElementById('edit-album-id').value=btn.dataset.albumId||'';document.getElementById('edit-album-desc').value=btn.dataset.albumDesc||'';document.getElementById('edit-album-date').value=btn.dataset.albumDate||'';document.getElementById('edit-album-location').value=btn.dataset.albumLocation||'';document.getElementById('edit-album-tags').value=btn.dataset.albumTags||'';document.getElementById('edit-album-password').value='';document.getElementById('edit-album-hint').value='';document.getElementById('edit-status').classList.add('hidden');em.classList.remove('hidden');}
+          if(btn&&em){document.getElementById('edit-album-name').value=btn.dataset.albumName||'';document.getElementById('edit-album-id').value=btn.dataset.albumId||'';document.getElementById('edit-album-desc').value=btn.dataset.albumDesc||'';document.getElementById('edit-album-date').value=btn.dataset.albumDate||'';document.getElementById('edit-album-location').value=btn.dataset.albumLocation||'';var tags=(btn.dataset.albumTags||'').split(',').map(function(s){return s.trim();});document.getElementById('edit-album-tag1').value=tags[0]||'';document.getElementById('edit-album-tag2').value=tags[1]||'';document.getElementById('edit-album-tagcustom').value=tags.slice(2).join(', ');document.getElementById('edit-album-password').value='';document.getElementById('edit-album-hint').value='';document.getElementById('edit-status').classList.add('hidden');em.classList.remove('hidden');}
           return;
         }
         // 删除
@@ -510,7 +524,7 @@ const coverLqipProps = cover
         const newDesc = document.getElementById('edit-album-desc').value.trim();
         const newLocation = document.getElementById('edit-album-location').value.trim();
         const newDate = document.getElementById('edit-album-date').value;
-        const newTags = document.getElementById('edit-album-tags').value;
+        const newTags = [document.getElementById('edit-album-tag1').value.trim(), document.getElementById('edit-album-tag2').value.trim(), document.getElementById('edit-album-tagcustom').value.trim()].filter(Boolean).join(', ');
         const newPwd = document.getElementById('edit-album-password').value;
         const newHint = document.getElementById('edit-album-hint').value.trim();
 
