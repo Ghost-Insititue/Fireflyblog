@@ -316,12 +316,13 @@ const coverLqipProps = cover
     </div>
   </div>
 
-  <script is:inline data-swup-reload-script define:vars={{ albumId: albumMeta.id }}>
-    // ===== 事件委托：打开/关闭弹窗（不依赖 getElementById 时序） =====
-    // 使用 AbortController 确保 Swup 重新执行时先清理旧监听器
-    if (window.__albumBtnAC) window.__albumBtnAC.abort();
-    window.__albumBtnAC = new AbortController();
-    var ac = window.__albumBtnAC;
+  <script is:inline define:vars={{ albumId: albumMeta.id }}>
+    // ===== 事件委托：打开/关闭弹窗 =====
+    // 不用 data-swup-reload-script（不可靠），改用 swup:content:replaced 事件
+    function setupAlbumDelegate() {
+      if (window.__albumBtnAC) window.__albumBtnAC.abort();
+      window.__albumBtnAC = new AbortController();
+      var ac = window.__albumBtnAC;
 
     // ESC 关闭所有弹窗
     document.addEventListener('keydown', function(e) {
@@ -364,6 +365,10 @@ const coverLqipProps = cover
       // 点击遮罩关闭
       if(e.target.classList&&e.target.classList.contains('fixed')&&e.target.classList.contains('inset-0')&&!e.target.classList.contains('hidden')){e.target.classList.add('hidden');return;}
     }, { signal: ac.signal });
+    }
+
+    // 初始绑定
+    setupAlbumDelegate();
 
     function initGalleryUpload() {
       const modal = document.getElementById('gallery-upload-modal');
@@ -973,8 +978,9 @@ const coverLqipProps = cover
       }
     }
 
-    // Swup 导航后重新初始化弹窗内部逻辑（上传区、编辑保存、删除确认）
+    // Swup 导航后重新初始化
     function reinitInternal() {
+      setupAlbumDelegate();
       setTimeout(function() { initGalleryUpload(); initAlbumEdit(); initPhotoDelete(); }, 100);
     }
     document.addEventListener('DOMContentLoaded', reinitInternal);
