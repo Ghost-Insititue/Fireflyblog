@@ -318,51 +318,52 @@ const coverLqipProps = cover
 
   <script is:inline data-swup-reload-script define:vars={{ albumId: albumMeta.id }}>
     // ===== 事件委托：打开/关闭弹窗（不依赖 getElementById 时序） =====
-    if (!window.__albumBtnDelegate) {
-      window.__albumBtnDelegate = true;
+    // 使用 AbortController 确保 Swup 重新执行时先清理旧监听器
+    if (window.__albumBtnAC) window.__albumBtnAC.abort();
+    window.__albumBtnAC = new AbortController();
+    var ac = window.__albumBtnAC;
 
-      // ESC 关闭所有弹窗
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          var modals = document.querySelectorAll('#gallery-upload-modal, #edit-album-modal, #delete-album-modal');
-          modals.forEach(function(m) { if (!m.classList.contains('hidden')) m.classList.add('hidden'); });
-        }
-      });
+    // ESC 关闭所有弹窗
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var modals = document.querySelectorAll('#gallery-upload-modal, #edit-album-modal, #delete-album-modal');
+        modals.forEach(function(m) { if (!m.classList.contains('hidden')) m.classList.add('hidden'); });
+      }
+    }, { signal: ac.signal });
 
-      document.addEventListener('click', function(e) {
-        var t = e.target;
-        // 点击后移除焦点，避免黑色轮廓残留
-        if (t.closest && t.closest('button')) {
-          setTimeout(function() { t.blur(); }, 10);
-        }
-        // 上传
-        if (t.closest('#btn-upload-photo')) {
-          var m = document.getElementById('gallery-upload-modal');
-          if (m) { m.classList.remove('hidden'); var fl=document.getElementById('upload-file-list'),st=document.getElementById('upload-status'),bc=document.getElementById('upload-confirm'); if(fl){fl.classList.add('hidden');fl.innerHTML='';} if(st)st.classList.add('hidden'); if(bc){bc.disabled=true;bc.textContent='上传';} }
-          return;
-        }
-        // 编辑
-        if (t.closest('#btn-edit-album')) {
-          var btn=document.getElementById('btn-edit-album'),em=document.getElementById('edit-album-modal');
-          if(btn&&em){document.getElementById('edit-album-name').value=btn.dataset.albumName||'';document.getElementById('edit-album-id').value=btn.dataset.albumId||'';document.getElementById('edit-album-desc').value=btn.dataset.albumDesc||'';document.getElementById('edit-album-date').value=btn.dataset.albumDate||'';document.getElementById('edit-album-location').value=btn.dataset.albumLocation||'';var tags=(btn.dataset.albumTags||'').split(',').map(function(s){return s.trim();});document.getElementById('edit-album-tag1').value=tags[0]||'';document.getElementById('edit-album-tag2').value=tags[1]||'';document.getElementById('edit-album-tagcustom').value=tags.slice(2).join(', ');document.getElementById('edit-album-password').value='';document.getElementById('edit-album-hint').value='';document.getElementById('edit-status').classList.add('hidden');em.classList.remove('hidden');}
-          return;
-        }
-        // 删除
-        if (t.closest('#btn-delete-album')) {
-          var dm=document.getElementById('delete-album-modal'),eb=document.getElementById('btn-edit-album');
-          if(dm){document.getElementById('delete-album-name').textContent=(eb&&eb.dataset.albumName)||albumId;document.getElementById('delete-status').classList.add('hidden');document.getElementById('delete-confirm').disabled=false;document.getElementById('delete-confirm').textContent='确认删除';dm.classList.remove('hidden');}
-          return;
-        }
-        // 关闭
-        if(t.id==='edit-cancel'||t.closest('#edit-cancel')){var x=document.getElementById('edit-album-modal');if(x)x.classList.add('hidden');return;}
-        if(t.id==='delete-cancel'||t.closest('#delete-cancel')){var x=document.getElementById('delete-album-modal');if(x)x.classList.add('hidden');return;}
-        if(t.id==='upload-cancel'||t.closest('#upload-cancel')){var x=document.getElementById('gallery-upload-modal');if(x)x.classList.add('hidden');return;}
-        // 密码小眼睛
-        if(t.id==='toggle-edit-pwd'||t.closest('#toggle-edit-pwd')){var p=document.getElementById('edit-album-password');if(p)p.type=p.type==='password'?'text':'password';return;}
-        // 点击遮罩关闭
-        if(e.target.classList&&e.target.classList.contains('fixed')&&e.target.classList.contains('inset-0')&&!e.target.classList.contains('hidden')){e.target.classList.add('hidden');return;}
-      });
-    }
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      // 点击后移除焦点，避免黑色轮廓残留
+      if (t.closest && t.closest('button')) {
+        setTimeout(function() { t.blur(); }, 10);
+      }
+      // 上传
+      if (t.closest('#btn-upload-photo')) {
+        var m = document.getElementById('gallery-upload-modal');
+        if (m) { m.classList.remove('hidden'); var fl=document.getElementById('upload-file-list'),st=document.getElementById('upload-status'),bc=document.getElementById('upload-confirm'); if(fl){fl.classList.add('hidden');fl.innerHTML='';} if(st)st.classList.add('hidden'); if(bc){bc.disabled=true;bc.textContent='上传';} }
+        return;
+      }
+      // 编辑
+      if (t.closest('#btn-edit-album')) {
+        var btn=document.getElementById('btn-edit-album'),em=document.getElementById('edit-album-modal');
+        if(btn&&em){document.getElementById('edit-album-name').value=btn.dataset.albumName||'';document.getElementById('edit-album-id').value=btn.dataset.albumId||'';document.getElementById('edit-album-desc').value=btn.dataset.albumDesc||'';document.getElementById('edit-album-date').value=btn.dataset.albumDate||'';document.getElementById('edit-album-location').value=btn.dataset.albumLocation||'';var tags=(btn.dataset.albumTags||'').split(',').map(function(s){return s.trim();});document.getElementById('edit-album-tag1').value=tags[0]||'';document.getElementById('edit-album-tag2').value=tags[1]||'';document.getElementById('edit-album-tagcustom').value=tags.slice(2).join(', ');document.getElementById('edit-album-password').value='';document.getElementById('edit-album-hint').value='';document.getElementById('edit-status').classList.add('hidden');em.classList.remove('hidden');}
+        return;
+      }
+      // 删除
+      if (t.closest('#btn-delete-album')) {
+        var dm=document.getElementById('delete-album-modal'),eb=document.getElementById('btn-edit-album');
+        if(dm){document.getElementById('delete-album-name').textContent=(eb&&eb.dataset.albumName)||albumId;document.getElementById('delete-status').classList.add('hidden');document.getElementById('delete-confirm').disabled=false;document.getElementById('delete-confirm').textContent='确认删除';dm.classList.remove('hidden');}
+        return;
+      }
+      // 关闭
+      if(t.id==='edit-cancel'||t.closest('#edit-cancel')){var x=document.getElementById('edit-album-modal');if(x)x.classList.add('hidden');return;}
+      if(t.id==='delete-cancel'||t.closest('#delete-cancel')){var x=document.getElementById('delete-album-modal');if(x)x.classList.add('hidden');return;}
+      if(t.id==='upload-cancel'||t.closest('#upload-cancel')){var x=document.getElementById('gallery-upload-modal');if(x)x.classList.add('hidden');return;}
+      // 密码小眼睛
+      if(t.id==='toggle-edit-pwd'||t.closest('#toggle-edit-pwd')){var p=document.getElementById('edit-album-password');if(p)p.type=p.type==='password'?'text':'password';return;}
+      // 点击遮罩关闭
+      if(e.target.classList&&e.target.classList.contains('fixed')&&e.target.classList.contains('inset-0')&&!e.target.classList.contains('hidden')){e.target.classList.add('hidden');return;}
+    }, { signal: ac.signal });
 
     function initGalleryUpload() {
       const modal = document.getElementById('gallery-upload-modal');

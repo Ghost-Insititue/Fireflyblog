@@ -10,28 +10,6 @@ import "@/styles/fancybox-custom.css";
   const LINK_SELECTOR = ".moment-images a[data-fancybox], [data-fancybox]:not(.moment-images a)";
   const svgBlobUrlCache = new Map<string, string>();
 
-  // ===== 彻底禁用 Fancybox 缩放动画 =====
-  // 拦截 Web Animations API，Fancybox 元素的动画瞬间完成
-  const _origAnimate = Element.prototype.animate;
-  Element.prototype.animate = function (this: Element, ...args: any[]) {
-    if (this.closest && this.closest(".fancybox__container")) {
-      // 立即跳到最终状态，不播放动画
-      const anim = _origAnimate.call(this, [], { duration: 0 });
-      return anim;
-    }
-    return _origAnimate.call(this, ...args);
-  };
-
-  // 拦截 Fancybox 设置的 inline style transition/transform
-  const _origSetAttribute = Element.prototype.setAttribute;
-  Element.prototype.setAttribute = function (this: Element, name: string, value: string) {
-    if (name === "style" && this.closest && this.closest(".fancybox__container")) {
-      // 移除 transition 和 transform 相关的内联样式
-      value = value.replace(/transition:[^;]+;?/gi, "").replace(/transform:[^;]+;?/gi, "");
-    }
-    return _origSetAttribute.call(this, name, value);
-  };
-
   function isSvgSrc(src: string): boolean {
     if (!src) return false;
     try {
@@ -81,8 +59,8 @@ import "@/styles/fancybox-custom.css";
   function getCommonOptions() {
     return {
       Thumbs: {
-        autoStart: true,
-        showOnStart: "yes",
+        autoStart: false,
+        showOnStart: "no",
       },
       Toolbar: {
         display: {
@@ -91,15 +69,14 @@ import "@/styles/fancybox-custom.css";
             "zoomIn",
             "zoomOut",
             "toggle1to1",
-            "rotateCCW",
-            "rotateCW",
-            "flipX",
-            "flipY",
           ],
-          right: ["slideshow", "thumbs", "close"],
+          right: ["close"],
         },
       },
-      animated: false,
+      zoomEffect: false,          // 禁用从缩略图到全屏的缩放动画（Fancybox v6 内置选项）
+      fadeEffect: false,          // 禁用 UI 淡入动画
+      showClass: false,           // 禁用打开时的 CSS 动画
+      hideClass: false,           // 禁用关闭时的 CSS 淡出动画
       dragToClose: false,
       Carousel: {
         transition: "none",
@@ -107,12 +84,6 @@ import "@/styles/fancybox-custom.css";
       },
       keyboard: {
         Escape: "close",
-        Delete: "close",
-        Backspace: "close",
-        PageUp: "next",
-        PageDown: "prev",
-        ArrowUp: "next",
-        ArrowDown: "prev",
         ArrowRight: "next",
         ArrowLeft: "prev",
       },
@@ -120,7 +91,7 @@ import "@/styles/fancybox-custom.css";
       preload: 1,
       infinite: true,
       Panzoom: {
-        maxScale: 3,
+        maxScale: 2,
         minScale: 1,
       },
       caption: false,
@@ -128,6 +99,15 @@ import "@/styles/fancybox-custom.css";
   }
 
   async function preprocessSvgImages() {
+    // 快速检查：页面没有 SVG 图片则跳过
+    const hasSvg = Array.from(document.querySelectorAll<HTMLImageElement>(IMG_SELECTOR)).some(
+      (img) => isSvgSrc(img.getAttribute("src") || "")
+    );
+    const hasSvgLink = Array.from(document.querySelectorAll<HTMLElement>(LINK_SELECTOR)).some(
+      (el) => isSvgSrc(el.getAttribute("data-src") || el.getAttribute("href") || "")
+    );
+    if (!hasSvg && !hasSvgLink) return;
+
     const promises: Promise<void>[] = [];
 
     document.querySelectorAll<HTMLImageElement>(IMG_SELECTOR).forEach((img) => {
@@ -166,8 +146,21 @@ import "@/styles/fancybox-custom.css";
     await Promise.allSettled(promises);
   }
 
+  // 页面空闲时预加载 Fancybox 模块，避免第一次点击时等待动态 import
+  function preloadFancybox() {
+    if (Fancybox) return;
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(() => import("@fancyapps/ui").then(mod => { Fancybox = mod.Fancybox; }));
+    } else {
+      setTimeout(() => import("@fancyapps/ui").then(mod => { Fancybox = mod.Fancybox; }), 200);
+    }
+  }
+
   async function setup() {
     if (!document.querySelector(IMG_SELECTOR) && !document.querySelector(LINK_SELECTOR)) return;
+
+    // 预加载
+    preloadFancybox();
 
     if (!Fancybox) {
       const mod = await import("@fancyapps/ui");

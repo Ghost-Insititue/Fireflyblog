@@ -233,92 +233,94 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
 
   <script is:inline data-swup-reload-script>
     // ===== 事件委托：打开/关闭弹窗（不依赖 getElementById 时序） =====
-    if (!window.__createAlbumDelegate) {
-      window.__createAlbumDelegate = true;
-      var idManuallyEdited = false;
+    // 使用 AbortController 确保 Swup 重新执行时先清理旧监听器
+    if (window.__createAlbumAC) window.__createAlbumAC.abort();
+    window.__createAlbumAC = new AbortController();
+    var ac = window.__createAlbumAC;
+    var idManuallyEdited = false;
 
-      // ESC 关闭所有弹窗
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          var modals = document.querySelectorAll('#create-album-modal, #edit-album-modal, #delete-album-modal, #gallery-upload-modal');
-          modals.forEach(function(m) { if (!m.classList.contains('hidden')) m.classList.add('hidden'); });
-        }
-      });
+    // ESC 关闭所有弹窗
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var modals = document.querySelectorAll('#create-album-modal, #edit-album-modal, #delete-album-modal, #gallery-upload-modal');
+        modals.forEach(function(m) { if (!m.classList.contains('hidden')) m.classList.add('hidden'); });
+      }
+    }, { signal: ac.signal });
 
-      document.addEventListener('click', function(e) {
-        var t = e.target;
+    document.addEventListener('click', function(e) {
+      var t = e.target;
 
-        // 点击后移除焦点，避免黑色轮廓残留
-        if (t.closest && t.closest('button')) {
-          setTimeout(function() { t.blur(); }, 10);
-        }
+      // 点击后移除焦点，避免黑色轮廓残留
+      if (t.closest && t.closest('button')) {
+        setTimeout(function() { t.blur(); }, 10);
+      }
 
-        // 刷新相册列表
-        if (t.closest('#btn-refresh-gallery')) {
-          window.location.reload();
-          return;
-        }
+      // 刷新相册列表
+      if (t.closest('#btn-refresh-gallery')) {
+        window.location.reload();
+        return;
+      }
 
-        // 打开新建相册弹窗
-        if (t.closest('#btn-create-album')) {
-          var modal = document.getElementById('create-album-modal');
-          if (modal) {
-            modal.classList.remove('hidden');
-            document.getElementById('new-album-name').value = '';
-            document.getElementById('new-album-id').value = '';
-            idManuallyEdited = false;
-            document.getElementById('new-album-desc').value = '';
-            document.getElementById('new-album-location').value = '';
-            document.getElementById('new-album-tag1').value = '';
-            document.getElementById('new-album-tag2').value = '';
-            document.getElementById('new-album-tagcustom').value = '';
-            document.getElementById('new-album-password').value = '';
-            document.getElementById('new-album-hint').value = '';
-            document.getElementById('new-album-date').value = new Date().toISOString().split('T')[0];
-            var st = document.getElementById('create-status');
-            if (st) st.classList.add('hidden');
-            var bc = document.getElementById('create-confirm');
-            if (bc) { bc.disabled = false; bc.textContent = '创建'; }
-          }
-          return;
+      // 打开新建相册弹窗
+      if (t.closest('#btn-create-album')) {
+        var modal = document.getElementById('create-album-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          document.getElementById('new-album-name').value = '';
+          document.getElementById('new-album-id').value = '';
+          idManuallyEdited = false;
+          document.getElementById('new-album-desc').value = '';
+          document.getElementById('new-album-location').value = '';
+          document.getElementById('new-album-tag1').value = '';
+          document.getElementById('new-album-tag2').value = '';
+          document.getElementById('new-album-tagcustom').value = '';
+          document.getElementById('new-album-password').value = '';
+          document.getElementById('new-album-hint').value = '';
+          document.getElementById('new-album-date').value = new Date().toISOString().split('T')[0];
+          var st = document.getElementById('create-status');
+          if (st) st.classList.add('hidden');
+          var bc = document.getElementById('create-confirm');
+          if (bc) { bc.disabled = false; bc.textContent = '创建'; }
         }
+        return;
+      }
 
-        // 关闭弹窗
-        if (t.id === 'create-cancel' || t.closest('#create-cancel')) {
-          var m = document.getElementById('create-album-modal');
-          if (m) m.classList.add('hidden');
-          return;
-        }
+      // 关闭弹窗
+      if (t.id === 'create-cancel' || t.closest('#create-cancel')) {
+        var m = document.getElementById('create-album-modal');
+        if (m) m.classList.add('hidden');
+        return;
+      }
 
-        // 点击遮罩关闭
-        if (t.classList && t.classList.contains('fixed') && t.classList.contains('inset-0') && !t.classList.contains('hidden')) {
-          t.classList.add('hidden');
-          return;
-        }
+      // 点击遮罩关闭
+      if (t.classList && t.classList.contains('fixed') && t.classList.contains('inset-0') && !t.classList.contains('hidden')) {
+        t.classList.add('hidden');
+        return;
+      }
 
-        // 密码小眼睛
-        if (t.id === 'toggle-new-pwd' || t.closest('#toggle-new-pwd')) {
-          var p = document.getElementById('new-album-password');
-          if (p) p.type = p.type === 'password' ? 'text' : 'password';
-          return;
-        }
-      });
+      // 密码小眼睛
+      if (t.id === 'toggle-new-pwd' || t.closest('#toggle-new-pwd')) {
+        var p = document.getElementById('new-album-password');
+        if (p) p.type = p.type === 'password' ? 'text' : 'password';
+        return;
+      }
+    }, { signal: ac.signal });
 
-      // 相册名称自动生成 ID
-      document.addEventListener('input', function(e) {
-        if (e.target.id === 'new-album-name' && !idManuallyEdited) {
-          var name = e.target.value.trim();
-          var slug = name
-            .toLowerCase()
-            .replace(/[\u4e00-\u9fff]+/g, function(m) { return m; })
-            .replace(/[^\w\u4e00-\u9fff]+/g, '-')
-            .replace(/^-|-$/g, '');
-          document.getElementById('new-album-id').value = slug;
-        }
-        if (e.target.id === 'new-album-id') {
-          idManuallyEdited = true;
-        }
-      });
+    // 相册名称自动生成 ID
+    document.addEventListener('input', function(e) {
+      if (e.target.id === 'new-album-name' && !idManuallyEdited) {
+        var name = e.target.value.trim();
+        var slug = name
+          .toLowerCase()
+          .replace(/[\u4e00-\u9fff]+/g, function(m) { return m; })
+          .replace(/[^\w\u4e00-\u9fff]+/g, '-')
+          .replace(/^-|-$/g, '');
+        document.getElementById('new-album-id').value = slug;
+      }
+      if (e.target.id === 'new-album-id') {
+        idManuallyEdited = true;
+      }
+    }, { signal: ac.signal });
 
       // 创建相册
       document.addEventListener('click', async function(e) {
@@ -454,8 +456,7 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
           btnConfirm.textContent = '创建';
           showStatus('❌ ' + e.message, 'error');
         }
-      });
-    }
+      }, { signal: ac.signal });
   </script>
 
 </MainGridLayout>

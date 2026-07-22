@@ -5,78 +5,19 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* ===== 彻底关闭 Fancybox 所有动画，解决大图卡顿 ===== */
-
-/* 覆盖 Fancybox 全局动画时长变量 */
-:root {
-  --f-transition-duration: 0s !important;
-  --f-interface-enter-duration: 0s !important;
-  --f-interface-hide-duration: 0s !important;
-  --fancybox-transition-duration: 0s !important;
-}
-
-/* 关闭所有元素的 transition 和 animation */
-.fancybox__container,
-.fancybox__container *,
-.fancybox__slide,
-.fancybox__slide *,
-.fancybox__image,
-.fancybox__thumb,
-.fancybox__carousel,
-.fancybox__viewport,
-.fancybox__toolbar,
-.fancybox__thumbs,
-.fancybox__button {
-  transition: none !important;
-  animation: none !important;
-  will-change: auto !important;
-}
-
-/* 强制禁用 Panzoom 的 transform 动画（JS 直接操作的） */
-.fancybox__slide .f-panzoom__content,
-.fancybox__slide .f-panzoom__content *,
-.fancybox__slide .f-panzoom__wrapper,
-.fancybox__slide .f-panzoom__wrapper * {
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-/* 覆盖 Fancybox 内置的 is-revealing / is-hiding 动画 */
-.fancybox__container.is-revealing,
-.fancybox__container.is-hiding {
-  animation: none !important;
-}
-
-.fancybox__container.is-revealing *,
-.fancybox__container.is-hiding * {
-  animation: none !important;
-  transition: none !important;
-}
-
-/* 禁用 f-fadeIn / f-fadeOut 关键帧动画 */
-.f-fadeIn,
-.f-fadeOut {
-  animation: none !important;
-}
-
 /* 隐藏加载转圈 spinner */
 .f-spinner {
   display: none !important;
 }
 
-/* 关闭时直接隐藏，不做缩回动画 */
-.fancybox__container.is-closing {
-  opacity: 0 !important;
-}
-
-.fancybox__container.is-closing * {
-  transform: none !important;
-  transition: none !important;
+/* 禁用 zoomEffect=false 后的 CSS 回退动画 */
+.fancybox__container .f-panzoom__content,
+.fancybox__container .f-html {
   animation: none !important;
-  opacity: 0 !important;
+  transition: none !important;
 }
 
+/* Fancybox 容器背景 */
 .fancybox__container {
   --fancybox-bg: rgba(0, 0, 0, 0.9);
   --fancybox-thumbs-width: 64px;
