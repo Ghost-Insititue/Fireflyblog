@@ -41,15 +41,6 @@ export const galleryConfig: GalleryConfig = {
 			date: "2026-07-23",
 			tags: ["测试", "封面", "时间", "设置"],
 		},
-			{
-			id: "最终测试",
-			cover: "/gallery/最终测试/cover.png",
-			name: "最终测试",
-			description: "测试",
-			location: "测试ces",
-			date: "2026-07-23",
-			tags: ["ce", "ces", "ceec", "cesss", "csdc", "cscscs", "cscs"],
-		},
 	],
 
 	// 瀑布流最小列宽(px)，浏览器根据容器宽度自动计算列数，默认 240
