@@ -672,8 +672,10 @@ const coverLqipProps = cover
         document.getElementById('edit-confirm').textContent = '保存中...';
 
         try {
+          var editCoverFile = window.__editAlbumCoverFile;
+          var coverPath = editCoverFile ? '/gallery/' + newId + '/cover.' + editCoverFile.name.split('.').pop().toLowerCase() : '';
           await modifyGalleryConfig(token, repo, 'edit', {
-            oldId: document.getElementById('btn-edit-album').dataset.albumId, newId, name: newName, description: newDesc, location: newLocation, date: newDate, tags: newTags, password: newPwd, passwordHint: newHint
+            oldId: document.getElementById('btn-edit-album').dataset.albumId, newId, name: newName, description: newDesc, location: newLocation, date: newDate, tags: newTags, password: newPwd, passwordHint: newHint, cover: coverPath
           });
 
           // 上传新封面图
@@ -860,6 +862,7 @@ const coverLqipProps = cover
 
         let newAlbum = `\t\t{\n`;
         newAlbum += `\t\t\tid: "${esc(data.newId)}",\n`;
+        if (data.cover) newAlbum += `\t\t\tcover: "${esc(data.cover)}",\n`;
         newAlbum += `\t\t\tname: "${esc(data.name)}",\n`;
         if (data.description) newAlbum += `\t\t\tdescription: "${esc(data.description)}",\n`;
         if (data.location) newAlbum += `\t\t\tlocation: "${esc(data.location)}",\n`;

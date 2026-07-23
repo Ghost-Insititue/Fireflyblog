@@ -564,8 +564,11 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
           }
 
           var esc = function(s) { return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"'); };
+          var coverFile = window.__newAlbumCoverFile;
+          var coverPath = coverFile ? '/gallery/' + id + '/cover.' + coverFile.name.split('.').pop().toLowerCase() : '';
           var newAlbum = '\t\t{\n';
           newAlbum += '\t\t\tid: "' + esc(id) + '",\n';
+          if (coverPath) newAlbum += '\t\t\tcover: "' + esc(coverPath) + '",\n';
           newAlbum += '\t\t\tname: "' + esc(name) + '",\n';
           if (desc) newAlbum += '\t\t\tdescription: "' + esc(desc) + '",\n';
           if (location) newAlbum += '\t\t\tlocation: "' + esc(location) + '",\n';
