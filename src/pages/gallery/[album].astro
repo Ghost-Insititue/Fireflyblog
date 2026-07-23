@@ -91,6 +91,13 @@ const coverLqipProps = cover
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             上传
           </button>
+          <button
+            id="btn-refresh-album"
+            class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white/90 hover:text-white transition-colors cursor-pointer"
+            title="刷新页面"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
         </div>
         <!-- 封面上的信息 -->
         <div class="absolute bottom-0 left-0 right-0 p-6">
@@ -172,6 +179,13 @@ const coverLqipProps = cover
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               上传
+            </button>
+            <button
+              id="btn-refresh-album"
+              class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-(--line-divider) bg-transparent text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
+              title="刷新页面"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             </button>
           </div>
         </div>
@@ -382,6 +396,11 @@ const coverLqipProps = cover
       if (t.closest('#btn-upload-photo')) {
         var m = document.getElementById('gallery-upload-modal');
         if (m) { m.classList.remove('hidden'); var fl=document.getElementById('upload-file-list'),st=document.getElementById('upload-status'),bc=document.getElementById('upload-confirm'); if(fl){fl.classList.add('hidden');fl.innerHTML='';} if(st)st.classList.add('hidden'); if(bc){bc.disabled=true;bc.textContent='上传';} }
+        return;
+      }
+      // 刷新
+      if (t.closest('#btn-refresh-album')) {
+        window.location.reload();
         return;
       }
       // 编辑
