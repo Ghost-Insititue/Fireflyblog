@@ -143,16 +143,17 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
       <h3 class="text-base font-bold text-black/90 dark:text-white/90 mb-4">📁 新建相册</h3>
 
       <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
-          <input id="new-album-name" type="text" placeholder="如：2026 旅行日记"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID <span class="text-xs text-black/40 dark:text-white/40">（用于 URL 和目录名，自动生成）</span></label>
-          <input id="new-album-id" type="text" placeholder="travel-2026"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册名称 <span class="text-red-500">*</span></label>
+            <input id="new-album-name" type="text" placeholder="如：2026 旅行日记"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
+          <div style="width: 180px;">
+            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">相册 ID <span class="text-xs text-black/40 dark:text-white/40">（自动生成）</span></label>
+            <input id="new-album-id" type="text" placeholder="travel-2026"
+              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+          </div>
         </div>
 
         <div>
@@ -167,7 +168,7 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
             <input id="new-album-location" type="text" placeholder="如：杭州"
               class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           </div>
-          <div style="width: 160px;">
+          <div style="width: 180px;">
             <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">日期</label>
             <input id="new-album-date" type="date"
               class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
@@ -176,25 +177,22 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
 
         <div>
           <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">标签</label>
-          <div class="flex gap-2">
+          <div class="grid grid-cols-4 gap-3">
             <input id="new-album-tag1" type="text" placeholder="标签1"
-              class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              class="px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
             <input id="new-album-tag2" type="text" placeholder="标签2"
-              class="w-[86px] px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              class="px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
             <input id="new-album-tagcustom" type="text" placeholder="自定义标签"
-              class="flex-1 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+              class="col-span-2 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
           </div>
         </div>
 
-        <div class="flex gap-3">
-          <div style="width: 180px;">
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码 <span class="text-xs text-black/40 dark:text-white/40">（留空公开）</span></label>
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">访问密码 <span class="text-xs text-black/40 dark:text-white/40">（留空公开）</span></label>
+          <div class="grid grid-cols-4 gap-3">
             <input id="new-album-hint" type="text" placeholder="密码提示（可选）"
-              class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
-          </div>
-          <div class="flex-1">
-            <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">&nbsp;</label>
-            <div class="relative">
+              class="col-span-2 px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
+            <div class="col-span-2 relative">
               <input id="new-album-password" type="password" placeholder="设置密码（留空不加密）"
                 class="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--line-divider)] bg-transparent text-sm text-black/90 dark:text-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50" />
               <button id="toggle-new-pwd" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 cursor-pointer">
@@ -202,6 +200,22 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
               </button>
             </div>
           </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-black/60 dark:text-white/60 mb-1">封面图 <span class="text-xs text-black/40 dark:text-white/40">（可选，支持 jpg/png/webp）</span></label>
+          <div id="new-album-cover-drop" class="relative border-2 border-dashed border-[var(--line-divider)] rounded-lg p-3 text-center cursor-pointer hover:border-[var(--primary)]/50 transition">
+            <input id="new-album-cover-input" type="file" accept="image/jpeg,image/png,image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+            <div id="new-album-cover-preview" class="hidden">
+              <img id="new-album-cover-img" class="max-h-24 mx-auto rounded object-cover" />
+              <p id="new-album-cover-name" class="text-xs text-black/60 dark:text-white/60 mt-1 truncate"></p>
+            </div>
+            <div id="new-album-cover-placeholder" class="text-black/40 dark:text-white/40">
+              <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <p class="text-xs">点击或拖拽上传封面图</p>
+            </div>
+          </div>
+          <input id="new-album-cover-file" type="hidden" value="" />
         </div>
 
         <div id="create-status" class="text-sm hidden"></div>
@@ -356,6 +370,16 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
             document.getElementById('new-album-password').value = '';
             document.getElementById('new-album-hint').value = '';
             document.getElementById('new-album-date').value = new Date().toISOString().split('T')[0];
+            // 重置封面图预览
+            var coverPreview = document.getElementById('new-album-cover-preview');
+            var coverPlaceholder = document.getElementById('new-album-cover-placeholder');
+            var coverInput = document.getElementById('new-album-cover-input');
+            var coverFileHidden = document.getElementById('new-album-cover-file');
+            if (coverPreview) coverPreview.classList.add('hidden');
+            if (coverPlaceholder) coverPlaceholder.classList.remove('hidden');
+            if (coverInput) coverInput.value = '';
+            if (coverFileHidden) coverFileHidden.value = '';
+            window.__newAlbumCoverFile = null;
             var st = document.getElementById('create-status');
             if (st) st.classList.add('hidden');
             var bc = document.getElementById('create-confirm');
@@ -384,6 +408,82 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
           return;
         }
       }, { signal: ac.signal });
+
+      // 封面图预览和拖拽上传
+      var coverInput = document.getElementById('new-album-cover-input');
+      var coverPreview = document.getElementById('new-album-cover-preview');
+      var coverPlaceholder = document.getElementById('new-album-cover-placeholder');
+      var coverImg = document.getElementById('new-album-cover-img');
+      var coverName = document.getElementById('new-album-cover-name');
+      var coverFileHidden = document.getElementById('new-album-cover-file');
+      var coverDrop = document.getElementById('new-album-cover-drop');
+
+      if (coverInput) {
+        coverInput.addEventListener('change', function(e) {
+          var file = e.target.files[0];
+          if (file) {
+            handleCoverFile(file);
+          }
+        });
+
+        // 拖拽上传
+        coverDrop.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          coverDrop.classList.add('border-[var(--primary)]');
+        });
+
+        coverDrop.addEventListener('dragleave', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          coverDrop.classList.remove('border-[var(--primary)]');
+        });
+
+        coverDrop.addEventListener('drop', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          coverDrop.classList.remove('border-[var(--primary)]');
+          var file = e.dataTransfer.files[0];
+          if (file && file.type.startsWith('image/')) {
+            handleCoverFile(file);
+          }
+        });
+      }
+
+      function handleCoverFile(file) {
+        var validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          showCreateStatus('只支持 jpg/png/webp 格式', 'error');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showCreateStatus('封面图不能超过 5MB', 'error');
+          return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          coverImg.src = e.target.result;
+          coverName.textContent = file.name;
+          coverPreview.classList.remove('hidden');
+          coverPlaceholder.classList.add('hidden');
+          coverFileHidden.value = file.name;
+        };
+        reader.readAsDataURL(file);
+
+        // 保存文件对象到window
+        window.__newAlbumCoverFile = file;
+      }
+
+      function showCreateStatus(msg, type) {
+        var statusEl = document.getElementById('create-status');
+        statusEl.classList.remove('hidden');
+        statusEl.className = 'text-sm ' +
+          (type === 'error' ? 'text-red-500' :
+           type === 'success' ? 'text-green-500' :
+           'text-blue-500');
+        statusEl.textContent = msg;
+      }
 
       // 相册名称自动生成 ID
       document.addEventListener('input', function(e) {
@@ -526,6 +626,46 @@ const allTags = [...new Set(albums.flatMap((a) => a.tags || []))].sort();
             throw new Error('创建目录失败: ' + (dirErr.message || JSON.stringify(dirErr)));
           }
 
+          // 上传封面图
+          var coverFile = window.__newAlbumCoverFile;
+          if (coverFile) {
+            showStatus('⏳ 正在上传封面图...', 'uploading');
+            var ext = coverFile.name.split('.').pop().toLowerCase();
+            var coverFileName = 'cover.' + ext;
+            var coverPath = 'public/gallery/' + id + '/' + coverFileName;
+
+            // 读取文件为base64
+            var coverBase64 = await new Promise(function(resolve, reject) {
+              var reader = new FileReader();
+              reader.onload = function() {
+                var base64 = reader.result.split(',')[1];
+                resolve(base64);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(coverFile);
+            });
+
+            var coverRes = await fetch('https://api.github.com/repos/' + repo + '/contents/' + coverPath, {
+              method: 'PUT',
+              headers: {
+                'Authorization': 'token ' + token,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: 'gallery: upload cover for album "' + name + '"',
+                content: coverBase64,
+                branch: 'main',
+              }),
+            });
+            if (!coverRes.ok) {
+              var coverErr = await coverRes.json();
+              console.error('封面图上传失败:', coverErr);
+              // 封面图上传失败不阻止相册创建
+            }
+          }
+
+          window.__newAlbumCoverFile = null;
           btnConfirm.textContent = '完成';
           showStatus('✅ 相册「' + name + '」创建成功！等待 GitHub Actions 部署后即可访问，2 秒后返回相册列表...', 'success');
           setTimeout(function() { window.location.href = '/gallery/'; }, 2000);
