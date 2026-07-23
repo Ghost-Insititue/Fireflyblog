@@ -23,14 +23,6 @@ export const galleryConfig: GalleryConfig = {
 			date: "2026-07-21",
 			tags: ["异次元", "测试", "相册"],
 		},
-			{
-			id: "封面上传相册测试",
-			name: "封面上传相册测试",
-			description: "封面设置ghost",
-			location: "hub20260101",
-			date: "2026-07-23",
-			tags: ["测试", "封面", "时间", "设置"],
-		},
 	],
 
 	// 瀑布流最小列宽(px)，浏览器根据容器宽度自动计算列数，默认 240
