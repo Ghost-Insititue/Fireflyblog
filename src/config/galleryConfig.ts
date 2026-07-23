@@ -32,6 +32,15 @@ export const galleryConfig: GalleryConfig = {
 			date: "2026-07-23",
 			tags: ["测试", "封面", "时间", "设置"],
 		},
+			{
+			id: "封面上传相册测试222",
+			cover: "/gallery/封面上传相册测试222/cover.png",
+			name: "封面上传相册测试222",
+			description: "封面设置ghost",
+			location: "hub20260101",
+			date: "2026-07-23",
+			tags: ["测试", "封面", "时间", "设置"],
+		},
 	],
 
 	// 瀑布流最小列宽(px)，浏览器根据容器宽度自动计算列数，默认 240
