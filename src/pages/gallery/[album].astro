@@ -141,14 +141,39 @@ const coverLqipProps = cover
             <Icon is:inline name="material-symbols:arrow-back" class="text-base" />
             {i18n(I18nKey.galleryBackToAlbums)}
           </a>
-          <button
-            id="btn-upload-photo"
-            class="inline-flex items-center gap-1.5 text-sm text-(--primary) hover:underline cursor-pointer"
-            title="上传照片"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            上传
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              id="btn-edit-album"
+              data-album-name={albumMeta.name}
+              data-album-id={albumMeta.id}
+              data-album-desc={albumMeta.description || ''}
+              data-album-date={albumMeta.date || ''}
+              data-album-location={albumMeta.location || ''}
+              data-album-tags={(albumMeta.tags || []).join(',')}
+              data-album-has-password={albumMeta.password ? 'true' : ''}
+              class="inline-flex items-center gap-1.5 text-sm text-(--primary) hover:underline cursor-pointer"
+              title="编辑相册"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              编辑
+            </button>
+            <button
+              id="btn-delete-album"
+              class="inline-flex items-center gap-1.5 text-sm text-red-500 hover:underline cursor-pointer"
+              title="删除相册"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              删除
+            </button>
+            <button
+              id="btn-upload-photo"
+              class="inline-flex items-center gap-1.5 text-sm text-(--primary) hover:underline cursor-pointer"
+              title="上传照片"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              上传
+            </button>
+          </div>
         </div>
         <div class="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-neutral-100">
           {albumMeta.name}
