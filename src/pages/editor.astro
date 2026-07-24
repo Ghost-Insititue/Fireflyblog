@@ -120,11 +120,23 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   }
 
   // [Editor] 导航栏偏移补偿：overflow:hidden 移除滚动条→页面宽度变化→92vw 导航栏右移
-  // 服务端已在 MainGridLayout 渲染 inline style，此处为 Swup 导航时的备用补偿
+  // 从 sessionStorage 读取主页缓存的导航栏像素宽度，直接设置固定宽度
   var navbarTransitionTimer = null;
   function applyNavbarOffset() {
     var row = document.getElementById('top-row');
-    if (row) row.style.transform = 'translateX(-8px)';
+    if (!row) return;
+    var cached = sessionStorage.getItem('navbar-width');
+    if (cached) {
+      // 使用主页缓存的固定像素宽度，确保视觉一致，translateX 微调位置
+      row.style.width = cached + 'px';
+      row.style.maxWidth = cached + 'px';
+      row.style.transform = 'translateX(-8px)';
+    } else {
+      // 无缓存时回退到动态计算
+      var sw = measureScrollbarWidth();
+      var offset = Math.round(sw * 0.92);
+      row.style.transform = 'translateX(-' + offset + 'px)';
+    }
   }
   // 清除偏移时先禁用过渡，避免 transform 变化被动画化（700ms 滑动）
   function clearNavbarOffset() {
@@ -134,6 +146,8 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       if (navbarTransitionTimer) { cancelAnimationFrame(navbarTransitionTimer); navbarTransitionTimer = null; }
       row.style.transition = 'none';
       row.style.transform = '';
+      row.style.width = '';
+      row.style.maxWidth = '';
       // 下一帧恢复过渡（确保后续 sticky navbar 等动画正常）
       navbarTransitionTimer = requestAnimationFrame(function() {
         row.style.transition = '';
@@ -154,6 +168,10 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
   function applyEditorMode() {
     if (editorStyleEl) return;
     var scrollbarWidth = measureScrollbarWidth();
+    var cachedWidth = sessionStorage.getItem('navbar-width');
+    var navbarCss = cachedWidth
+      ? 'body.editor-page.sticky-navbar #top-row { width: ' + cachedWidth + 'px !important; max-width: ' + cachedWidth + 'px !important; transform: translateX(-8px) !important; transition: none !important; }'
+      : 'body.editor-page.sticky-navbar #top-row { transform: translateX(-' + Math.round(scrollbarWidth * 0.92) + 'px) !important; transition: none !important; }';
     document.body.classList.add('editor-page');
     document.documentElement.classList.add('editor-page');
     editorStyleEl = document.createElement('style');
@@ -187,7 +205,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
       'html.editor-page { scrollbar-width: none; -ms-overflow-style: none; }',
       'html.editor-page::-webkit-scrollbar { display: none; }',
       /* [Editor] 导航栏偏移 + 禁用过渡动画（避免 transform 变化产生 700ms 滑动） */
-      'body.editor-page.sticky-navbar #top-row { transform: translateX(-8px) !important; transition: none !important; }'
+      navbarCss
     ].join('\n');
     document.head.appendChild(editorStyleEl);
     editorResizeHandler = function() {
@@ -196,7 +214,11 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
         var rules = editorStyleEl.textContent;
         rules = rules.replace(/calc\(100% - \d+px\)/g, 'calc(100% - ' + newSW + 'px)');
         rules = rules.replace(/body\.editor-page::after \{ content: ""; position: fixed; right: 0; top: 0; width: \d+px;/, 'body.editor-page::after { content: ""; position: fixed; right: 0; top: 0; width: ' + newSW + 'px;');
-        rules = rules.replace(/translateX\(-\d+px\)/, 'translateX(-' + newSW + 'px)');
+        // 有缓存宽度时不更新 translateX（使用固定宽度），无缓存时更新偏移量
+        if (!cachedWidth) {
+          var newOffset = Math.round(newSW * 0.92);
+          rules = rules.replace(/translateX\(-\d+px\)/, 'translateX(-' + newOffset + 'px)');
+        }
         editorStyleEl.textContent = rules;
       }
     };

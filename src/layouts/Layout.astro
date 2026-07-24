@@ -1698,4 +1698,16 @@ function disableAnimation() {
   document.addEventListener('swup:contentReplaced', () => {
     requestAnimationFrame(initImageLoadFadeIn);
   });
+
+  // [Editor] 测量导航栏实际像素宽度并缓存，供编辑器页面使用
+  function cacheNavbarWidth() {
+    var topRow = document.getElementById('top-row');
+    if (topRow && !document.body.classList.contains('editor-page')) {
+      var w = topRow.getBoundingClientRect().width;
+      if (w > 0) sessionStorage.setItem('navbar-width', String(Math.round(w)));
+    }
+  }
+  cacheNavbarWidth();
+  document.addEventListener('astro:page-load', cacheNavbarWidth);
+  document.addEventListener('swup:contentReplaced', () => requestAnimationFrame(cacheNavbarWidth));
 </script>
