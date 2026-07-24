@@ -210,17 +210,23 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
     document.head.appendChild(editorStyleEl);
     editorResizeHandler = function() {
       var newSW = measureScrollbarWidth();
+      // 重新读取缓存宽度（主页 resize 后会更新）
+      var newCached = sessionStorage.getItem('navbar-width');
       if (editorStyleEl) {
         var rules = editorStyleEl.textContent;
         rules = rules.replace(/calc\(100% - \d+px\)/g, 'calc(100% - ' + newSW + 'px)');
         rules = rules.replace(/body\.editor-page::after \{ content: ""; position: fixed; right: 0; top: 0; width: \d+px;/, 'body.editor-page::after { content: ""; position: fixed; right: 0; top: 0; width: ' + newSW + 'px;');
-        // 有缓存宽度时不更新 translateX（使用固定宽度），无缓存时更新偏移量
-        if (!cachedWidth) {
+        if (newCached) {
+          // 更新固定宽度和 translateX
+          rules = rules.replace(/width: \d+px !important; max-width: \d+px !important;/, 'width: ' + newCached + 'px !important; max-width: ' + newCached + 'px !important;');
+        } else {
           var newOffset = Math.round(newSW * 0.92);
           rules = rules.replace(/translateX\(-\d+px\)/, 'translateX(-' + newOffset + 'px)');
         }
         editorStyleEl.textContent = rules;
       }
+      // 同步更新 inline style
+      applyNavbarOffset();
     };
     window.addEventListener('resize', editorResizeHandler);
   }

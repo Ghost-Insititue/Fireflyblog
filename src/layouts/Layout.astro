@@ -1710,4 +1710,10 @@ function disableAnimation() {
   cacheNavbarWidth();
   document.addEventListener('astro:page-load', cacheNavbarWidth);
   document.addEventListener('swup:contentReplaced', () => requestAnimationFrame(cacheNavbarWidth));
+  // 缩放/resize 时重新缓存
+  var _cacheTimer: ReturnType<typeof setTimeout> | null = null;
+  window.addEventListener('resize', () => {
+    if (_cacheTimer) clearTimeout(_cacheTimer);
+    _cacheTimer = setTimeout(cacheNavbarWidth, 100);
+  });
 </script>
